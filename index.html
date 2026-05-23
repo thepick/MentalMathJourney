@@ -1049,15 +1049,43 @@
     }
   }
 
-/* -- Stage Board -- */
+/* -- Practice Queue and Stage Board -- */
+.pq-panel { margin-bottom: var(--space-3); padding: 0.65rem; border-radius: var(--radius-lg); background: var(--color-surface-2); border: 1px solid color-mix(in srgb, var(--color-text) 8%, transparent); }
+.pq-head { display: flex; align-items: flex-start; justify-content: space-between; gap: var(--space-2); margin-bottom: 0.55rem; }
+.pq-title { font-size: 0.78rem; text-transform: uppercase; letter-spacing: 0.06em; color: var(--color-text-muted); margin: 0; }
+.pq-subtitle { margin-top: 0.15rem; font-size: 0.72rem; color: var(--color-text-faint); line-height: 1.25; }
+.pq-count { min-width: 26px; height: 26px; border-radius: var(--radius-full); display: grid; place-items: center; background: var(--color-primary); color: var(--color-text-inverse); font-size: 0.74rem; font-weight: 900; flex: 0 0 auto; }
+.pq-list { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 0.42rem; }
+.pq-chip { min-height: 54px; padding: 0.5rem 0.6rem; border-radius: var(--radius-md); border: 1px solid color-mix(in srgb, var(--color-text) 10%, transparent); background: var(--color-surface); display: grid; align-content: center; gap: 0.16rem; text-align: left; box-shadow: var(--shadow-sm); transition: transform 120ms ease, border-color 160ms ease, box-shadow 160ms ease; }
+.pq-chip:hover { transform: translateY(-1px); }
+.pq-chip.active { outline: 2px solid var(--color-primary); outline-offset: 1px; box-shadow: 0 0 0 3px rgba(1,105,111,0.14), var(--shadow-sm); }
+.pq-fact { display: block; font-size: 1.1rem; line-height: 1.05; font-weight: 900; color: var(--color-text); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.pq-meta { display: flex; justify-content: space-between; gap: 0.35rem; font-size: 0.6rem; line-height: 1.15; text-transform: uppercase; letter-spacing: 0.045em; color: var(--color-text-muted); }
+.pq-meta span { min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.pq-chip.fluent { border-color: color-mix(in srgb, var(--cell-fluent) 45%, transparent); }
+.pq-chip.review { background: color-mix(in srgb, var(--cell-fluent) 18%, var(--color-surface)); border-color: color-mix(in srgb, var(--cell-fluent) 48%, transparent); }
+.pq-chip.near-ready { background: color-mix(in srgb, var(--cell-near-ready) 18%, var(--color-surface)); border-color: color-mix(in srgb, var(--cell-near-ready) 48%, transparent); }
+.pq-chip.learning { background: color-mix(in srgb, var(--cell-learning) 20%, var(--color-surface)); border-color: color-mix(in srgb, var(--cell-learning) 50%, transparent); }
+.pq-chip.struggling { background: color-mix(in srgb, var(--cell-struggling) 18%, var(--color-surface)); border-color: color-mix(in srgb, var(--cell-struggling) 55%, transparent); animation: pqAttention 3.2s ease-in-out infinite; }
+.pq-chip.empty { background: var(--color-surface-offset); border-style: dashed; }
+.pq-empty { padding: 0.6rem; border-radius: var(--radius-md); background: var(--color-surface-offset); color: var(--color-text-muted); font-size: var(--text-xs); text-align: center; }
+@keyframes pqAttention { 0%, 100% { border-color: color-mix(in srgb, var(--cell-struggling) 55%, transparent); } 50% { border-color: color-mix(in srgb, var(--cell-struggling) 85%, transparent); } }
+@media (prefers-reduced-motion: reduce) { .pq-chip.struggling { animation: none; } }
+.stage-map-panel { margin-top: var(--space-2); }
+.stage-map-head { display: flex; align-items: center; justify-content: space-between; gap: var(--space-2); margin-bottom: 0.4rem; }
+.stage-map-title { font-size: 0.78rem; text-transform: uppercase; letter-spacing: 0.06em; color: var(--color-text-muted); margin: 0; }
 .sb-panel { padding: var(--space-3); overflow: hidden; display: flex; flex-direction: column; }
 .sb-section { margin-bottom: var(--space-3); }
 .sb-section-header { display: flex; align-items: center; gap: var(--space-2); margin-bottom: var(--space-2); }
 .sb-section-num { width: 24px; height: 24px; border-radius: var(--radius-full); background: var(--color-primary); color: var(--color-text-inverse); display: grid; place-items: center; font-size: 0.68rem; font-weight: 900; flex-shrink: 0; }
 .sb-section-name { font-size: 0.82rem; font-weight: 800; color: var(--color-text); }
-.sb-section-sub { font-size: 0.68rem; color: var(--color-text-muted); }
+.sb-section-sub { font-size: 0.68rem; color: var(--color-text-muted); margin-left: var(--space-2); }
+.pg-stage-title { font-size: 0.8rem; font-weight: 700; color: var(--color-text); margin-bottom: var(--space-2); padding: var(--space-2) var(--space-3); background: var(--color-surface-offset); border-radius: var(--radius-md); display: flex; align-items: center; gap: 0.4rem; flex-wrap: wrap; }
+.pg-stage-title .pg-stage-num { width: 20px; height: 20px; border-radius: var(--radius-full); background: var(--color-primary); color: var(--color-text-inverse); display: inline-grid; place-items: center; font-size: 0.62rem; font-weight: 900; flex-shrink: 0; }
+.pg-stage-title .pg-stage-label { font-weight: 800; }
+.pg-stage-title .pg-stage-count { color: var(--color-text-muted); font-weight: 500; }
 .sb-items { display: flex; flex-wrap: wrap; gap: 4px; }
-.sb-cell { width: 24px; height: 24px; border-radius: 6px; display: grid; place-items: center; font-size: 0.58rem; font-weight: 850; line-height: 1; border: 1px solid rgba(40,37,29,0.10); box-shadow: inset 0 1px 0 rgba(255,255,255,0.24); transition: transform 120ms ease; }
+.sb-cell { position: relative; width: 24px; height: 24px; border-radius: 6px; display: grid; place-items: center; font-size: 0.58rem; font-weight: 850; line-height: 1; border: 1px solid rgba(40,37,29,0.10); box-shadow: inset 0 1px 0 rgba(255,255,255,0.24); transition: transform 120ms ease; }
 .sb-cell:hover { transform: translateY(-1px); }
 .sb-cell.fluent, .sb-cell.review { background: var(--cell-fluent); color: var(--color-text-inverse); }
 .sb-cell.review::after { content: ''; position: absolute; right: 2px; top: 2px; width: 4px; height: 4px; border-radius: var(--radius-full); background: var(--cell-learning); border: 1px solid rgba(255,255,255,0.7); }
@@ -1087,6 +1115,12 @@
       .sb-cell { width: 16px; height: 16px; border-radius: 4px; }
       .sb-items { gap: 3px; }
       .sb-cluster-name { font-size: 0.56rem; }
+      .pq-panel { padding: 0.55rem; margin-bottom: var(--space-2); }
+      .pq-list { grid-template-columns: 1fr; gap: 0.35rem; }
+      .pq-chip { min-height: 46px; }
+      .pq-fact { font-size: 1rem; }
+      .pq-meta { font-size: 0.58rem; }
+      .stage-map-title { font-size: 0.72rem; }
       body.mobile-play-mode.round-active .pg-panel { display: none; }
     }
 </style>
@@ -1235,7 +1269,7 @@
               <span class="settings-text">
                 <span class="settings-title">Speed Target</span>
                 <span class="settings-subtitle">
-                  <span id="speedTargetValue">20</span> items/min
+                  <span id="speedTargetValue">10</span> items/min
                 </span>
                 <input
                   type="range"
@@ -1247,7 +1281,7 @@
                   aria-label="Speed target in items per minute"
                 />
                 <span class="speed-target-marks" aria-hidden="true">
-                  <span>20</span><span>30</span><span>40</span><span>50</span><span>60</span>
+                  <span>10</span><span>15</span><span>20</span><span>25</span><span>30</span>
                 </span>
                 <span class="speed-target-note">This affects the speed bar, graph scoring, and mastery timing.</span>
               </span>
@@ -1419,7 +1453,26 @@
         <!-- Right: progress grid -->
         <aside class="panel pg-panel" id="progressGridPanel">
           <h2>Your Progress</h2>
-          <div class="sb-panel" id="progressGrid"></div>
+          <div class="pg-stage-title" id="pgStageTitle"></div>
+
+          <section class="pq-panel" id="practiceQueuePanel" aria-label="Next up facts">
+            <div class="pq-head">
+              <div>
+                <h3 class="pq-title">Next Up</h3>
+                <p class="pq-subtitle" id="practiceQueueSubtitle">Start a round to see facts here.</p>
+              </div>
+              <span class="pq-count" id="practiceQueueCount">0</span>
+            </div>
+            <div class="pq-list" id="practiceQueue"></div>
+          </section>
+
+          <section class="stage-map-panel" aria-label="Stage map">
+            <div class="stage-map-head">
+              <h3 class="stage-map-title">Stage Map</h3>
+            </div>
+            <div class="sb-panel" id="progressGrid"></div>
+          </section>
+
           <div class="pg-legend">
             <span><span class="swatch fl"></span> Mastered</span>
             <span><span class="swatch rv"></span> Review Soon</span>
@@ -1528,19 +1581,24 @@
 
     // User-adjustable speed target.
     // Saved on the synced progress object so each Google user can have a different target.
-    var SPEED_TARGET_OPTIONS = [20, 30, 40, 50, 60];
-    var DEFAULT_SPEED_TARGET_FPM = 20;
+    var SPEED_TARGET_OPTIONS = [10, 15, 20, 25, 30];
+    var DEFAULT_SPEED_TARGET_FPM = 10;
+    var SPEED_TARGET_SCALE_VERSION = 2;
+    var OLD_SPEED_TARGET_MAP = { 20: 10, 30: 15, 40: 20, 50: 25, 60: 30 };
     var DAILY_QUIZ_TARGET = 5;
 
-    // Mastery is now more forgiving for classroom keypad practice.
-    // The speed target is converted to a per-item fluent time with a grace multiplier
-    // so occasional input delay or a brief brain-fart does not erase mastery.
+    // Mastery is intentionally friendly for early elementary practice.
+    // Facts can turn green sooner, and they will return for review if later answers slip.
     var SPEED_TARGET_FLUENCY_GRACE = 1.25;
-    var GRADUATION_MASTERED_PCT = 0.80;
-    var GRADUATION_STRONG_READY_PCT = 0.70;
-    var GRADUATION_STRONG_MASTERED_PCT = 0.75;
-    var GRADUATION_ABSOLUTE_FLOOR = 5;
-    var GRADUATION_MIN_ACCURACY = 0.85;
+    var GRADUATION_MASTERED_PCT = 0.60;
+    var GRADUATION_STRONG_READY_PCT = 0.55;
+    var GRADUATION_STRONG_MASTERED_PCT = 0.45;
+    var GRADUATION_ABSOLUTE_FLOOR = 3;
+    var GRADUATION_MIN_ACCURACY = 0.80;
+    var CLUSTER_UNLOCK_READY_PCT = 0.60;
+    var STAGE_MASTERY_CONFIDENCE = { 1: 60, 2: 64, 3: 68, 4: 76, 5: 78, 6: 80 };
+    var STAGE_MASTERY_MIN_SHOWN = { 1: 3, 2: 3, 3: 3, 4: 4, 5: 4, 6: 4 };
+    var STAGE_NEAR_READY_CONFIDENCE = { 1: 42, 2: 46, 3: 52, 4: 62, 5: 64, 6: 66 };
 
     // Overall mastery score weights. The score is mostly stage progress.
     // In-progress items count as partial progress, while accuracy and speed add only a small progress-gated bonus.
@@ -1634,6 +1692,22 @@
       return STAGE_SPEED_MULTIPLIERS[stage] || 1.0;
     }
 
+    function getStageMasteryConfidence(stage) {
+      return STAGE_MASTERY_CONFIDENCE[stage] || 76;
+    }
+
+    function getStageMasteryMinShown(stage) {
+      return STAGE_MASTERY_MIN_SHOWN[stage] || 4;
+    }
+
+    function getStageNearReadyConfidence(stage) {
+      return STAGE_NEAR_READY_CONFIDENCE[stage] || 62;
+    }
+
+    function shouldCountIntroForMastery(item) {
+      return !!item && item.stage <= 3;
+    }
+
     function findItemById(id) {
       for (var i = 0; i < ITEM_BANK.length; i++) {
         if (ITEM_BANK[i].id === id) return ITEM_BANK[i];
@@ -1702,6 +1776,7 @@ var state = {
     var syncState = {
       available: false,
       signedIn: false,
+      driveVerified: false,
       tokenClient: null,
       accessToken: null,
       tokenExpiresAt: 0,
@@ -1725,7 +1800,8 @@ var state = {
       needsSyncAfterCurrent: false,
       deferSyncUntilRoundEnds: false,
       permissionRetryAttempted: false,
-      tokenRefreshInFlight: false
+      tokenRefreshInFlight: false,
+      lastTokenScope: ''
     };
 
     var syncDebounceTimer = null;
@@ -1803,6 +1879,10 @@ var state = {
       el.timeoutInput = document.getElementById('timeoutInput');
       el.cooldownBanner = document.getElementById('cooldownBanner');
       el.progressGridPanel = document.getElementById('progressGridPanel');
+      el.practiceQueuePanel = document.getElementById('practiceQueuePanel');
+      el.practiceQueue = document.getElementById('practiceQueue');
+      el.practiceQueueSubtitle = document.getElementById('practiceQueueSubtitle');
+      el.practiceQueueCount = document.getElementById('practiceQueueCount');
       el.progressGrid = document.getElementById('progressGrid');
       el.progressGraph = document.getElementById('progressGraph');
       el.streakFill = document.getElementById('streakFill');
@@ -1896,9 +1976,17 @@ var state = {
       return SPEED_TARGET_OPTIONS.indexOf(value) > -1 ? value : DEFAULT_SPEED_TARGET_FPM;
     }
 
+    function getProgressSpeedTargetFpm(progress) {
+      var raw = Number(progress && progress.speedTargetFpm);
+      if (progress && progress.speedTargetScaleVersion !== SPEED_TARGET_SCALE_VERSION && OLD_SPEED_TARGET_MAP[raw]) {
+        return OLD_SPEED_TARGET_MAP[raw];
+      }
+      return getValidSpeedTargetFpm(raw);
+    }
+
     function getSpeedTargetFpm() {
       var progress = loadProgress();
-      return getValidSpeedTargetFpm(progress.speedTargetFpm);
+      return getProgressSpeedTargetFpm(progress);
     }
 
     function getSpeedTargetIndex(value) {
@@ -1916,6 +2004,7 @@ var state = {
       var base = adaptive || APP_SETTINGS.adaptive;
       var target = DEFAULT_SPEED_TARGET_FPM;
       var stageMultiplier = 1.0;
+      var adaptiveStage = STARTING_STAGE;
 
       try {
         target = getSpeedTargetFpm();
@@ -1924,24 +2013,31 @@ var state = {
       }
 
       if (opts && typeof opts.stage === 'number') {
-        stageMultiplier = getStageSpeedMultiplier(opts.stage);
+        adaptiveStage = opts.stage;
+      } else if (base && typeof base.stage === 'number') {
+        adaptiveStage = base.stage;
       } else {
-        // Try to infer stage from active round or progress
         try {
           var inferredProgress = (round && round.progress) || loadProgress();
           if (inferredProgress && typeof inferredProgress.currentStage === 'number') {
-            stageMultiplier = getStageSpeedMultiplier(inferredProgress.currentStage);
+            adaptiveStage = inferredProgress.currentStage;
           }
         } catch (e) {
-          stageMultiplier = 1.0;
+          adaptiveStage = STARTING_STAGE;
         }
       }
+
+      stageMultiplier = getStageSpeedMultiplier(adaptiveStage);
 
       return {
         fluentMs: Math.round(getFluentMsForSpeedTargetFpm(target) * stageMultiplier),
         overdueMs: base.overdueMs || APP_SETTINGS.adaptive.overdueMs,
         wrongWeight: Math.min(Number(base.wrongWeight) || APP_SETTINGS.adaptive.wrongWeight, APP_SETTINGS.adaptive.wrongWeight),
-        slowWeight: Math.min(Number(base.slowWeight) || APP_SETTINGS.adaptive.slowWeight, APP_SETTINGS.adaptive.slowWeight)
+        slowWeight: Math.min(Number(base.slowWeight) || APP_SETTINGS.adaptive.slowWeight, APP_SETTINGS.adaptive.slowWeight),
+        stage: adaptiveStage,
+        masteryConfidence: getStageMasteryConfidence(adaptiveStage),
+        masteryMinShown: getStageMasteryMinShown(adaptiveStage),
+        nearReadyConfidence: getStageNearReadyConfidence(adaptiveStage)
       };
     }
 
@@ -1968,6 +2064,13 @@ var state = {
       return GOOGLE_CLIENT_ID && GOOGLE_CLIENT_ID.indexOf('PASTE_') !== 0 && GOOGLE_CLIENT_ID.indexOf('.apps.googleusercontent.com') > -1;
     }
 
+    function getGoogleProjectNumberFromClientId() {
+      var m;
+      if (!GOOGLE_CLIENT_ID || typeof GOOGLE_CLIENT_ID !== 'string') return '';
+      m = GOOGLE_CLIENT_ID.match(/^(\d+)-/);
+      return m && m[1] ? m[1] : '';
+    }
+
     function hasSyncEnabledBefore() {
       try {
         return localStorage.getItem(SYNC_ENABLED_KEY) === 'true';
@@ -1984,7 +2087,7 @@ var state = {
     }
 
     function blankProgress() {
-      return { schemaVersion: PROGRESS_SCHEMA_VERSION, currentStage: STARTING_STAGE, itemStats: {}, sessionsCompleted: 0, sessionHistory: [], allTimeBestStreak: 0, allTimeBestFpm: 0, dailyQuizCounts: {}, dailyScoreBaselines: {}, speedTargetFpm: DEFAULT_SPEED_TARGET_FPM, speedTargetUpdatedAtMs: 0, hasCompletedAllStages: false };
+      return { schemaVersion: PROGRESS_SCHEMA_VERSION, currentStage: STARTING_STAGE, itemStats: {}, sessionsCompleted: 0, sessionHistory: [], allTimeBestStreak: 0, allTimeBestFpm: 0, dailyQuizCounts: {}, dailyScoreBaselines: {}, speedTargetFpm: DEFAULT_SPEED_TARGET_FPM, speedTargetUpdatedAtMs: 0, speedTargetScaleVersion: SPEED_TARGET_SCALE_VERSION, hasCompletedAllStages: false };
     }
     function normalizeProgressForSave(p) {
       if (!p) return blankProgress();
@@ -1998,8 +2101,9 @@ var state = {
       if (!p.dailyQuizCounts) p.dailyQuizCounts = {};
       p.dailyScoreBaselines = cleanDailyScoreBaselines(p.dailyScoreBaselines || {});
       if (!p.schemaVersion) p.schemaVersion = PROGRESS_SCHEMA_VERSION;
-      p.speedTargetFpm = getValidSpeedTargetFpm(p.speedTargetFpm);
       if (p.speedTargetUpdatedAtMs == null) p.speedTargetUpdatedAtMs = 0;
+      p.speedTargetFpm = getProgressSpeedTargetFpm(p);
+      p.speedTargetScaleVersion = SPEED_TARGET_SCALE_VERSION;
       p.hasCompletedAllStages = p.hasCompletedAllStages === true;
       return p;
     }
@@ -2092,6 +2196,7 @@ var state = {
         dailyScoreBaselines: {},
         speedTargetFpm: DEFAULT_SPEED_TARGET_FPM,
         speedTargetUpdatedAtMs: 0,
+        speedTargetScaleVersion: SPEED_TARGET_SCALE_VERSION,
         hasCompletedAllStages: false
       };
     }
@@ -2112,8 +2217,11 @@ var state = {
         p.schemaVersion = PROGRESS_SCHEMA_VERSION;
       }
 
-      p.speedTargetFpm = getValidSpeedTargetFpm(p.speedTargetFpm);
+      backfillMissingItemConfidence(p.itemStats);
+
       if (p.speedTargetUpdatedAtMs == null) p.speedTargetUpdatedAtMs = 0;
+      p.speedTargetFpm = getProgressSpeedTargetFpm(p);
+      p.speedTargetScaleVersion = SPEED_TARGET_SCALE_VERSION;
       p.hasCompletedAllStages = p.hasCompletedAllStages === true;
 
       return p;
@@ -2126,6 +2234,66 @@ var state = {
           itemStats[key] = normalizeItemStatsV2(itemStats[key]);
         }
       }
+    }
+
+    function backfillMissingItemConfidence(itemStats) {
+      var key;
+      if (!itemStats) return;
+      for (key in itemStats) {
+        if (Object.prototype.hasOwnProperty.call(itemStats, key)) {
+          itemStats[key] = estimateItemConfidenceFromHistory(key, normalizeItemStatsV2(itemStats[key]));
+        }
+      }
+    }
+
+    function estimateItemConfidenceFromHistory(itemId, stats) {
+      var s = stats || blankStats();
+      var item;
+      var stage;
+      var fluentMs;
+      var minShown;
+      var masteryThreshold;
+      var recent;
+      var i;
+      var attempt;
+      var correctCount = 0;
+      var timelyCount = 0;
+      var wrongOrTimeoutCount = 0;
+      var accuracy;
+      var estimate;
+
+      if ((Number(s.confidence) || 0) > 0 || (Number(s.correct) || 0) <= 0 || (Number(s.shown) || 0) <= 0) {
+        return s;
+      }
+
+      item = findItemById(itemId);
+      stage = item && typeof item.stage === 'number' ? item.stage : STARTING_STAGE;
+      fluentMs = Math.round(getFluentMsForSpeedTargetFpm(DEFAULT_SPEED_TARGET_FPM) * getStageSpeedMultiplier(stage));
+      minShown = getStageMasteryMinShown(stage);
+      masteryThreshold = getStageMasteryConfidence(stage);
+      recent = getRecentAttempts(s, 6);
+
+      for (i = 0; i < recent.length; i += 1) {
+        attempt = recent[i];
+        if (attempt && attempt.isCorrect && !attempt.timeout) {
+          correctCount += 1;
+          if (Number(attempt.responseMs || 0) <= fluentMs * 1.6) timelyCount += 1;
+        } else if (attempt) {
+          wrongOrTimeoutCount += 1;
+        }
+      }
+
+      accuracy = s.shown ? (Number(s.correct) || 0) / Math.max(1, Number(s.shown) || 1) : 0;
+      estimate = Math.round(accuracy * 42) + Math.min(42, (Number(s.correct) || 0) * 7) + Math.min(16, timelyCount * 5);
+      estimate -= Math.min(28, ((Number(s.incorrect) || 0) + (Number(s.timeouts) || 0)) * 8 + wrongOrTimeoutCount * 6);
+
+      if (recent.length >= minShown && correctCount >= minShown && timelyCount >= Math.max(1, minShown - 1) && wrongOrTimeoutCount === 0) {
+        estimate = Math.max(estimate, masteryThreshold);
+      }
+
+      s.confidence = clamp(Math.round(estimate), 0, 100);
+      s.mastery = clamp(s.confidence / 100, 0, 1);
+      return s;
     }
 
     function normalizeItemStatsV2(s) {
@@ -2577,6 +2745,7 @@ var state = {
         p = loadProgress();
       }
 
+      renderPracticeQueue(p);
       renderProgressGrid(p);
       renderProgressGraph(p);
       updatePracticeHeader(p);
@@ -2678,8 +2847,8 @@ var state = {
     }
 
     function refreshGoogleAuthHeader() {
-      setGoogleAuthVisibility(syncState.signedIn);
-      if (syncState.signedIn) {
+      setGoogleAuthVisibility(syncState.signedIn && syncState.driveVerified);
+      if (syncState.signedIn && syncState.driveVerified) {
         setGoogleUserDisplay(syncState.googleUser || getCachedGoogleUser() || { name: 'Connected' });
       }
     }
@@ -2758,6 +2927,16 @@ var state = {
         return detail ? 'Google Drive limit reached today.' : 'Drive limit reached';
       }
 
+      if (e.googleReason === 'accessNotConfigured') {
+        var projectNumber = getGoogleProjectNumberFromClientId();
+        var enableHint = projectNumber
+          ? ('Enable drive.googleapis.com in project ' + projectNumber)
+          : 'Enable drive.googleapis.com for the OAuth client project';
+        return detail
+          ? ('Google Drive API is disabled for this Google Cloud project. ' + enableHint + ', wait a few minutes, then tap Sync now.')
+          : 'Drive API disabled';
+      }
+
       if (e.status === 403) {
         return detail ? 'Google Drive access was blocked.' : 'Drive access blocked';
       }
@@ -2810,7 +2989,11 @@ var state = {
     function setSyncStatus(status, message) {
       var text = message || '';
       if (!text) {
-        if (status === 'local') text = SHARED_DEVICE_MODE ? 'Sign in to start' : (syncState.signedIn ? 'Saved locally' : 'Not synced');
+        if (status === 'local') text = SHARED_DEVICE_MODE
+          ? 'Sign in to start'
+          : (syncState.signedIn
+              ? (syncState.driveVerified ? 'Saved locally' : 'Verifying Drive access...')
+              : 'Not synced');
         else if (status === 'syncing') text = 'Syncing...';
         else if (status === 'synced') text = 'Synced';
         else if (status === 'offline') text = 'Offline - will sync later';
@@ -2876,6 +3059,7 @@ var state = {
         syncState.accessToken = saved.accessToken;
         syncState.tokenExpiresAt = saved.tokenExpiresAt;
         syncState.signedIn = true;
+        syncState.driveVerified = false;
         syncState.googleUser = getCachedGoogleUser();
         syncState.lastError = null;
         return true;
@@ -2920,6 +3104,16 @@ var state = {
           if (window.console && console.warn) {
             console.warn('Google sign-in error:', e);
           }
+          console.warn('[NumberFlow Sync] GIS error_callback detail', {
+            type: e && e.type,
+            error: e && e.error,
+            message: e && e.message,
+            origin: window.location.origin,
+            protocol: window.location.protocol,
+            host: window.location.host,
+            configuredClientId: GOOGLE_CLIENT_ID,
+            configuredScope: GOOGLE_DRIVE_SCOPE
+          });
 
           if (e && e.type === 'popup_failed_to_open') {
             setSyncStatus('error', 'Popup blocked. Tap Google sign-in again.');
@@ -2941,7 +3135,21 @@ var state = {
       if (hasSyncEnabledBefore()) {
         if (restoreTokenSession()) {
           setSyncStatus('syncing', 'Restoring Google sync...');
-          onGoogleSignedIn();
+          verifyDriveAppDataAccess()
+            .then(function () {
+              syncState.driveVerified = true;
+              onGoogleSignedIn();
+            })
+            .catch(function (e) {
+              syncState.lastError = e;
+              handleSyncBlockState(e);
+              syncState.driveVerified = false;
+              if (shouldClearSessionForError(e)) {
+                syncState.signedIn = false;
+                clearTokenSession();
+              }
+              setSyncStatus('error', getSyncErrorMessage(e));
+            });
         } else {
           // No valid token in sessionStorage — wait for manual sign-in.
           setSyncStatus('local', 'Sign in to sync');
@@ -2950,7 +3158,15 @@ var state = {
     }
 
     function requestGoogleSignIn() {
-      console.log('[NumberFlow Sync] requestGoogleSignIn');
+      console.log('[NumberFlow Sync] requestGoogleSignIn', {
+        origin: window.location.origin,
+        protocol: window.location.protocol,
+        host: window.location.host,
+        configuredClientId: GOOGLE_CLIENT_ID,
+        configuredScope: GOOGLE_DRIVE_SCOPE,
+        hasGoogleApi: !!(window.google && window.google.accounts && window.google.accounts.oauth2),
+        hasTokenClient: !!syncState.tokenClient
+      });
       if (!syncState.tokenClient) {
         setSyncStatus('error', 'Google sync is still loading');
         return;
@@ -3028,7 +3244,15 @@ var state = {
             return;
           }
           applyTokenResponse(tokenResponse);
-          resolve(tokenResponse);
+          syncState.driveVerified = false;
+          verifyDriveAppDataAccess()
+            .then(function () {
+              syncState.driveVerified = true;
+              resolve(tokenResponse);
+            })
+            .catch(function (verifyError) {
+              reject(verifyError);
+            });
         };
         try {
           syncState.tokenClient.requestAccessToken({ prompt: typeof promptValue === 'string' ? promptValue : '' });
@@ -3048,8 +3272,14 @@ var state = {
       console.log('[NumberFlow Sync] handleTokenResponse', {
         hasToken: !!tokenResponse,
         error: tokenResponse && tokenResponse.error,
-        scope: tokenResponse && tokenResponse.scope
+        scope: tokenResponse && tokenResponse.scope,
+        expiresIn: tokenResponse && tokenResponse.expires_in,
+        hasAccessToken: !!(tokenResponse && tokenResponse.access_token)
       });
+
+      if (tokenResponse && tokenResponse.scope) {
+        syncState.lastTokenScope = tokenResponse.scope;
+      }
 
       if (!tokenResponse || tokenResponse.error) {
         setSyncStatus('error', 'Google sign-in failed');
@@ -3067,6 +3297,7 @@ var state = {
           requestGoogleTokenRefresh('consent')
             .then(function () {
               clearSyncBlockState();
+              syncState.driveVerified = true;
               onGoogleSignedIn();
             })
             .catch(function (e) {
@@ -3085,15 +3316,35 @@ var state = {
       applyTokenResponse(tokenResponse);
       verifyDriveAppDataAccess()
         .then(function () {
+          syncState.driveVerified = true;
           onGoogleSignedIn();
         })
         .catch(function (e) {
           syncState.lastError = e;
           syncState.permissionBlocked = true;
           syncState.pendingPush = true;
+          syncState.driveVerified = false;
+          if (shouldClearSessionForError(e)) {
+            syncState.signedIn = false;
+            clearTokenSession();
+          }
           if (typeof handleSyncBlockState === 'function') {
             handleSyncBlockState(e);
           }
+          console.error('[NumberFlow Sync] verifyDriveAppDataAccess failed after sign-in', {
+            status: e && e.status,
+            message: e && e.message,
+            googleReason: e && e.googleReason,
+            googleMessage: e && e.googleMessage,
+            googleStatus: e && e.googleStatus,
+            tokenScope: syncState.lastTokenScope || '(unknown)',
+            origin: window.location.origin,
+            protocol: window.location.protocol,
+            host: window.location.host,
+            configuredClientId: GOOGLE_CLIENT_ID,
+            scopeCheckHasHelper: !!(window.google && google.accounts && google.accounts.oauth2 && typeof google.accounts.oauth2.hasGrantedAllScopes === 'function'),
+            scopeCheckResult: tokenResponseIncludesScope({ scope: syncState.lastTokenScope || '' }, GOOGLE_DRIVE_APPDATA_SCOPE)
+          });
           setSyncStatus('error', getSyncErrorMessage(e));
         });
     }
@@ -3102,6 +3353,7 @@ var state = {
       syncState.accessToken = tokenResponse.access_token;
       syncState.tokenExpiresAt = nowMs() + ((tokenResponse.expires_in || 3600) - 60) * 1000;
       syncState.signedIn = true;
+      syncState.driveVerified = false;
       syncState.lastError = null;
       syncState.permissionBlocked = false;
       setSyncEnabledBefore(true);
@@ -3120,18 +3372,53 @@ var state = {
       // Confirms the token can actually access the Drive appDataFolder before finalizing sign-in.
       // This prevents confusing later sync failures when GIS scope information is missing or stale.
       if (!syncState.signedIn || !syncState.accessToken) return Promise.reject(new Error('DRIVE_APPDATA_VERIFY_NO_TOKEN'));
-      return driveFetch('https://www.googleapis.com/drive/v3/files?spaces=appDataFolder&pageSize=1&fields=files(id)', { method: 'GET' })
+      var verifyUrl = 'https://www.googleapis.com/drive/v3/files?spaces=appDataFolder&pageSize=1&fields=files(id)';
+      console.log('[NumberFlow Sync] verifyDriveAppDataAccess start', {
+        hasSignedInFlag: !!syncState.signedIn,
+        hasAccessToken: !!syncState.accessToken,
+        tokenExpiresAt: syncState.tokenExpiresAt,
+        nowMs: nowMs(),
+        tokenScope: syncState.lastTokenScope || '(unknown)',
+        verifyUrl: verifyUrl,
+        origin: window.location.origin,
+        protocol: window.location.protocol,
+        host: window.location.host
+      });
+      return driveFetch(verifyUrl, { method: 'GET' })
         .then(function (response) {
           if (!response.ok) {
-            var err = new Error('DRIVE_APPDATA_VERIFY_' + response.status);
-            err.status = response.status;
-            throw err;
+            return response.text().then(function (text) {
+              var parsed = parseGoogleApiErrorText(text || '');
+              var err = new Error('DRIVE_APPDATA_VERIFY_' + response.status);
+              err.status = response.status;
+              err.googleCode = parsed.code;
+              err.googleReason = parsed.reason;
+              err.googleMessage = parsed.message;
+              err.googleStatus = parsed.status;
+              err.responseText = text;
+              console.error('[NumberFlow Sync] verifyDriveAppDataAccess non-OK response', {
+                status: response.status,
+                statusText: response.statusText,
+                googleCode: err.googleCode,
+                googleReason: err.googleReason,
+                googleMessage: err.googleMessage,
+                googleStatus: err.googleStatus,
+                responseText: text,
+                tokenScope: syncState.lastTokenScope || '(unknown)',
+                origin: window.location.origin,
+                configuredClientId: GOOGLE_CLIENT_ID
+              });
+              throw err;
+            });
           }
+          console.log('[NumberFlow Sync] verifyDriveAppDataAccess success', {
+            status: response.status,
+            tokenScope: syncState.lastTokenScope || '(unknown)'
+          });
           return true;
         });
     }
 
-    
     function fetchGoogleUserInfo() {
       if (!syncState.signedIn || !syncState.accessToken) return Promise.resolve(null);
       return driveFetch('https://www.googleapis.com/oauth2/v2/userinfo', { method: 'GET' })
@@ -3196,6 +3483,7 @@ var state = {
                   setSyncStatus('syncing', 'Google Drive permission needed...');
                   return requestGoogleTokenRefresh('consent').then(function () {
                     clearSyncBlockState();
+                    syncState.driveVerified = true;
                     return uploadDriveProgress(cloudProgress).then(function () {
                       syncState.lastSyncedLocalHash = getProgressHash(cloudProgress);
                       markLocalCounterSynced(syncState.localSaveCounter);
@@ -3262,6 +3550,7 @@ var state = {
               setSyncStatus('syncing', 'Reconnecting Google sync...');
               requestGoogleTokenRefresh(isPermissionError(e) ? 'consent' : '')
                 .then(function () {
+                  syncState.driveVerified = true;
                   return hydrateGoogleProgressAfterSignIn();
                 })
                 .then(function () {
@@ -3314,6 +3603,7 @@ var state = {
 
       syncState.pendingPush = false;
       syncState.signedIn = false;
+      syncState.driveVerified = false;
       syncState.accessToken = null;
       syncState.tokenExpiresAt = 0;
       syncState.googleUser = null;
@@ -3377,6 +3667,18 @@ var state = {
 
     function isRecoverableGoogleAuthError(e) {
       return !!(isAuthError(e) || isPermissionError(e));
+    }
+
+    function shouldClearSessionForError(e) {
+      return !!(
+        isAuthError(e) ||
+        (e && (
+          e.googleReason === 'insufficientPermissions' ||
+          e.googleReason === 'insufficientFilePermissions' ||
+          e.status === 401 ||
+          e.status === 403
+        ))
+      );
     }
 
     function makeDriveApiError(prefix, response, text) {
@@ -3726,8 +4028,8 @@ var state = {
     }
 
     function chooseMergedSpeedTarget(local, cloud) {
-      var localTarget = getValidSpeedTargetFpm(local && local.speedTargetFpm);
-      var cloudTarget = getValidSpeedTargetFpm(cloud && cloud.speedTargetFpm);
+      var localTarget = getProgressSpeedTargetFpm(local);
+      var cloudTarget = getProgressSpeedTargetFpm(cloud);
       var localUpdated = Number(local && local.speedTargetUpdatedAtMs) || 0;
       var cloudUpdated = Number(cloud && cloud.speedTargetUpdatedAtMs) || 0;
 
@@ -4024,6 +4326,7 @@ var state = {
       var now = Date.now();
 
       if (!syncState.signedIn) return false;
+      if (!syncState.driveVerified) return false;
       if (!navigator.onLine) return false;
       if (syncState.isSyncing) return false;
       if (syncState.quotaBlocked) return false;
@@ -4065,6 +4368,10 @@ var state = {
 
       if (!syncState.signedIn) {
         setSyncStatus('local', 'Not synced');
+        return Promise.resolve(false);
+      }
+      if (!syncState.driveVerified) {
+        setSyncStatus('syncing', 'Verifying Drive access...');
         return Promise.resolve(false);
       }
       if (!navigator.onLine) {
@@ -4170,6 +4477,7 @@ var state = {
             return requestGoogleTokenRefresh(isPermissionError(e) ? 'consent' : '')
               .then(function () {
                 clearSyncBlockState();
+                syncState.driveVerified = true;
                 return syncNow('token-refresh-retry');
               })
               .catch(function (retryError) {
@@ -4248,6 +4556,7 @@ var state = {
             requestGoogleTokenRefresh(isPermissionError(e) ? 'consent' : '')
               .then(function () {
                 clearSyncBlockState();
+                syncState.driveVerified = true;
                 return pushLocalToDrive('token-refresh-push-retry', counterSnapshot);
               })
               .catch(function (retryError) {
@@ -4346,6 +4655,7 @@ var state = {
         var p;
         practiceRenderTimer = null;
         p = progress || (round && round.progress) || loadProgress();
+        if (el.practiceQueue) renderPracticeQueue(p);
         if (el.progressGrid) renderProgressGrid(p);
         if (el.progressGraph) renderProgressGraph(p);
       }
@@ -4360,33 +4670,64 @@ var state = {
     }
 
     function updateItemStats(itemId, isCorrect, responseMs, wasTimeout, options) {
-  var progress, s, now;
-  options = options || {};
-  progress = options.progress || loadProgress();
-  if (!progress.itemStats) progress.itemStats = {};
-  if (!progress.itemStats[itemId]) progress.itemStats[itemId] = blankStats();
-  s = progress.itemStats[itemId];
-  now = Date.now();
-  s.shown++;
-  s.lastSeenTs = now;
-  s.lastResponseMs = responseMs;
-  if (wasTimeout) {
-    s.timeouts++;
-    s.recent.push({ isCorrect: false, timeout: true, responseMs: responseMs, ts: now });
-  } else if (isCorrect) {
-    s.correct++;
-    s.recent.push({ isCorrect: true, timeout: false, responseMs: responseMs, ts: now });
-  } else {
-    s.incorrect++;
-    s.recent.push({ isCorrect: false, timeout: false, responseMs: responseMs, ts: now });
-  }
-  if (s.recent.length > 20) s.recent = s.recent.slice(-20);
-  s = normalizeItemStatsV2(s);
-  progress.itemStats[itemId] = s;
-  if (!options.deferRender) schedulePracticeRender(progress);
-  if (!options.deferSave) saveProgressToStorage(progress, { reason: 'item-update' });
-  return progress;
-}
+      var progress, s, now, item, adaptive, previousShown, attempt;
+      options = options || {};
+      progress = options.progress || loadProgress();
+      if (!progress.itemStats) progress.itemStats = {};
+      if (!progress.itemStats[itemId]) progress.itemStats[itemId] = blankStats();
+
+      item = findItemById(itemId);
+      adaptive = getEffectiveAdaptive(state.settings.adaptive, item && typeof item.stage === 'number' ? { stage: item.stage } : null);
+      s = normalizeItemStatsV2(progress.itemStats[itemId]);
+      now = Date.now();
+      previousShown = Number(s.shown) || 0;
+
+      s.shown = previousShown + 1;
+      s.lastSeen = nowIso();
+      s.lastSeenTs = now;
+      s.lastResponseMs = responseMs;
+      s.itemStage = item && typeof item.stage === 'number' ? item.stage : adaptive.stage;
+      s.itemStrategy = item && item.strategy ? item.strategy : s.itemStrategy;
+
+      attempt = { isCorrect: !!isCorrect && !wasTimeout, timeout: !!wasTimeout, responseMs: responseMs, ts: now };
+
+      if (wasTimeout) {
+        s.timeouts += 1;
+      } else if (isCorrect) {
+        s.correct += 1;
+      } else {
+        s.incorrect += 1;
+      }
+
+      s.recent.push(attempt);
+      if (s.recent.length > 20) s.recent = s.recent.slice(-20);
+
+      s.avgMs = previousShown > 0 && s.avgMs
+        ? Math.round(((Number(s.avgMs) || responseMs) * previousShown + responseMs) / s.shown)
+        : responseMs;
+
+      s.confidence = updateItemConfidence(s, isCorrect, responseMs, wasTimeout, adaptive);
+      s.mastery = clamp(s.confidence / 100, 0, 1);
+
+      if (isCorrect && !wasTimeout && responseMs <= adaptive.fluentMs) {
+        s.fastStreak = (Number(s.fastStreak) || 0) + 1;
+      } else {
+        s.fastStreak = 0;
+      }
+
+      if (isWeakAttempt(attempt, adaptive)) {
+        s.slowOrWrongCount = (Number(s.slowOrWrongCount) || 0) + 1;
+      } else {
+        s.slowOrWrongCount = Math.max(0, (Number(s.slowOrWrongCount) || 0) - 1);
+      }
+
+      s.lastStatus = getItemDisplayStatus(s, adaptive);
+      s = normalizeItemStatsV2(s);
+      progress.itemStats[itemId] = s;
+      if (!options.deferRender) schedulePracticeRender(progress);
+      if (!options.deferSave) saveProgressToStorage(progress, { reason: 'item-update' });
+      return progress;
+    }
     function schedulePostQuestionWork(progress) {
       if (postQuestionWorkTimer) return;
 
@@ -4395,6 +4736,7 @@ var state = {
 
         if (!round) return;
 
+        checkSubStageGraduation(progress);
         checkMidRoundGraduation(progress);
         updatePracticeHeader(progress);
         schedulePracticeRender(progress);
@@ -4550,7 +4892,10 @@ var state = {
     function getItemMasteryState(stats, adaptive) {
       adaptive = getEffectiveAdaptive(adaptive);
       var s = normalizeItemStatsV2(stats);
-      var last4 = getRecentCorrectStats(s, 4, adaptive);
+      var masteryThreshold = Number(adaptive.masteryConfidence) || getStageMasteryConfidence(adaptive.stage);
+      var minShown = Number(adaptive.masteryMinShown) || getStageMasteryMinShown(adaptive.stage);
+      var recentNeeded = Math.min(4, Math.max(2, minShown));
+      var recentStats = getRecentCorrectStats(s, recentNeeded, adaptive);
       var recent6 = getRecentAttempts(s, 6);
       var weakCount = countRecentWeakAttempts(s, 6, adaptive);
       var wrongOrTimeoutCount = countRecentWrongOrTimeout(s, 6);
@@ -4559,26 +4904,25 @@ var state = {
       var alreadyMastered = wasAlreadyMastered(s);
       var needsReview;
 
-      if (s.shown < 4) return '';
+      if (s.shown < minShown) return '';
 
       // Once an item is mastered, protect it from one typo, one timeout, or one very slow answer.
-      // It drops out of mastery only after repeated weakness or a large confidence drop.
+      // It drops out of mastery only after repeated weakness, so earlier facts can return later.
       if (alreadyMastered) {
-        if (s.confidence < 70) return '';
-        if (weakCount >= 2) return '';
-        needsReview = s.confidence < 85 || weakCount === 1 || wrongOrTimeoutCount === 1 || slowCorrectCount >= 2;
+        if (s.confidence < Math.max(50, masteryThreshold - 12)) return '';
+        if (weakCount >= 3) return '';
+        needsReview = s.confidence < Math.min(88, masteryThreshold + 10) || weakCount >= 1 || wrongOrTimeoutCount >= 1 || slowCorrectCount >= 3;
         return needsReview ? 'review' : 'fluent';
       }
 
-      // New mastery still has a real bar, but one old typo does not block mastery if the student
-      // has recovered with several correct answers.
-      if (s.confidence < 85) return '';
+      // New mastery is deliberately reachable for young learners: a few accurate, timely answers
+      // should be enough to turn green, while slips still keep the fact in review.
+      if (s.confidence < masteryThreshold) return '';
       if (wrongOrTimeoutCount > 1 || weakCount > 1) return '';
-      if (last4.recent.length < 3) return '';
-      if (last4.correctCount < 3) return '';
+      if (recentStats.recent.length < recentNeeded) return '';
+      if (recentStats.correctCount < recentNeeded) return '';
       if (lastAttempt && (!lastAttempt.isCorrect || lastAttempt.timeout)) return '';
-      if (last4.fastCorrectCount < 1) return '';
-      if (last4.timelyCorrectCount < 2) return '';
+      if (recentStats.timelyCorrectCount < Math.max(1, recentNeeded - 1)) return '';
 
       return wrongOrTimeoutCount === 1 || weakCount === 1 ? 'review' : 'fluent';
     }
@@ -4628,8 +4972,8 @@ var state = {
 
       if (isItemStruggling(s, adaptive)) return 'struggling';
 
-      // Near-ready: shown 3+ times, confidence >= 70, recent accuracy >= 70%, at most 1 wrong/timeout
-      if (s && s.shown >= 3 && Number(s.confidence) >= 70) {
+      // Near-ready: a friendly early signal that a fact is close to green.
+      if (s && s.shown >= Math.max(2, (Number(adaptive.masteryMinShown) || 3) - 1) && Number(s.confidence) >= (Number(adaptive.nearReadyConfidence) || 50)) {
         var nrRecent = getRecentAttempts(s, 6);
         var nrCorrect = 0;
         var nrWrongOrTimeout = 0;
@@ -4641,7 +4985,7 @@ var state = {
           if (isWrongOrTimeoutAttempt(nrItem)) nrWrongOrTimeout += 1;
         }
         var nrAcc = nrRecent.length ? nrCorrect / nrRecent.length : 0;
-        if (nrAcc >= 0.70 && nrWrongOrTimeout <= 1) return 'near-ready';
+        if (nrAcc >= 0.66 && nrWrongOrTimeout <= 1) return 'near-ready';
       }
 
       return 'learning';
@@ -4658,28 +5002,28 @@ var state = {
 
       if (isNaN(current)) current = Math.round((Number(s.mastery) || 0) * 100);
 
-      var newItemSpeedFactor = s.shown < 6 ? Math.min(1, s.shown / 6) : 1;
+      var newItemSpeedFactor = s.shown < 4 ? Math.min(1, s.shown / 4) : 1;
 
       if (wasTimeout) {
-        delta = alreadyMastered ? -16 : -22;
+        delta = alreadyMastered ? -12 : -18;
       } else if (!isCorrect) {
-        delta = alreadyMastered ? -8 : -12;
+        delta = alreadyMastered ? -6 : -10;
       } else if (speedRatio <= 0.85) {
-        delta = 18;
+        delta = 22;
       } else if (speedRatio <= 1.0) {
-        delta = 14;
+        delta = 18;
       } else if (speedRatio <= 1.25) {
-        delta = 9;
+        delta = 14;
       } else if (speedRatio <= 1.6) {
-        delta = 5;
+        delta = 9;
       } else if (speedRatio <= 2.2) {
-        delta = Math.round(2 * newItemSpeedFactor) || 1;
+        delta = Math.round(5 * newItemSpeedFactor) || 3;
       } else {
-        delta = Math.round(1 * newItemSpeedFactor) || 1;
+        delta = Math.round(3 * newItemSpeedFactor) || 2;
       }
 
       if (isCorrect && !wasTimeout && hasRecentWeakness(s, adaptive)) {
-        delta = Math.min(delta, alreadyMastered ? 8 : 6);
+        delta = Math.min(delta, alreadyMastered ? 10 : 8);
       }
 
       if (!isCorrect || wasTimeout) {
@@ -4702,7 +5046,7 @@ var state = {
         current = Math.min(current, 92);
       }
 
-      var sessionFloor = alreadyMastered ? 0 : 30;
+      var sessionFloor = isCorrect && !wasTimeout ? (alreadyMastered ? 0 : 20) : 0;
       return clamp(Math.round(current), sessionFloor, 100);
     }
 
@@ -4842,7 +5186,7 @@ var state = {
     // ═══════════════════════════ GRADUATION ═══════════════════════════
     function getStageGraduationReadiness(progress) {
   var stage = progress.currentStage;
-  var a = getEffectiveAdaptive(state.settings.adaptive);
+  var a = getEffectiveAdaptive(state.settings.adaptive, { stage: stage });
   var stageItems = getStageItems(stage);
   var mastered = 0, review = 0, ready = 0, learning = 0, struggling = 0, empty = 0;
   for (var i = 0; i < stageItems.length; i++) {
@@ -4855,7 +5199,7 @@ var state = {
       if (recent[ri].isCorrect && !recent[ri].timeout) recentCorrect++;
     }
     var recentAcc = recent.length ? recentCorrect / recent.length : 0;
-    var nearReady = s.shown >= 3 && s.confidence >= 70 && recentAcc >= 0.70 && countRecentWrongOrTimeout(s, 6) <= 1;
+    var nearReady = s.shown >= Math.max(2, a.masteryMinShown - 1) && s.confidence >= a.nearReadyConfidence && recentAcc >= 0.66 && countRecentWrongOrTimeout(s, 6) <= 1;
     if (status === 'fluent' || status === 'review') {
       mastered++; ready++;
       if (status === 'review') review++;
@@ -4910,7 +5254,7 @@ var state = {
   var stage = progress.currentStage;
   var clusters = STAGE_CLUSTERS[stage] || ['a'];
   var unlockedClusters = ['a'];
-  var a = getEffectiveAdaptive(state.settings.adaptive);
+  var a = getEffectiveAdaptive(state.settings.adaptive, { stage: stage });
 
   for (var ci = 1; ci < clusters.length; ci++) {
     var prevClusterItems = getStageClusterItems(stage, clusters[ci - 1]);
@@ -4922,14 +5266,15 @@ var state = {
         seenCount++;
         var recent = s.recent.slice(-4);
         var recentCorrect = 0;
+        var status = getItemDisplayStatus(s, a);
         for (var k = 0; k < recent.length; k++) {
           if (recent[k].isCorrect && !recent[k].timeout) recentCorrect++;
         }
         var recentAcc = recent.length ? recentCorrect / recent.length : 0;
-        if (s.mastery >= 0.70 && recent.length >= 3 && recentAcc >= 0.75) readyCount++;
+        if ((status === 'fluent' || status === 'review' || status === 'near-ready') && recent.length >= 2 && recentAcc >= 0.66) readyCount++;
       }
     }
-    if (seenCount === prevClusterItems.length && readyCount / prevClusterItems.length >= 0.70) {
+    if (seenCount === prevClusterItems.length && readyCount / prevClusterItems.length >= CLUSTER_UNLOCK_READY_PCT) {
       unlockedClusters.push(clusters[ci]);
     } else {
       break;
@@ -5284,7 +5629,10 @@ function chooseAllStageReviewItem(previousItem, progress) {
         graduated: false,
         progress: progress,
         progressDirty: false,
-        startProgressSnapshot: cloneJson(progress) || null
+        startProgressSnapshot: cloneJson(progress) || null,
+        lastUnlockedStage: model.stage,
+        lastUnlockedClusters: model.unlockedClusters.slice(),
+        subStageGraduations: []
       };
       lastItemKey = null;
       lastItemInfo = null;
@@ -5352,6 +5700,7 @@ function chooseAllStageReviewItem(previousItem, progress) {
       if (!syncResult) {
         setStatus(el.roundStatus, 'Round finished. Start another!', '');
       }
+      renderPracticeQueue(finalProgress);
       renderProgressGrid(finalProgress);
       renderProgressGraph(finalProgress);
       updatePracticeHeader(finalProgress);
@@ -5405,7 +5754,7 @@ function chooseAllStageReviewItem(previousItem, progress) {
       };
 
       var isNewItemIntro = isNewItemIntroductionDue(progress, round.currentItem.item.id);
-      round.currentItem.introMasteryFree = isNewItemIntro;
+      round.currentItem.introMasteryFree = isNewItemIntro && !shouldCountIntroForMastery(round.currentItem.item);
       if (isNewItemIntro) {
         progress = markItemIntroduced(progress, round.currentItem.item.id);
         round.progress = progress;
@@ -5417,9 +5766,9 @@ function chooseAllStageReviewItem(previousItem, progress) {
           var strategy = round.currentItem.item.strategy || '';
           var stratLabel = STRATEGY_LABELS[strategy] || '';
           if (stratLabel) {
-            el.newItemLabel.textContent = stratLabel + ' \u2014 ' + round.currentItem.item.prompt + ' = ' + round.currentItem.answer;
+            el.newItemLabel.textContent = stratLabel + ': ' + round.currentItem.item.prompt;
           } else {
-            el.newItemLabel.textContent = 'New: ' + round.currentItem.item.prompt + ' = ' + round.currentItem.answer;
+            el.newItemLabel.textContent = 'New: ' + round.currentItem.item.prompt;
           }
           el.newItemLabel.classList.add('visible');
         } else {
@@ -5428,6 +5777,7 @@ function chooseAllStageReviewItem(previousItem, progress) {
         }
       }
       el.problemText.textContent = p.item.prompt;
+      if (el.practiceQueue) renderPracticeQueue(progress);
       el.answerInput.value = '';
       el.answerInput.disabled = false;
       focusIfDesktop(el.answerInput);
@@ -5630,6 +5980,7 @@ function chooseAllStageReviewItem(previousItem, progress) {
       var prevFpm = round ? Math.round(getRoundFpm(round) * 10) / 10 : 0;
       var prevScore = calculateOverallMasteryScore(prevBreakdown.fluent, prevBreakdown.inProgress, prevAccuracy, prevFpm);
       var model = getStageModel(progress);
+      checkSubStageGraduation(progress);
       var graduated = checkGraduation(progress);
       var msg;
       var todayKey = getLocalDateKey();
@@ -5655,6 +6006,7 @@ function chooseAllStageReviewItem(previousItem, progress) {
         round.graduated = true;
         newStage = progress.currentStage;
         model = getStageModel(progress);
+        rememberUnlockedClusters(progress);
 
         msg += 'You unlocked Stage ' + newStage + '! ';
         el.graduateBanner.textContent = 'Stage ' + oldStage + ' done! Now on Stage ' + newStage + '.';
@@ -5687,6 +6039,7 @@ function chooseAllStageReviewItem(previousItem, progress) {
 
       saveProgressToStorage(progress, { reason: 'round-complete', flushNow: true });
 
+      renderPracticeQueue(progress);
       renderProgressGrid(progress);
       renderProgressGraph(progress);
       updatePracticeHeader(progress);
@@ -5716,6 +6069,7 @@ function chooseAllStageReviewItem(previousItem, progress) {
 
       round.progress = progress;
       round.graduated = true;
+      rememberUnlockedClusters(progress);
 
       celebrateVerticalStageAdvance(oldStage, newStage, progress);
 
@@ -5731,6 +6085,82 @@ function chooseAllStageReviewItem(previousItem, progress) {
       void el.levelupToast.offsetWidth;
       el.levelupToast.classList.add('show');
       setTimeout(function () { el.levelupToast.classList.remove('show'); }, 5000);
+    }
+
+    function getClusterDisplayName(stage, clusterId) {
+      var items = getStageClusterItems(stage, clusterId);
+      var strategyId = items.length && items[0].strategy ? items[0].strategy : '';
+      var strategyLabel = strategyId && STRATEGY_LABELS[strategyId] ? STRATEGY_LABELS[strategyId] : '';
+      return strategyLabel || ('Group ' + String(clusterId).toUpperCase());
+    }
+
+    function rememberUnlockedClusters(progress) {
+      var model;
+      if (!round) return;
+      progress = progress || round.progress || loadProgress();
+      model = getStageModel(progress);
+      round.lastUnlockedStage = model.stage;
+      round.lastUnlockedClusters = model.unlockedClusters.slice();
+    }
+
+    function celebrateSubStageAdvance(stage, newlyUnlockedClusters, progress) {
+      var label;
+      var msg;
+      if (!newlyUnlockedClusters || !newlyUnlockedClusters.length) return;
+
+      label = getClusterDisplayName(stage, newlyUnlockedClusters[0]);
+      if (newlyUnlockedClusters.length > 1) {
+        msg = 'New groups unlocked! Keep going!';
+      } else {
+        msg = 'New group unlocked: ' + label + '!';
+      }
+
+      showLevelUpToast(msg);
+      resetConfetti();
+      launchConfettiOnce();
+    }
+
+    function checkSubStageGraduation(progress) {
+      var model;
+      var oldClusters;
+      var oldSet;
+      var newlyUnlocked;
+      var i;
+
+      if (!round) return;
+
+      progress = progress || round.progress || loadProgress();
+      model = getStageModel(progress);
+
+      if (round.lastUnlockedStage !== model.stage || !round.lastUnlockedClusters) {
+        round.lastUnlockedStage = model.stage;
+        round.lastUnlockedClusters = model.unlockedClusters.slice();
+        return;
+      }
+
+      oldClusters = round.lastUnlockedClusters || [];
+      oldSet = {};
+      newlyUnlocked = [];
+
+      for (i = 0; i < oldClusters.length; i += 1) {
+        oldSet[oldClusters[i]] = true;
+      }
+
+      for (i = 0; i < model.unlockedClusters.length; i += 1) {
+        if (!oldSet[model.unlockedClusters[i]]) {
+          newlyUnlocked.push(model.unlockedClusters[i]);
+        }
+      }
+
+      if (!newlyUnlocked.length) return;
+
+      round.lastUnlockedClusters = model.unlockedClusters.slice();
+      if (!round.subStageGraduations) round.subStageGraduations = [];
+      for (i = 0; i < newlyUnlocked.length; i += 1) {
+        round.subStageGraduations.push(model.stage + ':' + newlyUnlocked[i]);
+      }
+
+      celebrateSubStageAdvance(model.stage, newlyUnlocked, progress);
     }
 
     function celebrateVerticalStageAdvance(oldStage, newStage, progress) {
@@ -6390,87 +6820,235 @@ function chooseAllStageReviewItem(previousItem, progress) {
 
     // v28: makeTicks() removed (was unused dead code)
     // ═══════════════════════════ PROGRESS GRID ═══════════════════════════
+    // Shared stage name map used by progress grid and practice header
+    var STAGE_NAMES = {1: "Anchor Facts", 2: "Counting Strategies", 3: "Doubles & Near Doubles", 4: "Make 10 & Bridge", 5: "Fact Families", 6: "Two-Digit Methods"};
+    var PRACTICE_QUEUE_MAX_ITEMS = 8;
+    var PRACTICE_QUEUE_REVIEW_MAX = 3;
+    var PRACTICE_QUEUE_CURRENT_MAX = 6;
+
+    function escapeHtml(value) {
+      return String(value == null ? '' : value)
+        .replace(/&/g, '&amp;')
+        .replace(/</g, '&lt;')
+        .replace(/>/g, '&gt;')
+        .replace(/"/g, '&quot;')
+        .replace(/'/g, '&#39;');
+    }
+
+    function getFactLabel(item) {
+      if (!item) return '';
+      return item.prompt;
+    }
+
+    function getFactAnswerLabel(item) {
+      if (!item) return '';
+      return item.prompt + ' = ' + item.answer;
+    }
+
+    function getQueueStatusLabel(status) {
+      if (status === 'struggling') return 'Needs Practice';
+      if (status === 'review') return 'Review';
+      if (status === 'near-ready') return 'Almost There';
+      if (status === 'learning') return 'Learning';
+      if (status === 'empty') return 'New';
+      if (status === 'fluent') return 'Mastered';
+      return 'Practice';
+    }
+
+    function getQueueMetaLabel(item, status) {
+      var strategyLabel = item && item.strategy ? (STRATEGY_LABELS[item.strategy] || '') : '';
+      return strategyLabel || getQueueStatusLabel(status);
+    }
+
+    function getPracticeQueueSubtitle(queue) {
+      var reviewCount = 0;
+      var currentCount = 0;
+      var i;
+
+      for (i = 0; i < queue.length; i += 1) {
+        if (queue[i].source === 'review') reviewCount += 1;
+        else currentCount += 1;
+      }
+
+      if (reviewCount && currentCount) return currentCount + ' current, ' + reviewCount + ' review';
+      if (reviewCount) return reviewCount + ' review facts for today';
+      if (currentCount) return currentCount + ' facts for today';
+      return 'Start a round to see facts here.';
+    }
+
+    function getPracticeQueueItems(progress) {
+      progress = progress || loadProgress();
+
+      var model = getStageModel(progress);
+      var current = [];
+      var review = [];
+      var i;
+      var item;
+      var stats;
+      var status;
+      var pri;
+      var combined;
+      var seen = {};
+      var deduped = [];
+
+      function addQueueItem(list, queueItem, queueStatus, source) {
+        stats = getItemStats(queueItem.id, progress);
+        pri = getPriorityBreakdown(stats);
+        list.push({
+          item: queueItem,
+          status: queueStatus,
+          source: source,
+          weight: pri.weight,
+          label: getFactLabel(queueItem)
+        });
+      }
+
+      for (i = 0; i < model.activeItems.length; i += 1) {
+        item = model.activeItems[i];
+        stats = getItemStats(item.id, progress);
+        status = getItemDisplayStatus(stats, state.settings.adaptive);
+
+        if (status === 'struggling' || status === 'learning' || status === 'near-ready' || status === 'empty' || status === 'review') {
+          addQueueItem(current, item, status, 'current');
+        }
+      }
+
+      for (i = 0; i < ITEM_BANK.length; i += 1) {
+        item = ITEM_BANK[i];
+        if (item.stage >= model.stage) continue;
+
+        stats = getItemStats(item.id, progress);
+        status = getItemDisplayStatus(stats, state.settings.adaptive);
+
+        if (status === 'struggling' || status === 'learning' || status === 'near-ready' || status === 'review' || status === 'empty') {
+          addQueueItem(review, item, status, 'review');
+        }
+      }
+
+      current.sort(function (a, b) { return b.weight - a.weight; });
+      review.sort(function (a, b) { return b.weight - a.weight; });
+
+      current = current.slice(0, PRACTICE_QUEUE_CURRENT_MAX);
+      review = review.slice(0, PRACTICE_QUEUE_REVIEW_MAX);
+      combined = review.concat(current);
+
+      for (i = 0; i < combined.length; i += 1) {
+        if (!seen[combined[i].item.id]) {
+          seen[combined[i].item.id] = true;
+          deduped.push(combined[i]);
+        }
+      }
+
+      return deduped.slice(0, PRACTICE_QUEUE_MAX_ITEMS);
+    }
+
+    function renderPracticeQueue(progress) {
+      progress = progress || (round && round.progress) || loadProgress();
+      if (!el.practiceQueue) return;
+
+      var queue = getPracticeQueueItems(progress);
+      var html = '';
+      var activeItemId = round && round.currentItem && round.currentItem.item ? round.currentItem.item.id : '';
+      var i;
+      var q;
+      var item;
+      var sourceLabel;
+      var metaLabel;
+      var cls;
+      var activeAttr;
+
+      for (i = 0; i < queue.length; i += 1) {
+        q = queue[i];
+        item = q.item;
+        sourceLabel = q.source === 'review' ? 'Review' : 'Current';
+        metaLabel = getQueueMetaLabel(item, q.status);
+        cls = 'pq-chip ' + q.status;
+        activeAttr = '';
+
+        if (activeItemId && item.id === activeItemId) {
+          cls += ' active';
+          activeAttr = ' aria-current="true"';
+        }
+
+        html += '<button type="button" class="' + cls + '" title="' + escapeHtml(getFactLabel(item)) + '"' + activeAttr + '>';
+        html += '<span class="pq-fact">' + escapeHtml(getFactLabel(item)) + '</span>';
+        html += '<span class="pq-meta">';
+        html += '<span>' + escapeHtml(sourceLabel) + '</span>';
+        html += '<span>' + escapeHtml(metaLabel) + '</span>';
+        html += '</span>';
+        html += '</button>';
+      }
+
+      if (!html) {
+        html = '<div class="pq-empty">Start a round to see facts here!</div>';
+      }
+
+      el.practiceQueue.innerHTML = html;
+
+      if (el.practiceQueueCount) el.practiceQueueCount.textContent = String(queue.length);
+      if (el.practiceQueueSubtitle) el.practiceQueueSubtitle.textContent = getPracticeQueueSubtitle(queue);
+    }
+
     function renderProgressGrid(progress) {
   progress = progress || (round && round.progress) || loadProgress();
   var currentStage = progress.currentStage;
   var model = getStageModel(progress);
   var html = '';
-  var stageNames = {1: "Anchor Facts", 2: "Counting Strategies", 3: "Doubles & Near Doubles", 4: "Make 10 & Bridge", 5: "Fact Families", 6: "Two-Digit Methods"};
 
-  for (var s = 1; s <= MAX_STAGE; s++) {
-    var stageItems = getStageItems(s);
-    var isCurrent = s === currentStage;
-    var isPast = s < currentStage;
-    var sectionCls = isCurrent ? " current" : (isPast ? " past" : " future");
-    html += "<div class=\"sb-section" + sectionCls + "\">";
-    html += "<div class=\"sb-section-header\">";
-    html += "<span class=\"sb-section-num\">" + s + "</span>";
-    html += "<div><span class=\"sb-section-name\">Stage " + s + " -- " + (stageNames[s] || "Mental Math") + "</span>";
-    html += "<span class=\"sb-section-sub\">" + stageItems.length + " items</span></div>";
-    html += "</div>";
+  // Update the stage title line above the grid
+  var titleEl = document.getElementById('pgStageTitle');
+  if (titleEl) {
+    var stageItems = getStageItems(currentStage);
+    var stageName = STAGE_NAMES[currentStage] || "Mental Math";
+    titleEl.innerHTML =
+      '<span class="pg-stage-num">' + currentStage + '</span>' +
+      '<span class="pg-stage-label">Stage ' + currentStage + ' of ' + MAX_STAGE + ' - ' + escapeHtml(stageName) + '</span>' +
+      '<span class="pg-stage-count">(' + stageItems.length + ' Items)</span>';
+  }
 
-    // Group items by cluster with strategy labels
-    var clusters = STAGE_CLUSTERS[s] || [];
-    for (var ci = 0; ci < clusters.length; ci++) {
-      var clusterId = clusters[ci];
-      var clusterItems = getStageClusterItems(s, clusterId);
-      if (!clusterItems.length) continue;
+  // Only render the current stage
+  var s = currentStage;
+  var clusters = STAGE_CLUSTERS[s] || [];
+  for (var ci = 0; ci < clusters.length; ci++) {
+    var clusterId = clusters[ci];
+    var clusterItems = getStageClusterItems(s, clusterId);
+    if (!clusterItems.length) continue;
 
-      // Determine if this cluster is unlocked
-      var clusterUnlocked;
-      if (s > currentStage) {
-        clusterUnlocked = false;
-      } else if (s < currentStage) {
-        clusterUnlocked = true;
-      } else {
-        // Current stage: check model.unlockedClusters
-        clusterUnlocked = false;
-        for (var ui = 0; ui < model.unlockedClusters.length; ui++) {
-          if (model.unlockedClusters[ui] === clusterId) { clusterUnlocked = true; break; }
-        }
-      }
-
-      // Find the cluster's strategy label from the first item
-      var strategyId = clusterItems[0].strategy || '';
-      var strategyLabel = STRATEGY_LABELS[strategyId] || '';
-      var clusterLabel = strategyLabel || ('Group ' + clusterId.toUpperCase());
-
-      html += "<div class=\"sb-cluster" + (clusterUnlocked ? "" : " locked") + "\">";
-      html += "<div class=\"sb-cluster-label\">";
-      html += "<span class=\"sb-cluster-name\">" + clusterLabel + "</span>";
-      if (!clusterUnlocked) {
-        html += "<span class=\"sb-cluster-badge\">Locked</span>";
-      }
-      html += "</div>";
-      html += "<div class=\"sb-items\">";
-
-      for (var i = 0; i < clusterItems.length; i++) {
-        var item = clusterItems[i];
-        var stats = getItemStats(item.id, progress);
-        var displayStatus = "empty";
-        var cls = "sb-cell";
-
-        if (!clusterUnlocked) {
-          cls += " locked";
-        } else if (s > currentStage) {
-          displayStatus = getItemDisplayStatus(stats, state.settings.adaptive);
-          if (displayStatus === "empty" && stats.shown === 0) {
-            cls += " locked";
-          } else {
-            cls += " " + displayStatus;
-          }
-        } else {
-          // Current stage, unlocked cluster
-          displayStatus = getItemDisplayStatus(stats, state.settings.adaptive);
-          cls += " " + displayStatus + " current-focus";
-        }
-
-        html += "<span class=\"" + cls + "\" title=\"" + item.prompt + " = " + item.answer + "\">";
-        html += "</span>";
-      }
-      html += "</div></div>"; // sb-cluster
+    // Check if this cluster is unlocked in the current stage
+    var clusterUnlocked = false;
+    for (var ui = 0; ui < model.unlockedClusters.length; ui++) {
+      if (model.unlockedClusters[ui] === clusterId) { clusterUnlocked = true; break; }
     }
-    html += "</div>"; // sb-section
+
+    var strategyId = clusterItems[0].strategy || '';
+    var strategyLabel = STRATEGY_LABELS[strategyId] || '';
+    var clusterLabel = strategyLabel || ('Group ' + clusterId.toUpperCase());
+
+    html += '<div class="sb-cluster' + (clusterUnlocked ? '' : ' locked') + '">';
+    html += '<div class="sb-cluster-label">';
+    html += '<span class="sb-cluster-name">' + escapeHtml(clusterLabel) + '</span>';
+    if (!clusterUnlocked) {
+      html += '<span class="sb-cluster-badge">Locked</span>';
+    }
+    html += '</div>';
+    html += '<div class="sb-items">';
+
+    for (var i = 0; i < clusterItems.length; i++) {
+      var item = clusterItems[i];
+      var stats = getItemStats(item.id, progress);
+      var displayStatus = getItemDisplayStatus(stats, state.settings.adaptive);
+      var cls = "sb-cell " + displayStatus;
+      var needsAttention = displayStatus === 'struggling' || displayStatus === 'review' || displayStatus === 'learning';
+      if (clusterUnlocked && needsAttention) {
+        cls += " current-focus";
+      }
+      if (!clusterUnlocked) {
+        cls = "sb-cell locked";
+      }
+      html += '<span class="' + cls + '" title="' + escapeHtml(getFactAnswerLabel(item)) + '" aria-label="' + escapeHtml(getFactAnswerLabel(item)) + '">';
+      html += '</span>';
+    }
+    html += '</div></div>'; // sb-cluster
   }
 
   el.progressGrid.innerHTML = html;
@@ -6479,9 +7057,8 @@ function chooseAllStageReviewItem(previousItem, progress) {
     function updatePracticeHeader(progress) {
   var p = progress || loadProgress();
   var stage = p.currentStage;
-  var stageNames = {1: "Anchor Facts", 2: "Counting Strategies", 3: "Doubles & Near Doubles", 4: "Make 10 & Bridge", 5: "Fact Families", 6: "Two-Digit Methods"};
-  var stageName = stageNames[stage] || "Mental Math";
-  el.practiceTitle.textContent = "Stage " + stage + " -- " + stageName;
+  var stageName = (typeof STAGE_NAMES !== 'undefined' ? STAGE_NAMES[stage] : null) || {1: "Anchor Facts", 2: "Counting Strategies", 3: "Doubles & Near Doubles", 4: "Make 10 & Bridge", 5: "Fact Families", 6: "Two-Digit Methods"}[stage] || "Mental Math";
+  el.practiceTitle.textContent = "Stage " + stage + " - " + stageName;
 
   var breakdown = getMasteryBreakdown(p);
   var fluent = breakdown.fluent;
@@ -6507,6 +7084,7 @@ function chooseAllStageReviewItem(previousItem, progress) {
 
       setStatus(el.roundStatus, locked ? 'Sign in with Google to start.' : getPrimaryActionStatus(uiProgress), '');
       updatePracticeHeader(uiProgress);
+      renderPracticeQueue(uiProgress);
       renderProgressGrid(uiProgress);
       renderProgressGraph(uiProgress);
       updateStreakMeter(round ? round.streak : 0);
@@ -6855,6 +7433,7 @@ function chooseAllStageReviewItem(previousItem, progress) {
 
       progress.speedTargetFpm = validTarget;
       progress.speedTargetUpdatedAtMs = nowMs();
+      progress.speedTargetScaleVersion = SPEED_TARGET_SCALE_VERSION;
 
       saveProgressToStorage(progress, { reason: 'speed-target-change' });
 
