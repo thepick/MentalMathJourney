@@ -369,12 +369,60 @@
       display: flex;
       flex-direction: column;
     }
+    .progress-graph-wrap.collapsed {
+      flex: 0 0 auto;
+    }
     .progress-graph-wrap h3 {
       font-size: var(--text-sm);
       text-transform: uppercase;
       letter-spacing: 0.06em;
       color: var(--color-text-muted);
       margin-bottom: var(--space-3);
+    }
+    .progress-graph-head {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      gap: var(--space-2);
+      margin-bottom: var(--space-3);
+    }
+    .progress-graph-head h3 {
+      margin-bottom: 0;
+    }
+    .progress-graph-actions {
+      display: flex;
+      align-items: center;
+      justify-content: flex-end;
+      gap: 0.35rem;
+      flex-wrap: wrap;
+    }
+    .graph-small-btn {
+      font-size: 0.68rem;
+      padding: 0.2rem 0.5rem;
+      min-height: auto;
+      border-radius: var(--radius-full);
+      opacity: 0.7;
+      letter-spacing: 0.03em;
+      white-space: nowrap;
+    }
+    .progress-graph-collapsed-note {
+      display: none;
+      padding: 0.55rem 0.7rem;
+      border-radius: var(--radius-lg);
+      background: var(--color-surface-2);
+      border: 1px dashed color-mix(in srgb, var(--color-text) 12%, transparent);
+      color: var(--color-text-muted);
+      font-size: var(--text-xs);
+      line-height: 1.35;
+    }
+    .progress-graph-wrap.collapsed .progress-graph {
+      display: none;
+    }
+    .progress-graph-wrap.collapsed .graph-range-btn {
+      display: none;
+    }
+    .progress-graph-wrap.collapsed .progress-graph-collapsed-note {
+      display: block;
     }
     .progress-graph {
       border-radius: var(--radius-lg);
@@ -1481,9 +1529,16 @@
             <span><span class="swatch st"></span> Needs Practice</span>
             <span><span class="swatch emp"></span> Not Started</span>
           </div>
-          <div class="progress-graph-wrap">
-            <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:var(--space-3)"><h3 style="margin-bottom:0">Mastery Over Time</h3><button type="button" id="graphToggleBtn" class="btn-ghost" style="font-size:0.68rem;padding:0.2rem 0.5rem;min-height:auto;border-radius:var(--radius-full);opacity:0.7;letter-spacing:0.03em" title="Toggle between recent and all saved quiz results">Show all results</button></div>
-            <div class="progress-graph" id="progressGraph" aria-label="Progress Graph"></div>
+          <div class="progress-graph-wrap collapsed" id="progressGraphWrap">
+            <div class="progress-graph-head">
+              <h3>Mastery Over Time</h3>
+              <div class="progress-graph-actions">
+                <button type="button" id="graphCollapseBtn" class="btn-ghost graph-small-btn graph-collapse-btn" aria-expanded="false" aria-controls="progressGraph" title="Show the progress graph for teachers and parents">Show graph</button>
+                <button type="button" id="graphToggleBtn" class="btn-ghost graph-small-btn graph-range-btn" title="Toggle between recent and all saved quiz results">Show all results</button>
+              </div>
+            </div>
+            <div class="progress-graph-collapsed-note" id="progressGraphCollapsedNote">Graph hidden for student focus. Teachers and parents can open it to review progress.</div>
+            <div class="progress-graph" id="progressGraph" aria-label="Progress Graph" aria-hidden="true"></div>
           </div>
         </aside>
       </div>
@@ -7589,7 +7644,31 @@ function chooseAllStageReviewItem(previousItem, progress) {
       });
     }
 
+    function setProgressGraphCollapsed(collapsed) {
+      var wrap = document.getElementById('progressGraphWrap');
+      var btn = document.getElementById('graphCollapseBtn');
+      var graph = document.getElementById('progressGraph');
+      collapsed = !!collapsed;
+      if (wrap) wrap.classList.toggle('collapsed', collapsed);
+      if (btn) {
+        btn.textContent = collapsed ? 'Show graph' : 'Hide graph';
+        btn.setAttribute('aria-expanded', collapsed ? 'false' : 'true');
+        btn.style.opacity = collapsed ? '0.7' : '1';
+      }
+      if (graph) graph.setAttribute('aria-hidden', collapsed ? 'true' : 'false');
+    }
+
     function bindGraphInteractions() {
+      var collapseBtn = document.getElementById('graphCollapseBtn');
+      var wrap = document.getElementById('progressGraphWrap');
+      if (collapseBtn && !collapseBtn.dataset.bound) {
+        collapseBtn.dataset.bound = '1';
+        setProgressGraphCollapsed(wrap ? wrap.classList.contains('collapsed') : true);
+        collapseBtn.addEventListener('click', function () {
+          setProgressGraphCollapsed(!(wrap && wrap.classList.contains('collapsed')));
+        });
+      }
+
       var btn = document.getElementById('graphToggleBtn');
       if (btn && !btn.dataset.bound) {
         btn.dataset.bound = '1';
