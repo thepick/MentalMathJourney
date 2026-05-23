@@ -1269,10 +1269,15 @@
     .journey-world:hover { transform: translateY(-1px); }
     .journey-world.complete { background: linear-gradient(135deg, #dcfce7, #f0fdf4); border-color: #86efac; }
     .journey-world.current { background: linear-gradient(135deg, #fff7ed, #fef3c7); border-color: #f59e0b; box-shadow: 0 0 0 3px rgba(245, 158, 11, 0.18), 0 10px 26px rgba(15, 23, 42, 0.14); }
-    .journey-world.locked { background: rgba(255,255,255,0.62); border-color: rgba(148, 163, 184, 0.36); }
+    .journey-world.locked { background: linear-gradient(135deg, rgba(241,245,249,0.96), rgba(226,232,240,0.94)); border-color: rgba(148, 163, 184, 0.56); color: #64748b; box-shadow: none; }
     [data-theme="dark"] .journey-world.complete { background: color-mix(in srgb, var(--color-success-highlight) 60%, var(--color-surface)); }
     [data-theme="dark"] .journey-world.current { background: color-mix(in srgb, var(--color-gold-highlight) 58%, var(--color-surface)); }
-    [data-theme="dark"] .journey-world.locked { background: color-mix(in srgb, var(--color-surface-2) 72%, transparent); }
+    [data-theme="dark"] .journey-world.locked { background: color-mix(in srgb, var(--color-surface-2) 88%, var(--color-surface)); color: var(--color-text-muted); border-color: color-mix(in srgb, var(--color-text) 18%, transparent); box-shadow: none; }
+    .journey-world.locked .journey-title,
+    .journey-world.locked .journey-skill,
+    .journey-world.locked .journey-message-small { color: inherit; }
+    .journey-world.locked .journey-badge { background: rgba(148,163,184,0.22); color: #475569; }
+    .journey-world.locked .journey-stars { opacity: 0.68; filter: grayscale(1); }
     .journey-status-icon {
       position: relative;
       z-index: 1;
@@ -1360,8 +1365,8 @@
       object-fit: cover;
     }
     .journey-world.locked .journey-world-image {
-      filter: grayscale(0.28);
-      opacity: 0.72;
+      filter: grayscale(1) saturate(0.08) brightness(1.02);
+      opacity: 0.62;
     }
     .teacher-parent-panel {
       margin: 0 0.8rem 0.8rem;
