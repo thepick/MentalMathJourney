@@ -138,7 +138,7 @@
       max-width: 90%;
       opacity: 0;
       pointer-events: none;
-      font-size: 0.86rem;
+      font-size: clamp(0.72rem, 1.7vh, 0.86rem);
       font-weight: 850;
       color: var(--color-primary);
       text-align: center;
@@ -1191,6 +1191,261 @@
       .stage-map-title { font-size: 0.72rem; }
       body.mobile-play-mode.round-active .pg-panel { display: none; }
     }
+
+    /* ---- Student Journey Map ---- */
+    .journey-panel {
+      padding: 0;
+      overflow: visible;
+      align-self: start;
+      background: linear-gradient(180deg, #e8f7ff 0%, #f8fff0 100%);
+      border-color: rgba(58, 134, 255, 0.18);
+      display: flex;
+      flex-direction: column;
+      min-height: 0;
+    }
+    [data-theme="dark"] .journey-panel {
+      background: linear-gradient(180deg, color-mix(in srgb, var(--color-primary) 18%, var(--color-surface)) 0%, var(--color-surface) 100%);
+    }
+    .journey-header {
+      padding: clamp(0.62rem, 1.1vh, 0.9rem) 1rem clamp(0.5rem, 0.9vh, 0.75rem);
+      background: linear-gradient(135deg, #0ea5e9, #2563eb);
+      color: #ffffff;
+      border-bottom: 1px solid rgba(255,255,255,0.24);
+    }
+    .journey-header h2 {
+      font-size: clamp(0.9rem, 2vh, 1.02rem);
+      margin: 0;
+      color: #ffffff;
+    }
+    .journey-header p {
+      margin-top: 0.2rem;
+      color: rgba(255,255,255,0.88);
+      font-size: clamp(0.66rem, 1.45vh, 0.74rem);
+      line-height: 1.35;
+    }
+    .journey-map {
+      position: relative;
+      display: grid;
+      gap: clamp(0.42rem, 0.7vh, 0.62rem);
+      padding: clamp(0.58rem, 1.2vh, 0.8rem);
+      max-height: none;
+      overflow: visible;
+      overscroll-behavior: auto;
+      flex: 0 0 auto;
+    }
+    .journey-map::before {
+      content: '';
+      position: absolute;
+      top: 1.2rem;
+      bottom: 1.2rem;
+      left: 2.1rem;
+      width: 4px;
+      border-radius: var(--radius-full);
+      background: linear-gradient(180deg, rgba(37,99,235,0.42), rgba(34,197,94,0.38));
+      opacity: 0.55;
+    }
+    .journey-world {
+      position: relative;
+      display: grid;
+      grid-template-columns: 38px minmax(0, 1fr) clamp(76px, 8.2vw, 98px);
+      align-items: center;
+      gap: clamp(0.38rem, 0.8vh, 0.58rem);
+      width: 100%;
+      min-height: clamp(74px, 10.2vh, 92px);
+      padding: clamp(0.42rem, 0.95vh, 0.55rem);
+      border-radius: 16px;
+      border: 2px solid rgba(255,255,255,0.85);
+      background: rgba(255,255,255,0.82);
+      box-shadow: 0 8px 24px rgba(15, 23, 42, 0.10);
+      text-align: left;
+      color: #163047;
+      isolation: isolate;
+    }
+    [data-theme="dark"] .journey-world {
+      background: color-mix(in srgb, var(--color-surface-2) 82%, transparent);
+      color: var(--color-text);
+      border-color: color-mix(in srgb, var(--color-text) 10%, transparent);
+    }
+    .journey-world:hover { transform: translateY(-1px); }
+    .journey-world.complete { background: linear-gradient(135deg, #dcfce7, #f0fdf4); border-color: #86efac; }
+    .journey-world.current { background: linear-gradient(135deg, #fff7ed, #fef3c7); border-color: #f59e0b; box-shadow: 0 0 0 3px rgba(245, 158, 11, 0.18), 0 10px 26px rgba(15, 23, 42, 0.14); }
+    .journey-world.locked { background: rgba(255,255,255,0.62); border-color: rgba(148, 163, 184, 0.36); }
+    [data-theme="dark"] .journey-world.complete { background: color-mix(in srgb, var(--color-success-highlight) 60%, var(--color-surface)); }
+    [data-theme="dark"] .journey-world.current { background: color-mix(in srgb, var(--color-gold-highlight) 58%, var(--color-surface)); }
+    [data-theme="dark"] .journey-world.locked { background: color-mix(in srgb, var(--color-surface-2) 72%, transparent); }
+    .journey-status-icon {
+      position: relative;
+      z-index: 1;
+      width: clamp(28px, 3.5vh, 34px);
+      height: clamp(28px, 3.5vh, 34px);
+      border-radius: var(--radius-full);
+      display: grid;
+      place-items: center;
+      font-size: clamp(0.72rem, 1.7vh, 0.9rem);
+      font-weight: 900;
+      color: #ffffff;
+      background: #38bdf8;
+      box-shadow: 0 3px 10px rgba(15, 23, 42, 0.16);
+    }
+    .journey-world.complete .journey-status-icon { background: #16a34a; }
+    .journey-world.current .journey-status-icon { background: #f97316; }
+    .journey-world.locked .journey-status-icon { background: #94a3b8; }
+    .journey-copy { min-width: 0; display: block; overflow: hidden; }
+    .journey-title-row { display: flex; align-items: center; gap: 0.35rem; min-width: 0; flex-wrap: wrap; line-height: 1.12; }
+    .journey-title {
+      display: block;
+      font-size: 0.86rem;
+      line-height: 1.1;
+      font-weight: 900;
+      color: inherit;
+    }
+    .journey-badge {
+      display: inline-flex;
+      align-items: center;
+      min-height: 18px;
+      padding: 0.08rem 0.42rem;
+      border-radius: var(--radius-full);
+      background: rgba(255,255,255,0.72);
+      color: #475569;
+      font-size: 0.56rem;
+      line-height: 1;
+      font-weight: 900;
+      text-transform: uppercase;
+      letter-spacing: 0.045em;
+      white-space: nowrap;
+    }
+    .journey-world.current .journey-badge { color: #9a3412; }
+    .journey-world.complete .journey-badge { color: #166534; }
+    .journey-skill {
+      display: block;
+      margin-top: clamp(0.08rem, 0.35vh, 0.22rem);
+      font-size: clamp(0.58rem, 1.35vh, 0.68rem);
+      line-height: 1.2;
+      color: #475569;
+      font-weight: 800;
+    }
+    [data-theme="dark"] .journey-skill { color: var(--color-text-muted); }
+    .journey-message-small {
+      display: block;
+      margin-top: clamp(0.06rem, 0.3vh, 0.18rem);
+      font-size: clamp(0.52rem, 1.2vh, 0.62rem);
+      line-height: 1.2;
+      color: #64748b;
+    }
+    [data-theme="dark"] .journey-message-small { color: var(--color-text-faint); }
+    .journey-stars {
+      margin-top: clamp(0.08rem, 0.4vh, 0.28rem);
+      display: flex;
+      gap: 0.1rem;
+      align-items: center;
+      flex-wrap: wrap;
+      font-size: clamp(0.76rem, 1.7vh, 0.92rem);
+      line-height: 1;
+    }
+    .journey-star.earned { color: #f59e0b; text-shadow: 0 1px 0 rgba(255,255,255,0.7); }
+    .journey-star.empty { color: rgba(100, 116, 139, 0.42); }
+    .journey-world-image-wrap {
+      width: clamp(76px, 8.2vw, 98px);
+      aspect-ratio: 4 / 3;
+      border-radius: 14px;
+      overflow: hidden;
+      border: 2px solid rgba(255,255,255,0.92);
+      box-shadow: inset 0 0 0 1px rgba(15,23,42,0.08), 0 5px 12px rgba(15,23,42,0.10);
+      background: rgba(255,255,255,0.7);
+    }
+    .journey-world-image {
+      width: 100%;
+      height: 100%;
+      display: block;
+      object-fit: cover;
+    }
+    .journey-world.locked .journey-world-image {
+      filter: grayscale(0.28);
+      opacity: 0.72;
+    }
+    .teacher-parent-panel {
+      margin: 0 0.8rem 0.8rem;
+      border-radius: 16px;
+      background: rgba(255,255,255,0.78);
+      border: 1px solid rgba(15,23,42,0.12);
+      overflow: hidden;
+    }
+    [data-theme="dark"] .teacher-parent-panel {
+      background: color-mix(in srgb, var(--color-surface-2) 76%, transparent);
+      border-color: color-mix(in srgb, var(--color-text) 10%, transparent);
+    }
+    .teacher-parent-toggle {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      width: 100%;
+      min-height: 42px;
+      padding: 0.68rem 0.82rem;
+      background: transparent;
+      color: var(--color-text);
+      font-size: 0.78rem;
+      font-weight: 900;
+      text-transform: uppercase;
+      letter-spacing: 0.045em;
+    }
+    .teacher-parent-toggle:hover { background: rgba(15,23,42,0.05); }
+    .teacher-parent-toggle::after { content: '+'; font-size: 1rem; line-height: 1; }
+    .teacher-parent-panel:not(.collapsed) .teacher-parent-toggle::after { content: '-'; }
+    .teacher-parent-content {
+      padding: 0.8rem;
+      border-top: 1px solid rgba(15,23,42,0.10);
+    }
+    .teacher-parent-content h2 { font-size: 0.88rem; margin-bottom: 0.6rem; }
+    .teacher-parent-content[hidden],
+    .teacher-parent-panel.collapsed .teacher-parent-content {
+      display: none !important;
+    }
+    .teacher-parent-panel.collapsed {
+      flex: 0 0 auto;
+    }
+    .journey-toast-note {
+      position: fixed;
+      left: 50%;
+      bottom: 1rem;
+      transform: translateX(-50%) translateY(8px);
+      z-index: 1100;
+      max-width: min(92vw, 380px);
+      padding: 0.68rem 0.95rem;
+      border-radius: var(--radius-full);
+      background: var(--color-primary);
+      color: var(--color-text-inverse);
+      font-size: 0.82rem;
+      font-weight: 850;
+      box-shadow: var(--shadow-md);
+      opacity: 0;
+      pointer-events: none;
+      transition: opacity 180ms ease, transform 180ms ease;
+    }
+    .journey-toast-note.show { opacity: 1; transform: translateX(-50%) translateY(0); }
+    @media (max-width: 1050px) {
+      .practice-layout { grid-template-columns: minmax(0, 1fr) 380px; }
+      .journey-world { grid-template-columns: 36px minmax(0, 1fr) clamp(72px, 8vw, 88px); gap: clamp(0.34rem, 0.7vh, 0.48rem); }
+      .journey-world-image-wrap { width: clamp(72px, 8vw, 88px); }
+    }
+    @media (max-width: 820px) {
+      .journey-panel { order: 10; }
+      .journey-map { max-height: none; overflow: visible; }
+    }
+    @media (max-width: 500px) {
+      .journey-header { padding: 0.75rem 0.8rem 0.65rem; }
+      .journey-map { padding: clamp(0.48rem, 1vh, 0.65rem); gap: clamp(0.36rem, 0.65vh, 0.52rem); }
+      .journey-map::before { left: 1.85rem; }
+      .journey-world { grid-template-columns: 32px minmax(0, 1fr) 70px; min-height: 70px; padding: 0.42rem; border-radius: 15px; }
+      .journey-status-icon { width: 30px; height: 30px; font-size: 0.78rem; }
+      .journey-title { font-size: 0.78rem; }
+      .journey-skill { font-size: 0.62rem; }
+      .journey-message-small { display: none; }
+      .journey-world-image-wrap { width: 70px; border-radius: 12px; }
+      .journey-stars { font-size: 0.82rem; }
+      .teacher-parent-panel { margin: 0 0.65rem 0.65rem; }
+      body.mobile-play-mode.round-active .journey-panel { display: none; }
+    }
+
 </style>
 <script>
   (function(){
@@ -1518,48 +1773,61 @@
           </div>
         </div>
 
-        <!-- Right: progress grid -->
-        <aside class="panel pg-panel" id="progressGridPanel">
-          <h2>Your Progress</h2>
-          <div class="pg-stage-title" id="pgStageTitle"></div>
-
-          <section class="pq-panel" id="practiceQueuePanel" aria-label="Next up facts">
-            <div class="pq-head">
-              <div>
-                <h3 class="pq-title">Next Up</h3>
-                <p class="pq-subtitle" id="practiceQueueSubtitle">Start a round to see facts here.</p>
-              </div>
-              <span class="pq-count" id="practiceQueueCount">0</span>
-            </div>
-            <div class="pq-list" id="practiceQueue"></div>
-          </section>
-
-          <section class="stage-map-panel" aria-label="Stage map">
-            <div class="stage-map-head">
-              <h3 class="stage-map-title">Stage Map</h3>
-            </div>
-            <div class="sb-panel" id="progressGrid"></div>
-          </section>
-
-          <div class="pg-legend">
-            <span><span class="swatch fl"></span> Mastered</span>
-            <span><span class="swatch rv"></span> Review Soon</span>
-            <span><span class="swatch nr"></span> Almost There</span>
-            <span><span class="swatch ln"></span> Learning</span>
-            <span><span class="swatch st"></span> Needs Practice</span>
-            <span><span class="swatch emp"></span> Not Started</span>
+        <!-- Right: student journey map plus hidden teacher/parent details -->
+        <aside class="panel journey-panel" id="studentJourneyPanel" aria-label="NumberFlow Journey Map">
+          <div class="journey-header">
+            <h2>NumberFlow Journey Map</h2>
+            <p id="journeyMessage">Keep going to unlock new places!</p>
           </div>
-          <div class="progress-graph-wrap collapsed" id="progressGraphWrap">
-            <div class="progress-graph-head">
-              <h3>Mastery Over Time</h3>
-              <div class="progress-graph-actions">
-                <button type="button" id="graphCollapseBtn" class="btn-ghost graph-small-btn graph-collapse-btn" aria-expanded="false" aria-controls="progressGraph" title="Show the progress graph for teachers and parents">Show graph</button>
-                <button type="button" id="graphToggleBtn" class="btn-ghost graph-small-btn graph-range-btn" title="Toggle between recent and all saved quiz results">Show all results</button>
+          <div id="journeyMap" class="journey-map" aria-label="Journey stages"></div>
+
+          <section class="teacher-parent-panel collapsed" id="teacherParentPanel" aria-label="Teacher and parent progress details">
+            <button type="button" class="teacher-parent-toggle" id="teacherParentToggle" aria-expanded="false" aria-controls="teacherParentContent">Teacher / Parent View</button>
+            <div class="teacher-parent-content pg-panel" id="teacherParentContent" hidden>
+              <div id="progressGridPanel">
+                <h2>Detailed Progress</h2>
+                <div class="pg-stage-title" id="pgStageTitle"></div>
+
+                <section class="pq-panel" id="practiceQueuePanel" aria-label="Next up facts">
+                  <div class="pq-head">
+                    <div>
+                      <h3 class="pq-title">Next Up</h3>
+                      <p class="pq-subtitle" id="practiceQueueSubtitle">Start a round to see facts here.</p>
+                    </div>
+                    <span class="pq-count" id="practiceQueueCount">0</span>
+                  </div>
+                  <div class="pq-list" id="practiceQueue"></div>
+                </section>
+
+                <section class="stage-map-panel" aria-label="Stage map">
+                  <div class="stage-map-head">
+                    <h3 class="stage-map-title">Stage Map</h3>
+                  </div>
+                  <div class="sb-panel" id="progressGrid"></div>
+                </section>
+
+                <div class="pg-legend">
+                  <span><span class="swatch fl"></span> Mastered</span>
+                  <span><span class="swatch rv"></span> Review Soon</span>
+                  <span><span class="swatch nr"></span> Almost There</span>
+                  <span><span class="swatch ln"></span> Learning</span>
+                  <span><span class="swatch st"></span> Needs Practice</span>
+                  <span><span class="swatch emp"></span> Not Started</span>
+                </div>
+                <div class="progress-graph-wrap collapsed" id="progressGraphWrap">
+                  <div class="progress-graph-head">
+                    <h3>Mastery Over Time</h3>
+                    <div class="progress-graph-actions">
+                      <button type="button" id="graphCollapseBtn" class="btn-ghost graph-small-btn graph-collapse-btn" aria-expanded="false" aria-controls="progressGraph" title="Show the progress graph for teachers and parents">Show graph</button>
+                      <button type="button" id="graphToggleBtn" class="btn-ghost graph-small-btn graph-range-btn" title="Toggle between recent and all saved quiz results">Show all results</button>
+                    </div>
+                  </div>
+                  <div class="progress-graph-collapsed-note" id="progressGraphCollapsedNote">Graph hidden for student focus. Teachers and parents can open it to review progress.</div>
+                  <div class="progress-graph" id="progressGraph" aria-label="Progress Graph" aria-hidden="true"></div>
+                </div>
               </div>
             </div>
-            <div class="progress-graph-collapsed-note" id="progressGraphCollapsedNote">Graph hidden for student focus. Teachers and parents can open it to review progress.</div>
-            <div class="progress-graph" id="progressGraph" aria-label="Progress Graph" aria-hidden="true"></div>
-          </div>
+          </section>
         </aside>
       </div>
     </section>
@@ -1742,6 +2010,65 @@
         STAGE_CLUSTERS[s] = clusters;
       }
     })();
+
+    var JOURNEY_WORLDS = {
+      1: {
+        title: 'Starter Island',
+        skill: 'Anchor Facts',
+        message: 'Set off from Starter Island and collect your first stars.',
+        completeText: 'Starter Island cleared!',
+        image: 'assets/journey/starter-island.webp',
+        totalParts: 3
+      },
+      2: {
+        title: 'Counting Trail',
+        skill: 'Counting Strategies',
+        message: 'Walk forward with smart counting moves.',
+        completeText: 'Counting Trail cleared!',
+        image: 'assets/journey/counting-trail.webp',
+        totalParts: 4
+      },
+      3: {
+        title: 'Doubles Forest',
+        skill: 'Doubles and Near Doubles',
+        message: 'Find patterns hiding between the trees.',
+        completeText: 'Doubles Forest cleared!',
+        image: 'assets/journey/doubles-forest.webp',
+        totalParts: 5
+      },
+      4: {
+        title: 'Bridge Town',
+        skill: 'Make 10 and Bridge',
+        message: 'Cross number bridges to make friendly tens.',
+        completeText: 'Bridge Town cleared!',
+        image: 'assets/journey/bridge-town.webp',
+        totalParts: 4
+      },
+      5: {
+        title: 'Family Village',
+        skill: 'Fact Families',
+        message: 'See how number facts live together.',
+        completeText: 'Family Village cleared!',
+        image: 'assets/journey/family-village.webp',
+        totalParts: 3
+      },
+      6: {
+        title: 'Big Number Mountain',
+        skill: 'Two-Digit Methods',
+        message: 'Climb higher into bigger number thinking.',
+        completeText: 'Big Number Mountain cleared!',
+        image: 'assets/journey/big-number-mountain.webp',
+        totalParts: 5
+      }
+    };
+
+    var JOURNEY_MESSAGES = {
+      starEarned: 'New star earned!',
+      worldUnlocked: 'New world unlocked!',
+      locked: 'Keep going to unlock this world!',
+      complete: 'Great work! This world is complete.',
+      current: 'You are here. Keep practicing!'
+    };
 
     var STRATEGY_LABELS = {
       'plus-zero': '', 'minus-zero': '',
@@ -1954,6 +2281,12 @@ var state = {
       el.timeoutInput = document.getElementById('timeoutInput');
       el.cooldownBanner = document.getElementById('cooldownBanner');
       el.progressGridPanel = document.getElementById('progressGridPanel');
+      el.studentJourneyPanel = document.getElementById('studentJourneyPanel');
+      el.journeyMap = document.getElementById('journeyMap');
+      el.journeyMessage = document.getElementById('journeyMessage');
+      el.teacherParentPanel = document.getElementById('teacherParentPanel');
+      el.teacherParentToggle = document.getElementById('teacherParentToggle');
+      el.teacherParentContent = document.getElementById('teacherParentContent');
       el.practiceQueuePanel = document.getElementById('practiceQueuePanel');
       el.practiceQueue = document.getElementById('practiceQueue');
       el.practiceQueueSubtitle = document.getElementById('practiceQueueSubtitle');
@@ -5704,7 +6037,8 @@ function chooseAllStageReviewItem(previousItem, progress) {
         graduated: false,
         progress: progress,
         progressDirty: false,
-        startProgressSnapshot: cloneJson(progress) || null
+        startProgressSnapshot: cloneJson(progress) || null,
+        journeyStartSnapshot: getJourneySnapshot(progress)
       };
       lastItemKey = null;
       lastItemInfo = null;
@@ -6113,6 +6447,7 @@ function chooseAllStageReviewItem(previousItem, progress) {
       renderProgressGrid(progress);
       renderProgressGraph(progress);
       updatePracticeHeader(progress);
+      checkJourneyCelebrations(round && round.journeyStartSnapshot, progress, { graduated: graduated || (round && round.graduated) });
 
       if (syncState.signedIn) {
         queueDrivePush('round-complete', true);
@@ -6170,7 +6505,7 @@ function chooseAllStageReviewItem(previousItem, progress) {
         if (status === 'fluent' || status === 'review') masteredCount++;
       }
 
-      var msg = 'You completed Stage ' + oldStage + '! (' + masteredCount + ' of ' + stageItems.length + ' items mastered) \u2014 Now on Stage ' + newStage + '!';
+      var msg = JOURNEY_MESSAGES.worldUnlocked + ' Stage ' + oldStage + ' complete - Stage ' + newStage + ' is ready!';
       showLevelUpToast(msg);
       launchConfettiOnce();
     }
@@ -6853,6 +7188,253 @@ function chooseAllStageReviewItem(previousItem, progress) {
       return strategyLabel || getQueueStatusLabel(status);
     }
 
+
+
+    function getJourneyWorld(stage) {
+      var fallbackName = (typeof STAGE_NAMES !== 'undefined' && STAGE_NAMES[stage]) ? STAGE_NAMES[stage] : 'Mental Math';
+      return JOURNEY_WORLDS[stage] || {
+        title: 'Stage ' + stage,
+        skill: fallbackName,
+        message: 'Keep practicing to move ahead.',
+        completeText: 'Stage ' + stage + ' complete!',
+        image: '',
+        totalParts: Math.max(1, (STAGE_CLUSTERS[stage] || ['a']).length)
+      };
+    }
+
+    function getJourneyWorldState(stage, progress) {
+      progress = progress || loadProgress();
+      if (progress.hasCompletedAllStages && stage <= MAX_STAGE) return 'complete';
+      if (stage < progress.currentStage) return 'complete';
+      if (stage === progress.currentStage) return 'current';
+      return 'locked';
+    }
+
+    function getJourneyStageMasteryRatio(stage, progress) {
+      var stageItems = getStageItems(stage);
+      var adaptive = getEffectiveAdaptive(state.settings.adaptive, { stage: stage });
+      var ready = 0;
+      var i;
+      var stats;
+      var status;
+
+      if (!stageItems.length) return 0;
+
+      for (i = 0; i < stageItems.length; i += 1) {
+        stats = getItemStats(stageItems[i].id, progress);
+        status = getItemDisplayStatus(stats, adaptive);
+        if (status === 'fluent' || status === 'review' || status === 'near-ready') ready += 1;
+      }
+
+      return ready / stageItems.length;
+    }
+
+    function getJourneyStageSeenRatio(stage, progress) {
+      var stageItems = getStageItems(stage);
+      var seen = 0;
+      var i;
+      var stats;
+
+      if (!stageItems.length) return 0;
+
+      for (i = 0; i < stageItems.length; i += 1) {
+        stats = getItemStats(stageItems[i].id, progress);
+        if (stats && Number(stats.shown) > 0) seen += 1;
+      }
+
+      return seen / stageItems.length;
+    }
+
+    function getJourneyUnlockedPartCount(stage, progress) {
+      var clusters = STAGE_CLUSTERS[stage] || [];
+      var currentStage;
+      var model;
+
+      if (!clusters.length) return 0;
+      progress = progress || loadProgress();
+      currentStage = progress.currentStage || STARTING_STAGE;
+
+      if (stage < currentStage || progress.hasCompletedAllStages) return clusters.length;
+      if (stage > currentStage) return 0;
+
+      model = getStageModel(progress);
+      if (model && model.unlockedClusters && model.unlockedClusters.length) {
+        return Math.max(0, Math.min(clusters.length, model.unlockedClusters.length - 1));
+      }
+
+      return 0;
+    }
+
+    function getJourneyStars(stage, progress) {
+      var world = getJourneyWorld(stage);
+      var total = Math.max(1, Number(world.totalParts) || 1);
+      var stateName = getJourneyWorldState(stage, progress);
+      var maxBeforeGraduation = Math.max(0, total - 1);
+      var readyRatio;
+      var seenRatio;
+      var unlockedParts;
+      var earned;
+
+      if (stateName === 'complete') {
+        return { earned: total, total: total };
+      }
+
+      if (stateName === 'locked') {
+        return { earned: 0, total: total };
+      }
+
+      readyRatio = getJourneyStageMasteryRatio(stage, progress);
+      seenRatio = getJourneyStageSeenRatio(stage, progress);
+      unlockedParts = getJourneyUnlockedPartCount(stage, progress);
+
+      earned = Math.max(
+        Math.floor(readyRatio * total),
+        Math.floor(seenRatio * maxBeforeGraduation),
+        Math.min(maxBeforeGraduation, unlockedParts)
+      );
+
+      // Reserve the final star for the app's existing graduation/pass logic.
+      if (earned >= total) earned = maxBeforeGraduation;
+
+      return {
+        earned: Math.max(0, Math.min(earned, total)),
+        total: total
+      };
+    }
+
+    function renderJourneyStars(earned, total) {
+      var html = '';
+      var i;
+
+      for (i = 0; i < total; i += 1) {
+        html += '<span class="journey-star ' + (i < earned ? 'earned' : 'empty') + '" aria-hidden="true">' + (i < earned ? '★' : '☆') + '</span>';
+      }
+
+      html += '<span class="sr-only">' + earned + ' of ' + total + ' stars earned</span>';
+      return html;
+    }
+
+    function getJourneySnapshot(progress) {
+      var snapshot = { currentStage: progress && typeof progress.currentStage === 'number' ? progress.currentStage : STARTING_STAGE };
+      var stage;
+      var stars;
+
+      progress = progress || loadProgress();
+      snapshot.currentStage = progress.currentStage;
+
+      for (stage = STARTING_STAGE; stage <= MAX_STAGE; stage += 1) {
+        stars = getJourneyStars(stage, progress);
+        snapshot[stage] = stars.earned;
+      }
+
+      return snapshot;
+    }
+
+    function renderJourneyWorldCard(stage, progress) {
+      var world = getJourneyWorld(stage);
+      var stateName = getJourneyWorldState(stage, progress);
+      var stars = getJourneyStars(stage, progress);
+      var badge = stateName === 'complete' ? 'Complete' : (stateName === 'current' ? 'You are here' : 'Locked');
+      var icon = stateName === 'complete' ? '✓' : (stateName === 'current' ? String(stage) : '🔒');
+      var title = escapeHtml(world.title);
+      var skill = escapeHtml(world.skill);
+      var message = stateName === 'complete' ? world.completeText : world.message;
+      var image = world.image ? escapeHtml(world.image) : '';
+      var aria = title + ', ' + badge + ', ' + stars.earned + ' of ' + stars.total + ' stars';
+      var html = '';
+
+      html += '<button type="button" class="journey-world ' + stateName + '" data-journey-stage="' + stage + '" aria-label="' + escapeHtml(aria) + '">';
+      html += '<span class="journey-status-icon" aria-hidden="true">' + icon + '</span>';
+      html += '<span class="journey-copy">';
+      html += '<span class="journey-title-row"><span class="journey-title">' + title + '</span><span class="journey-badge">' + escapeHtml(badge) + '</span></span>';
+      html += '<span class="journey-skill">' + skill + '</span>';
+      html += '<span class="journey-message-small">' + escapeHtml(message) + '</span>';
+      html += '<span class="journey-stars">' + renderJourneyStars(stars.earned, stars.total) + '</span>';
+      html += '</span>';
+      html += '<span class="journey-world-image-wrap">';
+      if (image) {
+        html += '<img class="journey-world-image" src="' + image + '" alt="" loading="lazy">';
+      }
+      html += '</span>';
+      html += '</button>';
+      return html;
+    }
+
+    function renderJourneyMap(progress) {
+      var map = el.journeyMap || document.getElementById('journeyMap');
+      var message = el.journeyMessage || document.getElementById('journeyMessage');
+      var currentStage;
+      var currentWorld;
+      var html = '';
+      var stage;
+
+      progress = progress || (round && round.progress) || loadProgress();
+      if (!map) return;
+
+      for (stage = MAX_STAGE; stage >= STARTING_STAGE; stage -= 1) {
+        html += renderJourneyWorldCard(stage, progress);
+      }
+
+      map.innerHTML = html;
+
+      if (message) {
+        currentStage = progress.currentStage || STARTING_STAGE;
+        currentWorld = getJourneyWorld(currentStage);
+        if (progress.hasCompletedAllStages) {
+          message.textContent = 'All worlds complete! You can keep practicing in review mode.';
+        } else {
+          message.textContent = currentWorld.message;
+        }
+      }
+    }
+
+    function showJourneyToast(message) {
+      var toast = document.getElementById('journeyToastNote');
+      if (!toast) {
+        toast = document.createElement('div');
+        toast.id = 'journeyToastNote';
+        toast.className = 'journey-toast-note';
+        toast.setAttribute('role', 'status');
+        toast.setAttribute('aria-live', 'polite');
+        document.body.appendChild(toast);
+      }
+
+      toast.textContent = message;
+      toast.classList.remove('show');
+      void toast.offsetWidth;
+      toast.classList.add('show');
+      setTimeout(function () {
+        toast.classList.remove('show');
+      }, 2600);
+    }
+
+    function checkJourneyCelebrations(oldSnapshot, progress, options) {
+      var newSnapshot;
+      var stage;
+      var oldStars;
+      var newStars;
+
+      options = options || {};
+      if (!oldSnapshot || !progress) return;
+
+      newSnapshot = getJourneySnapshot(progress);
+
+      if (newSnapshot.currentStage > oldSnapshot.currentStage || options.graduated) {
+        return;
+      }
+
+      for (stage = STARTING_STAGE; stage <= MAX_STAGE; stage += 1) {
+        oldStars = Number(oldSnapshot[stage]) || 0;
+        newStars = Number(newSnapshot[stage]) || 0;
+        if (newStars > oldStars) {
+          resetConfetti();
+          launchConfettiOnce();
+          showLevelUpToast(JOURNEY_MESSAGES.starEarned);
+          return;
+        }
+      }
+    }
+
     function getPracticeQueueSubtitle(queue) {
       var reviewCount = 0;
       var currentCount = 0;
@@ -6983,70 +7565,92 @@ function chooseAllStageReviewItem(previousItem, progress) {
     }
 
     function renderProgressGrid(progress) {
-  progress = progress || (round && round.progress) || loadProgress();
-  var currentStage = progress.currentStage;
-  var model = getStageModel(progress);
-  var html = '';
+      progress = progress || (round && round.progress) || loadProgress();
+      renderJourneyMap(progress);
 
-  // Update the stage title line above the grid
-  var titleEl = document.getElementById('pgStageTitle');
-  if (titleEl) {
-    var stageItems = getStageItems(currentStage);
-    var stageName = STAGE_NAMES[currentStage] || "Mental Math";
-    titleEl.innerHTML =
-      '<span class="pg-stage-num">' + currentStage + '</span>' +
-      '<span class="pg-stage-label">Stage ' + currentStage + ' of ' + MAX_STAGE + ' - ' + escapeHtml(stageName) + '</span>' +
-      '<span class="pg-stage-count">(' + stageItems.length + ' Items)</span>';
-  }
+      if (!el.progressGrid) return;
 
-  // Only render the current stage
-  var s = currentStage;
-  var clusters = STAGE_CLUSTERS[s] || [];
-  for (var ci = 0; ci < clusters.length; ci++) {
-    var clusterId = clusters[ci];
-    var clusterItems = getStageClusterItems(s, clusterId);
-    if (!clusterItems.length) continue;
+      var currentStage = progress.currentStage;
+      var model = getStageModel(progress);
+      var html = '';
+      var titleEl = document.getElementById('pgStageTitle');
+      var stageItems;
+      var stageName;
+      var clusters;
+      var s;
+      var ci;
+      var clusterId;
+      var clusterItems;
+      var clusterUnlocked;
+      var ui;
+      var strategyId;
+      var strategyLabel;
+      var clusterLabel;
+      var i;
+      var item;
+      var stats;
+      var displayStatus;
+      var cls;
+      var needsAttention;
+      var factLabel;
 
-    // Check if this cluster is unlocked in the current stage
-    var clusterUnlocked = false;
-    for (var ui = 0; ui < model.unlockedClusters.length; ui++) {
-      if (model.unlockedClusters[ui] === clusterId) { clusterUnlocked = true; break; }
-    }
-
-    var strategyId = clusterItems[0].strategy || '';
-    var strategyLabel = STRATEGY_LABELS[strategyId] || '';
-    var clusterLabel = strategyLabel || ('Group ' + clusterId.toUpperCase());
-
-    html += '<div class="sb-cluster' + (clusterUnlocked ? '' : ' locked') + '">';
-    html += '<div class="sb-cluster-label">';
-    html += '<span class="sb-cluster-name">' + escapeHtml(clusterLabel) + '</span>';
-    if (!clusterUnlocked) {
-      html += '<span class="sb-cluster-badge">Locked</span>';
-    }
-    html += '</div>';
-    html += '<div class="sb-items">';
-
-    for (var i = 0; i < clusterItems.length; i++) {
-      var item = clusterItems[i];
-      var stats = getItemStats(item.id, progress);
-      var displayStatus = getItemDisplayStatus(stats, state.settings.adaptive);
-      var cls = "sb-cell " + displayStatus;
-      var needsAttention = displayStatus === 'struggling' || displayStatus === 'review' || displayStatus === 'learning';
-      if (clusterUnlocked && needsAttention) {
-        cls += " current-focus";
+      if (titleEl) {
+        stageItems = getStageItems(currentStage);
+        stageName = STAGE_NAMES[currentStage] || 'Mental Math';
+        titleEl.innerHTML =
+          '<span class="pg-stage-num">' + currentStage + '</span>' +
+          '<span class="pg-stage-label">Stage ' + currentStage + ' of ' + MAX_STAGE + ' - ' + escapeHtml(stageName) + '</span>' +
+          '<span class="pg-stage-count">(' + stageItems.length + ' Items)</span>';
       }
-      if (!clusterUnlocked) {
-        cls = "sb-cell locked";
-      }
-      var factLabel = getFactAnswerLabel(item);
-      html += '<span class="' + cls + '" title="' + escapeHtml(factLabel) + '" data-fact="' + escapeHtml(factLabel) + '" role="button" tabindex="0" aria-label="' + escapeHtml(factLabel) + '">';
-      html += '</span>';
-    }
-    html += '</div></div>'; // sb-cluster
-  }
 
-  el.progressGrid.innerHTML = html;
-}
+      s = currentStage;
+      clusters = STAGE_CLUSTERS[s] || [];
+      for (ci = 0; ci < clusters.length; ci += 1) {
+        clusterId = clusters[ci];
+        clusterItems = getStageClusterItems(s, clusterId);
+        if (!clusterItems.length) continue;
+
+        clusterUnlocked = false;
+        for (ui = 0; ui < model.unlockedClusters.length; ui += 1) {
+          if (model.unlockedClusters[ui] === clusterId) {
+            clusterUnlocked = true;
+            break;
+          }
+        }
+
+        strategyId = clusterItems[0].strategy || '';
+        strategyLabel = STRATEGY_LABELS[strategyId] || '';
+        clusterLabel = strategyLabel || ('Group ' + clusterId.toUpperCase());
+
+        html += '<div class="sb-cluster' + (clusterUnlocked ? '' : ' locked') + '">';
+        html += '<div class="sb-cluster-label">';
+        html += '<span class="sb-cluster-name">' + escapeHtml(clusterLabel) + '</span>';
+        if (!clusterUnlocked) {
+          html += '<span class="sb-cluster-badge">Locked</span>';
+        }
+        html += '</div>';
+        html += '<div class="sb-items">';
+
+        for (i = 0; i < clusterItems.length; i += 1) {
+          item = clusterItems[i];
+          stats = getItemStats(item.id, progress);
+          displayStatus = getItemDisplayStatus(stats, state.settings.adaptive);
+          cls = 'sb-cell ' + displayStatus;
+          needsAttention = displayStatus === 'struggling' || displayStatus === 'review' || displayStatus === 'learning';
+          if (clusterUnlocked && needsAttention) {
+            cls += ' current-focus';
+          }
+          if (!clusterUnlocked) {
+            cls = 'sb-cell locked';
+          }
+          factLabel = getFactAnswerLabel(item);
+          html += '<span class="' + cls + '" title="' + escapeHtml(factLabel) + '" data-fact="' + escapeHtml(factLabel) + '" role="button" tabindex="0" aria-label="' + escapeHtml(factLabel) + '"></span>';
+        }
+        html += '</div></div>';
+      }
+
+      el.progressGrid.innerHTML = html;
+    }
     // ═══════════════════════════ UI ═══════════════════════════
     function updatePracticeHeader(progress) {
   var p = progress || loadProgress();
@@ -7080,6 +7684,7 @@ function chooseAllStageReviewItem(previousItem, progress) {
       updatePracticeHeader(uiProgress);
       renderPracticeQueue(uiProgress);
       renderProgressGrid(uiProgress);
+      renderJourneyMap(uiProgress);
       renderProgressGraph(uiProgress);
       updateStreakMeter(round ? round.streak : 0);
       updateSpeedUi(round ? getLiveFpm() : 0);
@@ -7892,6 +8497,66 @@ function chooseAllStageReviewItem(previousItem, progress) {
       }, { passive: false });
     }
 
+
+
+    function bindJourneyInteractions() {
+      var panel = el.teacherParentPanel || document.getElementById('teacherParentPanel');
+      var toggle = el.teacherParentToggle || document.getElementById('teacherParentToggle');
+      var content = el.teacherParentContent || document.getElementById('teacherParentContent');
+      var map = el.journeyMap || document.getElementById('journeyMap');
+
+      if (toggle && panel && content && !toggle.dataset.bound) {
+        toggle.dataset.bound = '1';
+        toggle.addEventListener('click', function () {
+          var open = panel.classList.contains('collapsed');
+          panel.classList.toggle('collapsed', !open);
+          content.hidden = !open;
+          toggle.setAttribute('aria-expanded', open ? 'true' : 'false');
+          if (open) {
+            renderProgressGraph((round && round.progress) || loadProgress());
+          }
+        });
+      }
+
+      if (map && !map.dataset.bound) {
+        map.dataset.bound = '1';
+        map.addEventListener('click', function (e) {
+          var target = e.target;
+          var card;
+          var stage;
+          var progress;
+          var stateName;
+
+          while (target && target !== map) {
+            if (target.getAttribute && target.getAttribute('data-journey-stage')) {
+              card = target;
+              break;
+            }
+            target = target.parentNode;
+          }
+
+          if (!card) return;
+          stage = Number(card.getAttribute('data-journey-stage'));
+          progress = (round && round.progress) || loadProgress();
+          stateName = getJourneyWorldState(stage, progress);
+
+          if (stateName === 'current') {
+            showJourneyToast(JOURNEY_MESSAGES.current);
+            if (el.playPanel && el.playPanel.scrollIntoView) {
+              el.playPanel.scrollIntoView({ behavior: 'smooth', block: 'center' });
+            }
+            if (!round && el.startBtn && !el.startBtn.disabled) {
+              setTimeout(function () { el.startBtn.focus(); }, 350);
+            }
+          } else if (stateName === 'complete') {
+            showJourneyToast(getJourneyWorld(stage).completeText || JOURNEY_MESSAGES.complete);
+          } else {
+            showJourneyToast(JOURNEY_MESSAGES.locked);
+          }
+        });
+      }
+    }
+
     // ═════════════════════════════════════════════════ INIT ═════════════════════════════════════════════════
 
     function init() {
@@ -7919,6 +8584,7 @@ function chooseAllStageReviewItem(previousItem, progress) {
       }
 
       bindEvents();
+      bindJourneyInteractions();
       bindStageMapInteractions();
       bindGraphInteractions();
       renderAuthUI();
