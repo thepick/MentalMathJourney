@@ -630,6 +630,11 @@
       cursor: pointer;
     }
     .settings-item:hover { background: var(--color-surface-offset); }
+    .settings-item:disabled {
+      opacity: 0.48;
+      cursor: not-allowed;
+    }
+    .settings-item:disabled:hover { background: none; }
     .settings-item.active { background: var(--color-primary-highlight); color: var(--color-text); font-weight: 700; }
     .settings-item-row {
       display: grid;
@@ -1267,7 +1272,7 @@
             </div>
             <div id="resetConfirm" class="settings-confirm-box" style="display:none;">
               <p id="resetConfirmText">Choose how to reset progress. This cannot be undone.</p>
-              <button type="button" class="settings-item danger" id="settingsConfirmResetLocalBtn" style="display:none;">Reset this device only</button>
+              <button type="button" class="settings-item danger" id="settingsConfirmResetLocalBtn">Reset this device only</button>
               <button type="button" class="settings-item danger" id="settingsConfirmResetCloudBtn">Reset my Google progress</button>
               <button type="button" class="settings-item" id="settingsCancelResetBtn">Cancel</button>
             </div>
@@ -1381,14 +1386,14 @@
               <video class="completion-video" id="completionVideo" src="celebration.mp4" autoplay loop muted playsinline controls preload="auto" aria-label="Final mastery celebration video"></video>
             </div>
             <div class="answer-wrap">
-              <label class="sr-only" for="answerInput">Type answer</label>
+              <label class="sr-only" for="answerInput">Enter answer</label>
               <input id="answerInput" class="answer-input" inputmode="none" autocomplete="off" placeholder="?" maxlength="3" readonly disabled />
               <div class="feedback-pill" id="feedbackPill">Correct</div>
             </div>
             <div class="timeout-overlay" id="timeoutOverlay">
               <div class="answer-reveal" id="timeoutAnswer"></div>
-              <p class="subtle">Type the answer shown to continue</p>
-              <input id="timeoutInput" class="answer-input" inputmode="none" autocomplete="off" placeholder="Type it" maxlength="3" readonly style="max-width:180px;margin:0 auto;" />
+              <p class="subtle">Enter the answer shown to continue</p>
+              <input id="timeoutInput" class="answer-input" inputmode="none" autocomplete="off" placeholder="Enter it" maxlength="3" readonly style="max-width:180px;margin:0 auto;" />
             </div>
             <div class="keypad" aria-label="Number keypad" style="margin-top:var(--space-3);">
               <button type="button" class="key-btn" data-key="1">1</button>
@@ -1517,7 +1522,7 @@
 
     // ═══════════════════════════ CLASSROOM / SHARED DEVICE ═══════════════════════════
     var REQUIRE_SIGN_IN_TO_PRACTICE = true;
-    var SHARED_DEVICE_MODE = false;
+    var SHARED_DEVICE_MODE = true;
     var STARTING_STAGE = 1;   // First stage (default: 2)
     var MAX_STAGE = 6;  // Last stage  (default: 12)
 
@@ -1527,9 +1532,9 @@
     var DEFAULT_SPEED_TARGET_FPM = 20;
     var DAILY_QUIZ_TARGET = 5;
 
-    // Mastery is now more forgiving for classroom typing practice.
+    // Mastery is now more forgiving for classroom keypad practice.
     // The speed target is converted to a per-item fluent time with a grace multiplier
-    // so occasional typing delay or a brief brain-fart does not erase mastery.
+    // so occasional input delay or a brief brain-fart does not erase mastery.
     var SPEED_TARGET_FLUENCY_GRACE = 1.25;
     var GRADUATION_MASTERED_PCT = 0.80;
     var GRADUATION_STRONG_READY_PCT = 0.70;
@@ -1762,6 +1767,7 @@ var state = {
       el.settingsResetBtn = document.getElementById('settingsResetBtn');
       el.resetNormal = document.getElementById('resetNormal');
       el.resetConfirm = document.getElementById('resetConfirm');
+      el.resetConfirmText = document.getElementById('resetConfirmText');
       el.settingsCancelResetBtn = document.getElementById('settingsCancelResetBtn');
       el.themeLightBtn = document.getElementById('themeLightBtn');
       el.themeDarkBtn = document.getElementById('themeDarkBtn');
@@ -1796,7 +1802,6 @@ var state = {
       el.timeoutAnswer = document.getElementById('timeoutAnswer');
       el.timeoutInput = document.getElementById('timeoutInput');
       el.cooldownBanner = document.getElementById('cooldownBanner');
-      el.cooldownHint = document.getElementById('cooldownHint');
       el.progressGridPanel = document.getElementById('progressGridPanel');
       el.progressGrid = document.getElementById('progressGrid');
       el.progressGraph = document.getElementById('progressGraph');
@@ -2787,6 +2792,10 @@ var state = {
       syncState.permissionBlocked = false;
     }
 
+    
+    
+    
+    
     function setDriveSyncDot(status) {
       if (!el.headerDriveSyncDot) return;
       var cls = 'drive-sync-dot';
@@ -3122,6 +3131,7 @@ var state = {
         });
     }
 
+    
     function fetchGoogleUserInfo() {
       if (!syncState.signedIn || !syncState.accessToken) return Promise.resolve(null);
       return driveFetch('https://www.googleapis.com/oauth2/v2/userinfo', { method: 'GET' })
@@ -6689,7 +6699,6 @@ function chooseAllStageReviewItem(previousItem, progress) {
     function hideCooldown() {
       if (cooldownHideTimer) { clearTimeout(cooldownHideTimer); cooldownHideTimer = null; }
       if (el.cooldownBanner) el.cooldownBanner.classList.remove('active');
-      if (el.cooldownHint) { el.cooldownHint.classList.remove('active'); }
     }
     function hideGraduateBanner() { el.graduateBanner.classList.remove('active'); }
     function clamp(v, min, max) { return Math.max(min, Math.min(max, v)); }
@@ -6876,6 +6885,27 @@ function chooseAllStageReviewItem(previousItem, progress) {
       if (el.resetConfirm) el.resetConfirm.style.display = 'none';
     }
 
+    function updateResetConfirmUi() {
+      var signedIn = !!syncState.signedIn;
+
+      if (el.settingsConfirmResetLocalBtn) {
+        el.settingsConfirmResetLocalBtn.style.display = '';
+        el.settingsConfirmResetLocalBtn.disabled = false;
+      }
+
+      if (el.settingsConfirmResetCloudBtn) {
+        el.settingsConfirmResetCloudBtn.disabled = !signedIn;
+        el.settingsConfirmResetCloudBtn.textContent = signedIn ? 'Reset my Google progress' : 'Sign in to reset Google progress';
+        el.settingsConfirmResetCloudBtn.title = signedIn ? '' : 'Sign in with Google before resetting cloud progress.';
+      }
+
+      if (el.resetConfirmText) {
+        el.resetConfirmText.textContent = signedIn ?
+          'Choose how to reset progress. This cannot be undone.' :
+          'You can reset this device now. Sign in with Google before resetting Google progress.';
+      }
+    }
+
 
     // ═══════════════════════════ SCORE INFO PANEL ═══════════════════════════
     function openScoreInfo() {
@@ -6973,6 +7003,7 @@ function chooseAllStageReviewItem(previousItem, progress) {
           if (open) {
             updateHapticsMenuText();
             syncSpeedTargetSlider();
+            updateResetConfirmUi();
             if (el.resetNormal) el.resetNormal.style.display = '';
             if (el.resetConfirm) el.resetConfirm.style.display = 'none';
           }
@@ -6988,6 +7019,7 @@ function chooseAllStageReviewItem(previousItem, progress) {
       if (el.settingsResetBtn) {
         el.settingsResetBtn.addEventListener('click', function (e) {
           e.stopPropagation();
+          updateResetConfirmUi();
           if (el.resetNormal) el.resetNormal.style.display = 'none';
           if (el.resetConfirm) el.resetConfirm.style.display = '';
         });
@@ -7000,6 +7032,10 @@ function chooseAllStageReviewItem(previousItem, progress) {
       }
       if (el.settingsConfirmResetCloudBtn) {
         el.settingsConfirmResetCloudBtn.addEventListener('click', function () {
+          if (!syncState.signedIn) {
+            updateResetConfirmUi();
+            return;
+          }
           closeSettingsMenu();
           resetProgress({ deleteCloud: true });
         });
