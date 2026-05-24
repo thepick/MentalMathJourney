@@ -337,6 +337,7 @@ export default function App() {
   const questionStartedAtRef = useRef<number>(Date.now());
   const answerLockedRef = useRef<boolean>(false);
   const roundCompletedRef = useRef<boolean>(false);
+  const countdownTimersRef = useRef<ReturnType<typeof setTimeout>[]>([]);
   const roundAttemptsRef = useRef<number>(0);
   const roundCorrectAttemptsRef = useRef<number>(0);
   const roundWrongAttemptsRef = useRef<number>(0);
@@ -377,6 +378,8 @@ export default function App() {
 
   // Stats in the round
   const [isRoundActive, setIsRoundActive] = useState<boolean>(false);
+  const [countdownValue, setCountdownValue] = useState<string | null>(null);
+  const [countdownLabel, setCountdownLabel] = useState<string>("Get ready");
   const [currentStreak, setCurrentStreak] = useState<number>(0);
   const [bestStreakRound, setBestStreakRound] = useState<number>(0);
   
@@ -396,6 +399,7 @@ export default function App() {
   
   // Tab control: "map" or "encyclopedia"
   const [activeTab, setActiveTab] = useState<"map" | "encyclopedia" | "practice">("map");
+  const isTimedQuizInProgress = activeTab === "practice" && !!activeStrategyRound && !roundCompleted && (isRoundActive || countdownValue !== null);
 
   // Load progress from localStorage
   useEffect(() => {
@@ -422,6 +426,14 @@ export default function App() {
   useEffect(() => {
     factStatsRef.current = factStats;
   }, [factStats]);
+
+  useEffect(() => {
+    return () => {
+      countdownTimersRef.current.forEach((timerId) => clearTimeout(timerId));
+      document.body.classList.remove("timed-quiz-active");
+      document.documentElement.classList.remove("timed-quiz-active");
+    };
+  }, []);
 
   // Save progress
   const saveProgress = (
@@ -543,8 +555,77 @@ export default function App() {
     setRoundCompleted(true);
   };
 
+  const clearRoundCountdown = () => {
+    countdownTimersRef.current.forEach((timerId) => clearTimeout(timerId));
+    countdownTimersRef.current = [];
+    setCountdownValue(null);
+    setCountdownLabel("Get ready");
+  };
+
+  const resetTimedRoundCounters = () => {
+    roundCompletedRef.current = false;
+    answerLockedRef.current = false;
+    const now = Date.now();
+    questionStartedAtRef.current = now;
+    setQuestionStartedAt(now);
+    setTimeLeft(60);
+    setRoundScore(0);
+    setRoundAttempts(0);
+    setRoundCorrectAttempts(0);
+    setRoundWrongAttempts(0);
+    roundAttemptsRef.current = 0;
+    roundCorrectAttemptsRef.current = 0;
+    roundWrongAttemptsRef.current = 0;
+    setCurrentQuestionIdx(0);
+    setUserAnswer("");
+    setRoundCompleted(false);
+    setCurrentStreak(0);
+    setBestStreakRound(0);
+    setConsecutiveErrors(0);
+    setSpamWarning(null);
+    setShowHint(false);
+  };
+
+  const beginTimedRoundNow = () => {
+    clearRoundCountdown();
+    resetTimedRoundCounters();
+    setIsRoundActive(true);
+    window.setTimeout(() => {
+      const activeElement = document.activeElement as HTMLElement | null;
+      if (activeElement && typeof activeElement.blur === "function") {
+        activeElement.blur();
+      }
+    }, 0);
+  };
+
+  const startTimedRoundCountdown = () => {
+    if (isRoundActive || countdownValue !== null) return;
+    resetTimedRoundCounters();
+    setIsRoundActive(false);
+    setCountdownLabel("Get ready");
+    setCountdownValue("3");
+    setEncouragingText("Get ready... 🚀");
+
+    const steps: Array<{ delay: number; value: string | null; label: string; done?: boolean }> = [
+      { delay: 1000, value: "2", label: "Get ready" },
+      { delay: 2000, value: "1", label: "Get ready" },
+      { delay: 3000, value: "Go!", label: "Start" },
+      { delay: 3700, value: null, label: "Start", done: true },
+    ];
+
+    countdownTimersRef.current = steps.map((step) => window.setTimeout(() => {
+      if (step.done) {
+        beginTimedRoundNow();
+        return;
+      }
+      setCountdownLabel(step.label);
+      setCountdownValue(step.value);
+    }, step.delay));
+  };
+
   // Launch practice session
   const handleStartPracticeRound = (strategy: Strategy) => {
+    clearRoundCountdown();
     setActiveModalStrategy(null); // Close modal
     setActiveStrategyRound(strategy);
 
@@ -746,16 +827,59 @@ export default function App() {
     }, 400);
   };
 
-  // Auto-focus input when the round is active or on question index change
+  // Keep mobile keyboards hidden during timed quizzes. Hardware keyboard input is handled below.
   useEffect(() => {
-    if (activeTab === "practice" && isRoundActive && !roundCompleted) {
-      // Small timeout to guarantee completion of layout rendering
-      const t = setTimeout(() => {
-        inputRef.current?.focus();
-      }, 50);
-      return () => clearTimeout(t);
+    if (!isTimedQuizInProgress) {
+      document.body.classList.remove("timed-quiz-active");
+      document.documentElement.classList.remove("timed-quiz-active");
+      return;
     }
-  }, [activeTab, isRoundActive, roundCompleted, currentQuestionIdx]);
+
+    document.body.classList.add("timed-quiz-active");
+    document.documentElement.classList.add("timed-quiz-active");
+
+    const blurFocusedInput = () => {
+      const activeElement = document.activeElement as HTMLElement | null;
+      if (activeElement && typeof activeElement.blur === "function") {
+        activeElement.blur();
+      }
+      inputRef.current?.blur();
+    };
+
+    blurFocusedInput();
+    const blurTimer = window.setTimeout(blurFocusedInput, 75);
+
+    return () => {
+      window.clearTimeout(blurTimer);
+      document.body.classList.remove("timed-quiz-active");
+      document.documentElement.classList.remove("timed-quiz-active");
+    };
+  }, [isTimedQuizInProgress, currentQuestionIdx]);
+
+  // Hardware keyboard support without focusing a mobile text input
+  useEffect(() => {
+    if (!isTimedQuizInProgress || !isRoundActive) return;
+
+    const handleHardwareKey = (event: KeyboardEvent) => {
+      if (/^[0-9]$/.test(event.key)) {
+        event.preventDefault();
+        handleNumClick(event.key);
+        return;
+      }
+      if (event.key === "Backspace" || event.key === "Delete") {
+        event.preventDefault();
+        handleNumClick("DELETE");
+        return;
+      }
+      if (event.key === "Enter") {
+        event.preventDefault();
+        handleSubmitAnswer();
+      }
+    };
+
+    window.addEventListener("keydown", handleHardwareKey);
+    return () => window.removeEventListener("keydown", handleHardwareKey);
+  }, [isTimedQuizInProgress, isRoundActive, userAnswer, currentQuestion]);
 
   // Typing listener for correct answer matching
   useEffect(() => {
@@ -826,6 +950,7 @@ export default function App() {
   // Quick reset progress helper (for teachers/testing)
   const handleResetProgress = () => {
     if (window.confirm("Do you want to reset your stars and math journey path?")) {
+      clearRoundCountdown();
       setViewedStrategyIds([1]);
       setMasteredStrategyIds([]);
       setStars(0);
@@ -851,7 +976,8 @@ export default function App() {
       </div>
 
       {/* HEADER HUD */}
-      <header className="border-b-[4px] border-blue-200 bg-white/90 backdrop-blur-md sticky top-0 z-40 px-4 py-3 shadow-md">
+      {!isTimedQuizInProgress && (
+      <header className="border-b-[4px] border-blue-200 bg-white/90 backdrop-blur-md px-4 py-3 shadow-md">
         <div className="max-w-6xl mx-auto flex flex-col sm:flex-row items-center justify-between gap-3">
           
           <div className="flex items-center justify-center sm:justify-start gap-2.5 w-full sm:w-auto text-center sm:text-left">
@@ -900,8 +1026,10 @@ export default function App() {
 
         </div>
       </header>
+      )}
 
       {/* SUB MENU NAVIGATION */}
+      {!isTimedQuizInProgress && (
       <div className="bg-blue-900/10 border-b-[4px] border-blue-200/80 py-3 px-4">
         <div className="max-w-6xl mx-auto flex flex-wrap gap-2">
           <button
@@ -932,9 +1060,10 @@ export default function App() {
 
         </div>
       </div>
+      )}
 
       {/* CORE DISPLAY WINDOW */}
-      <main className="flex-1 max-w-6xl w-full mx-auto p-4 md:p-6">
+      <main className={`flex-1 max-w-6xl w-full mx-auto ${isTimedQuizInProgress ? "timed-quiz-main p-0 sm:p-4 md:p-6" : "p-4 md:p-6"}`}>
         
         {/* TAB 1: ADVENTURE MAP STAGES */}
         {activeTab === "map" && (
@@ -1469,12 +1598,15 @@ export default function App() {
 
         {/* TAB 3: THE PRACTICE ARENA SCREEN */}
         {activeTab === "practice" && activeStrategyRound && (
-          <div className="max-w-2xl mx-auto">
+          <div className={`max-w-2xl mx-auto ${isTimedQuizInProgress ? "timed-practice-shell" : ""}`}>
             
             {/* Header back options */}
+            {!isTimedQuizInProgress && (
             <div className="flex items-center justify-between mb-4">
               <button
                 onClick={() => {
+                  clearRoundCountdown();
+                  setIsRoundActive(false);
                   setActiveTab("map");
                 }}
                 className="text-xs text-blue-800 hover:text-blue-900 flex items-center gap-1.5 bg-white border-2 border-blue-200 px-3 py-1.5 rounded-xl font-black transition active:translate-y-0.5 cursor-pointer"
@@ -1487,12 +1619,42 @@ export default function App() {
                 Practicing Strategy {activeStrategyRound.id}/{STRATEGIES.length}
               </span>
             </div>
+            )}
 
             {/* Main practicing card */}
-            <div className="bg-white rounded-[40px] border-[6px] border-blue-400 p-6 md:p-8 relative overflow-hidden shadow-[0_20px_0px_0px_#BFDBFE] text-slate-900">
+            <div className={`bg-white rounded-[40px] border-[6px] border-blue-400 p-6 md:p-8 relative overflow-hidden shadow-[0_20px_0px_0px_#BFDBFE] text-slate-900 ${isTimedQuizInProgress ? "timed-quiz-card" : ""}`}>
               
               {/* Outer boundary glow */}
               <div className="absolute top-0 left-0 w-full h-[6px] bg-[#FF4757]" />
+
+              <AnimatePresence>
+                {countdownValue !== null && (
+                  <motion.div
+                    key="timed-round-countdown"
+                    initial={{ opacity: 0 }}
+                    animate={{ opacity: 1 }}
+                    exit={{ opacity: 0 }}
+                    className="absolute inset-0 z-50 grid place-items-center bg-white/80 backdrop-blur-[2px] pointer-events-none"
+                    aria-live="assertive"
+                  >
+                    <div className="rounded-[32px] border-4 border-blue-300 bg-white/95 px-8 py-6 text-center shadow-2xl min-w-[180px]">
+                      <div className="text-[11px] font-black uppercase tracking-[0.2em] text-blue-700 mb-2">
+                        {countdownLabel}
+                      </div>
+                      <motion.div
+                        key={countdownValue}
+                        initial={{ scale: 0.72, opacity: 0, y: 12 }}
+                        animate={{ scale: 1, opacity: 1, y: 0 }}
+                        exit={{ scale: 1.2, opacity: 0, y: -12 }}
+                        transition={{ type: "spring", stiffness: 420, damping: 18 }}
+                        className="text-6xl md:text-8xl font-black font-display text-[#FF4757] leading-none"
+                      >
+                        {countdownValue}
+                      </motion.div>
+                    </div>
+                  </motion.div>
+                )}
+              </AnimatePresence>
 
               {!roundCompleted ? (
                 // Active Math Quest Layout
@@ -1583,29 +1745,7 @@ export default function App() {
 
                       {/* Huge Start Button */}
                       <button
-                        onClick={() => {
-                          setIsRoundActive(true);
-                          roundCompletedRef.current = false;
-                          answerLockedRef.current = false;
-                          const now = Date.now();
-                          questionStartedAtRef.current = now;
-                          setQuestionStartedAt(now);
-                          setTimeLeft(60);
-                          setRoundScore(0);
-                          setRoundAttempts(0);
-                          setRoundCorrectAttempts(0);
-                          setRoundWrongAttempts(0);
-                          roundAttemptsRef.current = 0;
-                          roundCorrectAttemptsRef.current = 0;
-                          roundWrongAttemptsRef.current = 0;
-                          setCurrentQuestionIdx(0);
-                          setUserAnswer("");
-                          setRoundCompleted(false);
-                          setCurrentStreak(0);
-                          setBestStreakRound(0);
-                          setConsecutiveErrors(0);
-                          setSpamWarning(null);
-                        }}
+                        onClick={startTimedRoundCountdown}
                         className="w-full max-w-[340px] mx-auto block bg-emerald-500 hover:bg-emerald-600 text-white font-black py-4 rounded-2xl text-lg transition border-2 border-emerald-600 shadow-[0_5px_0px_#047857] active:scale-98 active:translate-y-0.5 cursor-pointer active:shadow-none"
                       >
                         Start 1-Minute Sprint! ⏱️
@@ -1613,7 +1753,7 @@ export default function App() {
                     </div>
                   ) : (
                     // Timed Active Sprint Playing Layout
-                    <div className="space-y-5">
+                    <div className="timed-sprint-layout space-y-5">
                       
                       {/* Quiet digital indicators (Time & Score) */}
                       <div className="flex justify-between items-center bg-slate-50/80 px-4 py-2.5 rounded-2xl border border-slate-100">
@@ -1693,7 +1833,7 @@ export default function App() {
 
                       {/* Math Question Arena Display */}
                       <motion.div 
-                        onClick={() => inputRef.current?.focus()}
+                        onClick={() => inputRef.current?.blur()}
                         animate={isShaking ? { x: [-10, 10, -10, 10, -5, 5, 0] } : {}}
                         transition={{ duration: 0.3 }}
                         className={`text-center py-6 md:py-8 rounded-3xl border-4 transition-all duration-200 relative overflow-hidden select-none cursor-pointer ${
@@ -1769,18 +1909,21 @@ export default function App() {
                         ref={inputRef}
                         type="text"
                         pattern="[0-9]*"
-                        inputMode="numeric"
+                        inputMode="none"
+                        autoComplete="off"
                         value={userAnswer}
                         onChange={(e) => {
                           const val = e.target.value.replace(/[^0-9]/g, "");
                           setUserAnswer(val);
                         }}
                         className="sr-only opacity-0 absolute pointer-events-none"
-                        autoFocus
+                        readOnly
+                        tabIndex={-1}
+                        aria-hidden="true"
                       />
 
                       {/* RESTORED KEYPAD EXACTLY AS PREVIOUSLY DESIGNED */}
-                      <div className="space-y-3">
+                      <div className="timed-keypad-wrap space-y-3">
                         <div className="grid grid-cols-3 gap-2.5 max-w-[340px] mx-auto select-none">
                           {["1", "2", "3", "4", "5", "6", "7", "8", "9"].map((num) => (
                             <button
@@ -1812,6 +1955,7 @@ export default function App() {
                       </div>
 
                       {/* Hint Slide Drawer Buttons */}
+                      {!isTimedQuizInProgress && (
                       <div className="flex gap-2.5 max-w-[340px] mx-auto select-none pt-1">
                         <button
                           onClick={() => setShowHint(!showHint)}
@@ -1829,8 +1973,9 @@ export default function App() {
                           Revisit Lesson Slide (Full)
                         </button>
                       </div>
+                      )}
 
-                      {showHint && (
+                      {!isTimedQuizInProgress && showHint && (
                         <div className="bg-yellow-50/50 border-2 border-yellow-200 p-4 rounded-2xl space-y-2 max-w-[340px] mx-auto text-left">
                           <div className="flex items-center gap-1.5">
                             <Lightbulb className="w-4 h-4 text-yellow-500 stroke-[2.5]" />

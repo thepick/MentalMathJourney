@@ -21,3 +21,81 @@
   animation: bounce-slow 3s infinite ease-in-out;
 }
 
+
+/* Timed sprint mobile layout fixes */
+html.timed-quiz-active,
+body.timed-quiz-active {
+  overscroll-behavior: none;
+}
+
+body.timed-quiz-active input {
+  caret-color: transparent;
+}
+
+@media (max-width: 640px) {
+  .timed-quiz-main {
+    width: 100% !important;
+    max-width: none !important;
+    padding: 0 !important;
+  }
+
+  .timed-practice-shell {
+    width: 100% !important;
+    max-width: none !important;
+    margin-left: 0 !important;
+    margin-right: 0 !important;
+  }
+
+  .timed-quiz-card {
+    min-height: 100dvh;
+    border-left-width: 0 !important;
+    border-right-width: 0 !important;
+    border-bottom-width: 0 !important;
+    border-radius: 0 !important;
+    box-shadow: none !important;
+    padding: 0.65rem 0.75rem max(0.45rem, env(safe-area-inset-bottom)) !important;
+  }
+
+  .timed-quiz-card > .space-y-6 {
+    min-height: calc(100dvh - 1.3rem);
+    display: flex;
+    flex-direction: column;
+  }
+
+  .timed-sprint-layout {
+    min-height: calc(100dvh - 1.3rem);
+    display: flex;
+    flex-direction: column;
+  }
+
+  .timed-sprint-layout > * + * {
+    margin-top: 0.5rem !important;
+  }
+
+  .timed-sprint-layout .rounded-3xl {
+    padding-top: 1rem !important;
+    padding-bottom: 1rem !important;
+  }
+
+  .timed-sprint-layout h4 {
+    font-size: clamp(2.7rem, 14vw, 4.35rem) !important;
+    line-height: 1.05 !important;
+  }
+
+  .timed-keypad-wrap {
+    margin-top: auto !important;
+    padding-bottom: max(0rem, env(safe-area-inset-bottom));
+  }
+
+  .timed-keypad-wrap .grid {
+    width: min(340px, 96vw);
+    max-width: min(340px, 96vw) !important;
+    gap: 0.45rem !important;
+  }
+
+  .timed-keypad-wrap button {
+    padding-top: 0.7rem !important;
+    padding-bottom: 0.7rem !important;
+    touch-action: manipulation;
+  }
+}
