@@ -1087,6 +1087,67 @@
   .info-card li {
     margin: 0.35rem 0;
   }
+  .strategy-lesson-card {
+    width: min(92vw, 560px);
+  }
+  .strategy-lesson-reason {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.35rem;
+    margin-bottom: var(--space-2);
+    padding: 0.35rem 0.55rem;
+    border-radius: var(--radius-full);
+    background: var(--color-primary-highlight);
+    color: var(--color-primary);
+    font-size: var(--text-xs);
+    font-weight: 800;
+    text-transform: uppercase;
+    letter-spacing: 0.06em;
+  }
+  .strategy-lesson-name {
+    margin: 0 0 var(--space-2);
+    font-size: 1.35rem;
+    line-height: 1.12;
+    color: var(--color-text);
+  }
+  .strategy-lesson-example {
+    margin: var(--space-3) 0 var(--space-2);
+    padding: var(--space-3);
+    border-radius: var(--radius-lg);
+    background: var(--color-surface-offset);
+    border: 1px solid color-mix(in srgb, var(--color-text) 10%, transparent);
+  }
+  .strategy-lesson-example-label {
+    display: block;
+    margin-bottom: 0.2rem;
+    font-size: var(--text-xs);
+    font-weight: 800;
+    color: var(--color-text-muted);
+    text-transform: uppercase;
+    letter-spacing: 0.08em;
+  }
+  .strategy-lesson-problem {
+    display: block;
+    font-size: 1.55rem;
+    line-height: 1.1;
+    color: var(--color-text);
+  }
+  .strategy-lesson-steps {
+    margin: 0 0 var(--space-3) 1.2rem;
+    padding: 0;
+  }
+  .strategy-lesson-steps li {
+    margin: 0.32rem 0;
+    color: var(--color-text-muted);
+  }
+  .strategy-lesson-extra {
+    margin: var(--space-2) 0 var(--space-3);
+    padding: var(--space-3);
+    border-radius: var(--radius-lg);
+    background: var(--color-gold-highlight);
+    color: var(--color-text);
+    font-size: var(--text-sm);
+  }
   .info-close-btn {
     flex: 0 0 auto;
     width: 34px;
@@ -1907,6 +1968,23 @@
     </div>
   </div>
 
+  <div class="info-overlay hidden" id="strategyLessonOverlay" role="dialog" aria-modal="true" aria-labelledby="strategyLessonTitle">
+    <div class="info-card strategy-lesson-card" role="document">
+      <div class="info-card-header">
+        <h2 id="strategyLessonTitle">Strategy Break</h2>
+        <button type="button" class="info-close-btn" id="strategyLessonCloseBtn" aria-label="Close strategy lesson"><svg width="12" height="12" viewBox="0 0 12 12" fill="none" aria-hidden="true"><path d="M1 1l10 10M11 1L1 11" stroke="currentColor" stroke-width="2" stroke-linecap="round"/></svg></button>
+      </div>
+      <p class="strategy-lesson-reason" id="strategyLessonReason">New strategy unlocked</p>
+      <h3 class="strategy-lesson-name" id="strategyLessonName">Mental Math Strategy</h3>
+      <p id="strategyLessonIntro">Use this strategy when it helps.</p>
+      <div id="strategyLessonBody"></div>
+      <p id="strategyLessonFooter">Try this in the next round when it helps.</p>
+      <div class="row" style="justify-content:flex-end;margin-top:var(--space-3);">
+        <button type="button" class="btn" id="strategyLessonDoneBtn">Start Next Round</button>
+      </div>
+    </div>
+  </div>
+
   <div id="mobileCornerTimer" aria-live="polite" aria-label="Time remaining"></div>
   <div class="levelup-toast" id="levelupToast" aria-live="polite"></div>
   <div class="graph-tooltip" id="graphTooltip"></div>
@@ -2118,6 +2196,154 @@
       'bridging': 'Bridge Across!'
     };
 
+    var STRATEGY_LESSONS = {
+      '1-a': {
+        reason: 'You unlocked anchor facts!',
+        name: 'Same Number Facts',
+        intro: 'When you add 0 or take away 0, the number stays the same.',
+        examples: [
+          { problem: '7 + 0', steps: ['Adding 0 means nothing is added.', 'The number stays 7.'] },
+          { problem: '7 - 0', steps: ['Taking away 0 means nothing is removed.', 'The number stays 7.'] }
+        ]
+      },
+      '1-b': {
+        reason: 'You unlocked a new anchor strategy!',
+        name: 'One More and One Less',
+        intro: 'When you add 1, say the next number. When you subtract 1, say the number before.',
+        examples: [
+          { problem: '6 + 1', steps: ['Start at 6.', 'The next number is 7.'] },
+          { problem: '6 - 1', steps: ['Start at 6.', 'The number before is 5.'] }
+        ]
+      },
+      '1-c': {
+        reason: 'You unlocked two-jump facts!',
+        name: 'Two More and Two Less',
+        intro: 'When you add 2, count forward two jumps. When you subtract 2, count back two jumps.',
+        examples: [
+          { problem: '5 + 2', steps: ['Start at 5.', 'Count two jumps: 6, 7.', 'So 5 + 2 = 7.'] },
+          { problem: '8 - 2', steps: ['Start at 8.', 'Count back two jumps: 7, 6.', 'So 8 - 2 = 6.'] }
+        ]
+      },
+      '1-d': {
+        reason: 'You unlocked 10 partners!',
+        name: 'Make 10 Pairs',
+        intro: 'Some numbers are partners because they add up to 10.',
+        examples: [
+          { problem: '4 + 6', steps: ['4 and 6 are partners.', 'Together they make 10.', 'So 4 + 6 = 10.'] }
+        ],
+        extra: 'Other pairs: 1 + 9, 2 + 8, 3 + 7, and 5 + 5.'
+      },
+      '1-e': {
+        reason: 'You unlocked subtraction from 10!',
+        name: 'Subtract from 10',
+        intro: 'Use your 10 partners to subtract from 10.',
+        examples: [
+          { problem: '10 - 6', steps: ['6 and 4 make 10.', 'If 6 is taken away from 10, 4 is left.', 'So 10 - 6 = 4.'] }
+        ]
+      },
+      '2-a': {
+        reason: 'You unlocked count-on addition!',
+        name: 'Count On to Add',
+        intro: 'For addition, start with the bigger number and count on the smaller number.',
+        examples: [
+          { problem: '3 + 8', steps: ['Start with 8.', 'Count on 3 jumps: 9, 10, 11.', 'So 3 + 8 = 11.'] }
+        ]
+      },
+      '2-b': {
+        reason: 'You unlocked count-back subtraction!',
+        name: 'Count Back to Subtract',
+        intro: 'When subtracting a small number, start with the first number and count back.',
+        examples: [
+          { problem: '13 - 4', steps: ['Start at 13.', 'Count back 4 jumps: 12, 11, 10, 9.', 'So 13 - 4 = 9.'] }
+        ]
+      },
+      '2-c': {
+        reason: 'You unlocked count-up subtraction!',
+        name: 'Count Up to Find the Difference',
+        intro: 'Sometimes subtraction is easier if you count up from the smaller number.',
+        examples: [
+          { problem: '14 - 9', steps: ['Start at 9.', 'Count up to 14: 10, 11, 12, 13, 14.', 'That is 5 jumps, so 14 - 9 = 5.'] }
+        ]
+      },
+      '3-a': {
+        reason: 'You unlocked doubles!',
+        name: 'Doubles and Half Facts',
+        intro: 'A double is the same number added to itself. A half fact is the matching subtraction fact.',
+        examples: [
+          { problem: '6 + 6', steps: ['Double 6 is 12.', 'So 6 + 6 = 12.'] },
+          { problem: '12 - 6', steps: ['12 is double 6.', 'Half of 12 is 6.', 'So 12 - 6 = 6.'] }
+        ]
+      },
+      '3-b': {
+        reason: 'You unlocked near doubles!',
+        name: 'Near Doubles',
+        intro: 'If two numbers are almost the same, use the double you know.',
+        examples: [
+          { problem: '6 + 7', steps: ['6 + 6 = 12.', '7 is one more than 6.', 'Add 1 more: 12 + 1 = 13.', 'So 6 + 7 = 13.'] }
+        ]
+      },
+      '3-c': {
+        reason: 'You unlocked near-double subtraction!',
+        name: 'Near Doubles Backwards',
+        intro: 'Use a near-double addition fact to solve a subtraction fact.',
+        examples: [
+          { problem: '13 - 6', steps: ['6 + 7 = 13.', 'If 6 is taken away from 13, 7 is left.', 'So 13 - 6 = 7.'] }
+        ]
+      },
+      '4-a': {
+        reason: 'You unlocked make-10 addition!',
+        name: 'Make 10 First',
+        intro: 'When a number is close to 10, make 10 first. Then add what is left.',
+        examples: [
+          { problem: '8 + 5', steps: ['8 needs 2 to make 10.', 'Split 5 into 2 and 3.', '8 + 2 = 10.', '10 + 3 = 13.', 'So 8 + 5 = 13.'] }
+        ]
+      },
+      '4-b': {
+        reason: 'You unlocked bridge-back subtraction!',
+        name: 'Bridge Back Through 10',
+        intro: 'When subtracting across 10, go back to 10 first. Then subtract what is left.',
+        examples: [
+          { problem: '13 - 5', steps: ['13 needs to go back 3 to reach 10.', 'Split 5 into 3 and 2.', '13 - 3 = 10.', '10 - 2 = 8.', 'So 13 - 5 = 8.'] }
+        ]
+      },
+      '5-a': {
+        reason: 'You unlocked fact families!',
+        name: 'Think Inverse',
+        intro: 'Addition and subtraction facts can belong to the same family.',
+        examples: [
+          { problem: '13 + 7', steps: ['13 and 7 are partners that make 20.', 'So 13 + 7 = 20.'] },
+          { problem: '20 - 8', steps: ['What number goes with 8 to make 20?', '8 + 12 = 20.', 'So 20 - 8 = 12.'] }
+        ]
+      },
+      '6-a': {
+        reason: 'You unlocked compensation!',
+        name: 'Make a Friendly Number',
+        intro: 'Change one number to a friendly number, then fix the answer.',
+        examples: [
+          { problem: '29 + 5', steps: ['29 is close to 30.', '29 + 1 = 30.', 'There are 4 left from the 5.', '30 + 4 = 34.', 'So 29 + 5 = 34.'] },
+          { problem: '31 - 9', steps: ['9 is close to 10.', '31 - 10 = 21.', 'You subtracted 1 too many, so add 1 back.', '21 + 1 = 22.', 'So 31 - 9 = 22.'] }
+        ]
+      },
+      '6-b': {
+        reason: 'You unlocked partitioning!',
+        name: 'Split Tens and Ones',
+        intro: 'Break a two-digit number into tens and ones.',
+        examples: [
+          { problem: '35 + 12', steps: ['35 + 10 = 45.', '45 + 2 = 47.', 'So 35 + 12 = 47.'] },
+          { problem: '48 - 24', steps: ['48 - 20 = 28.', '28 - 4 = 24.', 'So 48 - 24 = 24.'] }
+        ]
+      },
+      '6-c': {
+        reason: 'You unlocked flexible bridging!',
+        name: 'Bridge Across Tens',
+        intro: 'Move to the next ten first. Then add or subtract what is left.',
+        examples: [
+          { problem: '27 + 15', steps: ['27 needs 3 to reach 30.', 'Split 15 into 3 and 12.', '27 + 3 = 30.', '30 + 12 = 42.', 'So 27 + 15 = 42.'] },
+          { problem: '51 - 28', steps: ['51 - 20 = 31.', 'Now subtract 8.', '31 - 1 = 30.', '30 - 7 = 23.', 'So 51 - 28 = 23.'] }
+        ]
+      }
+    };
+
     // Stage-specific speed multipliers adjust the fluentMs threshold per stage.
     // Anchor facts and doubles should be answered faster; counting strategies get the base target.
     // Multiplier < 1.0 = stricter threshold. Multiplier = 1.0 = default.
@@ -2296,6 +2522,14 @@ var state = {
       el.scoreInfoOverlay = document.getElementById('scoreInfoOverlay');
       el.scoreInfoCloseBtn = document.getElementById('scoreInfoCloseBtn');
       el.scoreInfoDoneBtn = document.getElementById('scoreInfoDoneBtn');
+      el.strategyLessonOverlay = document.getElementById('strategyLessonOverlay');
+      el.strategyLessonCloseBtn = document.getElementById('strategyLessonCloseBtn');
+      el.strategyLessonDoneBtn = document.getElementById('strategyLessonDoneBtn');
+      el.strategyLessonReason = document.getElementById('strategyLessonReason');
+      el.strategyLessonName = document.getElementById('strategyLessonName');
+      el.strategyLessonIntro = document.getElementById('strategyLessonIntro');
+      el.strategyLessonBody = document.getElementById('strategyLessonBody');
+      el.strategyLessonFooter = document.getElementById('strategyLessonFooter');
       el.levelupToast = document.getElementById('levelupToast');
       el.playPanel = document.getElementById('playPanel');
       el.problemArea = document.getElementById('problemArea');
@@ -2549,6 +2783,7 @@ var state = {
       if (p.speedTargetUpdatedAtMs == null) p.speedTargetUpdatedAtMs = 0;
       p.speedTargetFpm = getProgressSpeedTargetFpm(p);
       p.speedTargetScaleVersion = SPEED_TARGET_SCALE_VERSION;
+      if (!p.seenStrategyLessons || typeof p.seenStrategyLessons !== 'object') p.seenStrategyLessons = {};
       p.hasCompletedAllStages = p.hasCompletedAllStages === true;
       return p;
     }
@@ -2642,6 +2877,7 @@ var state = {
         speedTargetFpm: DEFAULT_SPEED_TARGET_FPM,
         speedTargetUpdatedAtMs: 0,
         speedTargetScaleVersion: SPEED_TARGET_SCALE_VERSION,
+        seenStrategyLessons: {},
         hasCompletedAllStages: false
       };
     }
@@ -6212,6 +6448,7 @@ function chooseAllStageReviewItem(previousItem, progress) {
         strategyShown: false, answerRevealActive: false,
         hasRecordedWrong: false, timeoutsTriggered: 0,
         graduated: false,
+        pendingGraduation: null,
         progress: progress,
         progressDirty: false,
         startProgressSnapshot: cloneJson(progress) || null,
@@ -6395,16 +6632,11 @@ function chooseAllStageReviewItem(previousItem, progress) {
     }
 
     function scheduleAdaptiveSupportTimers() {
-      var itemId;
       clearAdaptiveSupportTimers();
       if (!round || !round.currentItem || !round.currentItem.item) return;
-      itemId = round.currentItem.item.id;
-      strategyHintTimer = setTimeout(function () {
-        strategyHintTimer = null;
-        if (!round || !round.currentItem || !round.currentItem.item || round.currentItem.item.id !== itemId) return;
-        showStrategyHintForCurrentItem();
-      }, getAdaptiveStrategyDelayMs());
 
+      // Timed rounds are now fluency-only: do not schedule mental-math teaching hints
+      // while the timer is running. The answer reveal timer remains unchanged.
       timeoutTimer = setTimeout(triggerTimeout, getAdaptiveAnswerRevealDelayMs());
     }
 
@@ -6664,6 +6896,165 @@ function chooseAllStageReviewItem(previousItem, progress) {
       if (round) { el.answerInput.disabled = false; focusIfDesktop(el.answerInput); }
     }
 
+    function getStrategyLessonKey(stage, cluster) {
+      return String(stage) + '-' + String(cluster);
+    }
+
+    function getStrategyLessonForCluster(stage, cluster) {
+      var key = getStrategyLessonKey(stage, cluster);
+      var lesson = STRATEGY_LESSONS[key];
+      if (!lesson) return null;
+      return { key: key, lesson: lesson, stage: stage, cluster: cluster };
+    }
+
+    function hasSeenStrategyLesson(progress, key) {
+      if (!progress || !key) return false;
+      if (!progress.seenStrategyLessons || typeof progress.seenStrategyLessons !== 'object') progress.seenStrategyLessons = {};
+      return progress.seenStrategyLessons[key] === true;
+    }
+
+    function markStrategyLessonSeen(progress, key) {
+      if (!progress || !key) return progress;
+      if (!progress.seenStrategyLessons || typeof progress.seenStrategyLessons !== 'object') progress.seenStrategyLessons = {};
+      progress.seenStrategyLessons[key] = true;
+      return progress;
+    }
+
+    function findFirstUnseenStrategyLesson(progress, stage, clusters) {
+      var i;
+      var info;
+      clusters = clusters || [];
+      for (i = 0; i < clusters.length; i += 1) {
+        info = getStrategyLessonForCluster(stage, clusters[i]);
+        if (info && !hasSeenStrategyLesson(progress, info.key)) return info;
+      }
+      return null;
+    }
+
+    function getNewlyUnlockedClusters(prevProgress, progress) {
+      var prevModel;
+      var newModel;
+      var prevSeen = {};
+      var result = [];
+      var i;
+
+      if (!prevProgress || !progress) return result;
+      if (prevProgress.currentStage !== progress.currentStage) return result;
+
+      prevModel = getStageModel(prevProgress);
+      newModel = getStageModel(progress);
+
+      for (i = 0; i < prevModel.unlockedClusters.length; i += 1) {
+        prevSeen[prevModel.unlockedClusters[i]] = true;
+      }
+      for (i = 0; i < newModel.unlockedClusters.length; i += 1) {
+        if (!prevSeen[newModel.unlockedClusters[i]]) result.push(newModel.unlockedClusters[i]);
+      }
+
+      return result;
+    }
+
+    function hasNewJourneyStar(oldSnapshot, progress) {
+      var newSnapshot;
+      var stage;
+      if (!oldSnapshot || !progress) return false;
+      newSnapshot = getJourneySnapshot(progress);
+      for (stage = STARTING_STAGE; stage <= MAX_STAGE; stage += 1) {
+        if ((Number(newSnapshot[stage]) || 0) > (Number(oldSnapshot[stage]) || 0)) return true;
+      }
+      return false;
+    }
+
+    function chooseStrategyLessonAfterRound(prevProgress, progress, options) {
+      var model;
+      var newClusters;
+      var info;
+      options = options || {};
+      if (!progress || options.completedAllItems) return null;
+
+      model = getStageModel(progress);
+
+      if (options.graduated) {
+        info = findFirstUnseenStrategyLesson(progress, model.stage, model.unlockedClusters);
+        if (info) return info;
+      }
+
+      newClusters = getNewlyUnlockedClusters(prevProgress, progress);
+      info = findFirstUnseenStrategyLesson(progress, progress.currentStage, newClusters);
+      if (info) return info;
+
+      if (hasNewJourneyStar(options.journeyStartSnapshot, progress)) {
+        info = findFirstUnseenStrategyLesson(progress, model.stage, model.unlockedClusters);
+        if (info) return info;
+      }
+
+      return null;
+    }
+
+    function renderStrategyLessonExample(example, index) {
+      var html = '';
+      var steps;
+      var i;
+
+      if (!example) return '';
+      html += '<div class="strategy-lesson-example">';
+      html += '<span class="strategy-lesson-example-label">Example ' + (index + 1) + '</span>';
+      html += '<strong class="strategy-lesson-problem">' + escapeHtml(example.problem || '') + '</strong>';
+      html += '</div>';
+
+      steps = example.steps || [];
+      if (steps.length) {
+        html += '<ol class="strategy-lesson-steps">';
+        for (i = 0; i < steps.length; i += 1) {
+          html += '<li>' + escapeHtml(steps[i]) + '</li>';
+        }
+        html += '</ol>';
+      }
+
+      return html;
+    }
+
+    function openStrategyLesson(info) {
+      var lesson;
+      var examples;
+      var body = '';
+      var i;
+
+      if (!info || !info.lesson || !el.strategyLessonOverlay) return false;
+      lesson = info.lesson;
+
+      if (el.strategyLessonReason) el.strategyLessonReason.textContent = lesson.reason || 'New strategy unlocked';
+      if (el.strategyLessonName) el.strategyLessonName.textContent = lesson.name || 'Mental Math Strategy';
+      if (el.strategyLessonIntro) el.strategyLessonIntro.textContent = lesson.intro || 'Use this strategy when it helps.';
+
+      examples = lesson.examples || [];
+      for (i = 0; i < examples.length; i += 1) {
+        body += renderStrategyLessonExample(examples[i], i);
+      }
+      if (lesson.extra) {
+        body += '<p class="strategy-lesson-extra">' + escapeHtml(lesson.extra) + '</p>';
+      }
+      if (el.strategyLessonBody) el.strategyLessonBody.innerHTML = body;
+      if (el.strategyLessonFooter) el.strategyLessonFooter.textContent = lesson.footer || 'Try this in the next round when it helps.';
+
+      el.strategyLessonOverlay.classList.remove('hidden');
+      if (el.strategyLessonDoneBtn) el.strategyLessonDoneBtn.focus();
+      return true;
+    }
+
+    function closeStrategyLesson() {
+      if (el.strategyLessonOverlay) el.strategyLessonOverlay.classList.add('hidden');
+    }
+
+    function maybeShowStrategyLessonAfterRound(prevProgress, progress, options) {
+      var info = chooseStrategyLessonAfterRound(prevProgress, progress, options || {});
+      if (!info) return false;
+      if (!openStrategyLesson(info)) return false;
+      markStrategyLessonSeen(progress, info.key);
+      saveProgressToStorage(progress, { reason: 'strategy-lesson-seen', flushNow: true });
+      return true;
+    }
+
     function finalizeRound() {
       var progress = (round && round.progress) || loadProgress();
       var prevProgress = (round && round.startProgressSnapshot) ? (cloneJson(round.startProgressSnapshot) || progress) : (cloneJson(progress) || progress);
@@ -6672,7 +7063,7 @@ function chooseAllStageReviewItem(previousItem, progress) {
       var prevFpm = round ? Math.round(getRoundFpm(round) * 10) / 10 : 0;
       var prevScore = calculateOverallMasteryScore(prevBreakdown.fluent, prevBreakdown.inProgress, prevAccuracy, prevFpm);
       var model = getStageModel(progress);
-      var graduated = checkGraduation(progress);
+      var graduated = !!(round && round.pendingGraduation) || checkGraduation(progress);
       var msg;
       var todayKey = getLocalDateKey();
       var dailyScoreNote = '';
@@ -6689,8 +7080,8 @@ function chooseAllStageReviewItem(previousItem, progress) {
       updateBestSpeedDisplay(progress);
 
       msg = 'Done! ' + round.correct + ' correct. ';
-      if (graduated) {
-        var oldStage = progress.currentStage;
+      if (graduated && progress.currentStage < MAX_STAGE) {
+        var oldStage = (round && round.pendingGraduation && round.pendingGraduation.oldStage) ? round.pendingGraduation.oldStage : progress.currentStage;
         var newStage;
 
         graduate(progress, { deferSave: true });
@@ -6734,6 +7125,11 @@ function chooseAllStageReviewItem(previousItem, progress) {
       renderProgressGraph(progress);
       updatePracticeHeader(progress);
       checkJourneyCelebrations(round && round.journeyStartSnapshot, progress, { graduated: graduated || (round && round.graduated) });
+      maybeShowStrategyLessonAfterRound(prevProgress, progress, {
+        graduated: graduated || (round && round.graduated),
+        completedAllItems: completedAllItems,
+        journeyStartSnapshot: round && round.journeyStartSnapshot
+      });
 
       if (syncState.signedIn) {
         queueDrivePush('round-complete', true);
@@ -6746,26 +7142,27 @@ function chooseAllStageReviewItem(previousItem, progress) {
     // ══════════════════════ MID-ROUND GRADUATION ══════════════════════
     function checkMidRoundGraduation(progress) {
       var oldStage;
-      var newStage;
 
       if (!round) return;
+      if (round.pendingGraduation) return;
 
       progress = progress || round.progress || loadProgress();
       if (progress.currentStage >= MAX_STAGE) return;
       if (!checkGraduation(progress)) return;
 
       oldStage = progress.currentStage;
-      graduate(progress, { deferSave: true });
-      newStage = progress.currentStage;
-
+      round.pendingGraduation = {
+        oldStage: oldStage,
+        newStage: Math.min(oldStage + 1, MAX_STAGE)
+      };
       round.progress = progress;
-      round.graduated = true;
+      round.progressDirty = true;
 
-      celebrateVerticalStageAdvance(oldStage, newStage, progress);
-
+      // Graduation is earned now but shown after the timer finishes, so timed
+      // fluency practice is not interrupted by confetti or a lesson screen.
       updatePracticeHeader(progress);
       schedulePracticeRender(progress);
-      scheduleProgressFlush('mid-round-graduation');
+      scheduleProgressFlush('mid-round-graduation-ready');
     }
 
     function showLevelUpToast(msg) {
@@ -8420,6 +8817,14 @@ function chooseAllStageReviewItem(previousItem, progress) {
           if (e.target === el.hapticsInfoOverlay) closeHapticsInfo();
         });
       }
+      if (el.strategyLessonCloseBtn) el.strategyLessonCloseBtn.addEventListener('click', closeStrategyLesson);
+      if (el.strategyLessonDoneBtn) el.strategyLessonDoneBtn.addEventListener('click', closeStrategyLesson);
+      if (el.strategyLessonOverlay) {
+        el.strategyLessonOverlay.addEventListener('click', function (e) {
+          if (e.target === el.strategyLessonOverlay) closeStrategyLesson();
+        });
+      }
+
       if (el.hapticsToggleBtn) {
         el.hapticsToggleBtn.addEventListener('click', function (e) {
           e.stopPropagation();
