@@ -35,7 +35,6 @@ import {
   FactStatsMap,
   chooseNextFact,
   getFactStatus,
-  getPracticeStatusSummary,
   getPriorityReviewQuestions,
   getStrategyAdaptiveMastery,
   mergeUniqueQuestions,
@@ -415,23 +414,6 @@ export default function App() {
   const [activeTab, setActiveTab] = useState<"map" | "encyclopedia" | "practice">("map");
   const isTimedQuizInProgress = activeTab === "practice" && !!activeStrategyRound && !roundCompleted && (isRoundActive || countdownValue !== null);
 
-  const getLearnerStatusLabel = (status: ReturnType<typeof getFactStatus>) => {
-    switch (status) {
-      case "fluent":
-        return "Ready";
-      case "review":
-        return "Review soon";
-      case "near-ready":
-        return "Almost ready";
-      case "learning":
-        return "Building";
-      case "needs-support":
-        return "Needs extra practice";
-      default:
-        return "Not started yet";
-    }
-  };
-
   // Load progress from localStorage
   useEffect(() => {
     try {
@@ -559,7 +541,7 @@ export default function App() {
     const previousFacts = mergeUniqueQuestions(
       ...earlierStrategies.map((item) => generateQuestionPoolForStrategy(item.code))
     );
-    const reviewLimit = Math.max(2, Math.min(8, Math.round(currentFacts.length * 0.12)));
+    const reviewLimit = Math.max(3, Math.min(10, Math.round(currentFacts.length * 0.16)));
     const priorityReview = getPriorityReviewQuestions(previousFacts, factStatsRef.current, speedTarget, reviewLimit);
     return {
       currentFacts,
@@ -577,7 +559,7 @@ export default function App() {
       ? currentStrategyFactsRef.current
       : questionPoolRef.current;
     const reviewPool = getReviewFactsForActiveRound();
-    const shouldUseQuickReview = reviewPool.length > 0 && roundAttemptsRef.current > 0 && roundAttemptsRef.current % 6 === 0;
+    const shouldUseQuickReview = reviewPool.length > 0 && roundAttemptsRef.current > 0 && roundAttemptsRef.current % 5 === 0;
     const preferredPool = shouldUseQuickReview ? reviewPool : currentPool;
 
     return (
@@ -1036,7 +1018,6 @@ export default function App() {
       [activeStage.id]: !previous[activeStage.id],
     }));
   };
-  const practiceStatusSummary = getPracticeStatusSummary(currentStrategyFacts, factStats);
   const currentQuestionStatus = currentQuestion ? getFactStatus(factStats[currentQuestion.id]) : "empty";
   const currentLessonFactIds = new Set(currentStrategyFacts.map((fact) => fact.id));
   const isQuickReviewFact = !!currentQuestion && currentLessonFactIds.size > 0 && !currentLessonFactIds.has(currentQuestion.id);
@@ -1066,8 +1047,8 @@ export default function App() {
     }
     if (currentQuestionStatus === "empty") {
       return {
-        label: "New Fact",
-        className: "bg-emerald-50 border-emerald-300 text-emerald-800",
+        label: activeStrategyRound?.name || "Practice Fact",
+        className: "bg-blue-50 border-blue-300 text-blue-800",
       };
     }
     if (currentQuestionStatus === "fluent") {
@@ -2422,68 +2403,22 @@ export default function App() {
 
                 <details className="bg-slate-50/60 border-2 border-slate-100 rounded-xl p-3 text-left">
                   <summary className="text-[11px] font-black text-slate-500 uppercase tracking-widest cursor-pointer select-none">
-                    Teacher tools
+                    Advanced
                   </summary>
 
-                  <div className="mt-4 space-y-4">
-                    <div className="bg-white p-3 rounded-xl border border-slate-200 space-y-3">
-                      <span className="text-[10px] font-black text-slate-400 uppercase tracking-widest block">
-                        Learning data
-                      </span>
-
-                      <div className="grid grid-cols-2 gap-2 text-center text-[10px] font-black">
-                        <div className="bg-slate-50 border border-slate-200 rounded-xl p-2">
-                          <span className="block text-blue-900 text-sm">{activeStrategyRound ? activeStrategyRound.name : "None"}</span>
-                          <span className="text-slate-500">Current lesson</span>
-                        </div>
-                        <div className="bg-slate-50 border border-slate-200 rounded-xl p-2">
-                          <span className="block text-blue-900 text-sm">{getLearnerStatusLabel(currentQuestionStatus)}</span>
-                          <span className="text-slate-500">Fact support</span>
-                        </div>
-                        <div className="bg-slate-50 border border-slate-200 rounded-xl p-2">
-                          <span className="block text-blue-900 text-sm">{roundAccuracyPercent}%</span>
-                          <span className="text-slate-500">Correct rate</span>
-                        </div>
-                        <div className="bg-slate-50 border border-slate-200 rounded-xl p-2">
-                          <span className="block text-blue-900 text-sm">{roundQuestions.length || currentStrategyFacts.length}</span>
-                          <span className="text-slate-500">Pool size</span>
-                        </div>
-                      </div>
-
-                      <div className="grid grid-cols-2 sm:grid-cols-4 gap-2 text-center text-[10px] font-black">
-                        <div className="bg-slate-50 border border-slate-200 rounded-xl p-2">
-                          <span className="block text-slate-700 text-sm">{practiceStatusSummary.needsPractice}</span>
-                          <span className="text-slate-500">Extra help</span>
-                        </div>
-                        <div className="bg-slate-50 border border-slate-200 rounded-xl p-2">
-                          <span className="block text-slate-700 text-sm">{practiceStatusSummary.almostThere}</span>
-                          <span className="text-slate-500">Close</span>
-                        </div>
-                        <div className="bg-slate-50 border border-slate-200 rounded-xl p-2">
-                          <span className="block text-slate-700 text-sm">{practiceStatusSummary.reviewSoon}</span>
-                          <span className="text-slate-500">Review</span>
-                        </div>
-                        <div className="bg-slate-50 border border-slate-200 rounded-xl p-2">
-                          <span className="block text-slate-700 text-sm">{practiceStatusSummary.fluent}</span>
-                          <span className="text-slate-500">Ready</span>
-                        </div>
-                      </div>
-                    </div>
-
-                    <div className="bg-red-50/50 p-3 rounded-xl border-2 border-red-100 space-y-2">
-                      <span className="text-[10px] font-black text-red-700 uppercase tracking-widest block">
-                        Reset
-                      </span>
-                      <button 
-                        onClick={() => {
-                          handleResetProgress();
-                          setShowSettingsModal(false);
-                        }}
-                        className="w-full py-2.5 px-4 bg-red-100 hover:bg-red-200 text-red-700 font-black rounded-lg text-xs border-2 border-red-300 transition active:translate-y-0.5 cursor-pointer text-center"
-                      >
-                        Reset Progress
-                      </button>
-                    </div>
+                  <div className="mt-4 bg-red-50/50 p-3 rounded-xl border-2 border-red-100 space-y-2">
+                    <span className="text-[10px] font-black text-red-700 uppercase tracking-widest block">
+                      Reset progress
+                    </span>
+                    <button 
+                      onClick={() => {
+                        handleResetProgress();
+                        setShowSettingsModal(false);
+                      }}
+                      className="w-full py-2.5 px-4 bg-red-100 hover:bg-red-200 text-red-700 font-black rounded-lg text-xs border-2 border-red-300 transition active:translate-y-0.5 cursor-pointer text-center"
+                    >
+                      Reset Progress
+                    </button>
                   </div>
                 </details>
               </div>

@@ -49,7 +49,7 @@ export const STAGES: Stage[] = [
     color: "from-emerald-400 to-teal-500",
     bgColor: "bg-teal-50/75",
     accentColor: "teal",
-    description: "Anchor Facts - Meet the numbers 0 to 10!",
+    description: "Anchor Facts - Meet the numbers 0 to 20!",
   },
   {
     id: StageId.CountingTrail,

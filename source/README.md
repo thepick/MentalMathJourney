@@ -17,7 +17,6 @@ Progress is saved in the browser using `localStorage`. The app does not require 
 - Strategy lesson slides with examples and step-by-step thinking prompts
 - 1-minute timed sprints for each unlocked strategy stop
 - Smart review engine that gives more practice to facts that need support
-- Hidden fact status tracking for teacher/debug review
 - Star rewards based on the selected speed target
 - Journey map showing unlocked, locked, and mastered stops
 - All Lessons view for reviewing every strategy slide
@@ -129,17 +128,6 @@ The current pass check looks for:
 
 Individual fact tracking still matters for smart review. Slow or missed facts continue to appear more often, even after the next lesson is unlocked.
 
-## Hidden fact status labels
-
-| Hidden engine state | Teacher/debug label | What it means |
-|---|---|---|
-| Needs support | Extra practice | The fact has been missed, slow, or weak recently |
-| Building | Building | The fact has started but is not ready yet |
-| Almost ready | Almost ready | The fact is improving but needs more evidence |
-| Review soon | Review soon | The fact is mostly ready but should return for review |
-| Ready | Ready | The fact is accurate and quick enough for now |
-| Not started | Not started yet | The fact has not appeared yet |
-
 ## Stars and speed targets
 
 Each sprint lasts 60 seconds, so the number of correct answers is also the student's facts-per-minute score for that sprint.
@@ -174,7 +162,7 @@ Stored progress includes:
 - Current speed target
 - Best streaks by strategy stop
 - Best speeds by strategy stop
-- Fact-level learning statistics hidden under the settings debug area
+- Fact-level learning statistics used internally by the smart review engine
 
 Because the app uses browser storage, progress is tied to the device and browser profile. Clearing site data, using a different browser, or changing devices may remove or hide existing progress.
 
@@ -288,7 +276,7 @@ Possible future additions:
 - Teacher dashboard or exportable progress summary
 - Class roster support
 - Optional cloud sync
-- More detailed teacher settings panel
+- Optional classroom settings panel
 - Separate student profiles on shared classroom devices
 - More print-friendly progress reports
 
