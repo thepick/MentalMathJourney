@@ -41,7 +41,6 @@ import {
 } from "./adaptiveEngine";
 
 interface SavedProgress {
-  progressSchemaVersion?: number;
   viewedStrategyIds: number[];
   masteredStrategyIds: number[];
   stars: number;
@@ -49,106 +48,6 @@ interface SavedProgress {
   bestStreaks?: { [key: number]: number };
   bestSpeeds?: { [key: number]: number };
   factStats?: FactStatsMap;
-}
-
-const PROGRESS_SCHEMA_VERSION = 2;
-
-const LEGACY_TO_CURRENT_STRATEGY_ID: { [key: number]: number | null } = {
-  1: 1,
-  2: 2,
-  3: 3,
-  4: 4,
-  5: 5,
-  6: null,
-  7: 6,
-  8: 7,
-  9: 8,
-  10: null,
-  11: null,
-  12: 9,
-  13: 10,
-  14: 11,
-  15: 12,
-  16: null,
-  17: null,
-  18: 13,
-  19: 14,
-  20: 15,
-  21: null,
-  22: null,
-  23: 16,
-  24: 17,
-  25: 18,
-  26: null,
-  27: null,
-  28: 19,
-  29: 20,
-  30: 21,
-  31: 22,
-  32: 23,
-  33: 24,
-  34: 25,
-  35: null,
-};
-
-function uniqueSortedIds(ids: number[]): number[] {
-  return Array.from(new Set(ids))
-    .filter((id) => id >= 1 && id <= STRATEGIES.length)
-    .sort((a, b) => a - b);
-}
-
-function remapLegacyStrategyIds(ids: number[] | undefined): number[] {
-  if (!ids) return [];
-  return uniqueSortedIds(ids.flatMap((id) => {
-    const mapped = LEGACY_TO_CURRENT_STRATEGY_ID[id];
-    return typeof mapped === "number" ? [mapped] : [];
-  }));
-}
-
-function remapLegacyNumberMap(values: { [key: number]: number } | undefined): { [key: number]: number } {
-  if (!values) return {};
-  return Object.entries(values).reduce<{ [key: number]: number }>((acc, [rawKey, value]) => {
-    const oldId = Number(rawKey);
-    const newId = LEGACY_TO_CURRENT_STRATEGY_ID[oldId];
-    if (typeof newId === "number") {
-      acc[newId] = Math.max(acc[newId] || 0, value);
-    }
-    return acc;
-  }, {});
-}
-
-function normalizeProgressForCurrentLessons(progress: SavedProgress): SavedProgress {
-  if (progress.progressSchemaVersion === PROGRESS_SCHEMA_VERSION) {
-    return {
-      ...progress,
-      viewedStrategyIds: uniqueSortedIds(progress.viewedStrategyIds || [1]).length ? uniqueSortedIds(progress.viewedStrategyIds || [1]) : [1],
-      masteredStrategyIds: uniqueSortedIds(progress.masteredStrategyIds || []),
-    };
-  }
-
-  const mastered = remapLegacyStrategyIds(progress.masteredStrategyIds);
-  let viewed = uniqueSortedIds([
-    ...remapLegacyStrategyIds(progress.viewedStrategyIds),
-    ...mastered,
-    1,
-  ]);
-
-  let nextLessonToUnlock = 1;
-  while (mastered.includes(nextLessonToUnlock) && nextLessonToUnlock <= STRATEGIES.length) {
-    nextLessonToUnlock += 1;
-  }
-  if (nextLessonToUnlock <= STRATEGIES.length && !viewed.includes(nextLessonToUnlock)) {
-    viewed = uniqueSortedIds([...viewed, nextLessonToUnlock]);
-  }
-
-  return {
-    ...progress,
-    progressSchemaVersion: PROGRESS_SCHEMA_VERSION,
-    viewedStrategyIds: viewed,
-    masteredStrategyIds: mastered,
-    bestStreaks: remapLegacyNumberMap(progress.bestStreaks),
-    bestSpeeds: remapLegacyNumberMap(progress.bestSpeeds),
-  };
 }
 
 interface ConfettiPiece {
@@ -286,7 +185,7 @@ function printCertificate(
             font-size: 13px;
             line-height: 1.5;
             color: #334155;
-            max-w: 80%;
+            max-width: 80%;
             margin: 12px auto;
             font-weight: 500;
           }
@@ -520,19 +419,15 @@ export default function App() {
       const saved = localStorage.getItem("mental_math_journey_progress");
       if (saved) {
         const parsed: SavedProgress = JSON.parse(saved);
-        const normalized = normalizeProgressForCurrentLessons(parsed);
-        if (normalized.viewedStrategyIds) setViewedStrategyIds(normalized.viewedStrategyIds);
-        if (normalized.masteredStrategyIds) setMasteredStrategyIds(normalized.masteredStrategyIds);
-        if (typeof normalized.stars === "number") setStars(normalized.stars);
-        if (typeof normalized.speedTarget === "number") setSpeedTarget(normalized.speedTarget);
-        if (normalized.bestStreaks) setBestStreaks(normalized.bestStreaks);
-        if (normalized.bestSpeeds) setBestSpeeds(normalized.bestSpeeds);
-        if (normalized.factStats) {
-          setFactStats(normalized.factStats);
-          factStatsRef.current = normalized.factStats;
-        }
-        if (normalized.progressSchemaVersion !== parsed.progressSchemaVersion) {
-          localStorage.setItem("mental_math_journey_progress", JSON.stringify(normalized));
+        if (parsed.viewedStrategyIds) setViewedStrategyIds(parsed.viewedStrategyIds);
+        if (parsed.masteredStrategyIds) setMasteredStrategyIds(parsed.masteredStrategyIds);
+        if (typeof parsed.stars === "number") setStars(parsed.stars);
+        if (typeof parsed.speedTarget === "number") setSpeedTarget(parsed.speedTarget);
+        if (parsed.bestStreaks) setBestStreaks(parsed.bestStreaks);
+        if (parsed.bestSpeeds) setBestSpeeds(parsed.bestSpeeds);
+        if (parsed.factStats) {
+          setFactStats(parsed.factStats);
+          factStatsRef.current = parsed.factStats;
         }
       }
     } catch (e) {
@@ -567,7 +462,6 @@ export default function App() {
   ) => {
     try {
       const data: SavedProgress = {
-        progressSchemaVersion: PROGRESS_SCHEMA_VERSION,
         viewedStrategyIds: viewed,
         masteredStrategyIds: mastered,
         stars: newStars,
@@ -839,12 +733,12 @@ export default function App() {
 
   // Timer countdown mechanism
   useEffect(() => {
-    let intervalId: any = null;
+    let intervalId: ReturnType<typeof setInterval> | null = null;
     if (activeTab === "practice" && activeStrategyRound && isRoundActive && !roundCompleted) {
       intervalId = setInterval(() => {
         setTimeLeft((prev) => {
           if (prev <= 1) {
-            clearInterval(intervalId);
+            if (intervalId) clearInterval(intervalId);
             finishRound();
             return 0;
           }
@@ -1192,7 +1086,11 @@ export default function App() {
       setFactStats({});
       factStatsRef.current = {};
       setSpeedTarget(20);
-      localStorage.removeItem("mental_math_journey_progress");
+      try {
+        localStorage.removeItem("mental_math_journey_progress");
+      } catch (e) {
+        console.warn("Could not clear saved progress:", e);
+      }
       setCurrentStageId(StageId.StarterIsland);
       setActiveTab("map");
     }
@@ -1449,7 +1347,7 @@ export default function App() {
               <div className="text-center max-w-xl mx-auto mb-6">
                 <span className="text-4xl">🧭</span>
                 <h2 className="text-2xl md:text-3xl font-display font-black text-blue-950 mt-2">Choose a Chapter</h2>
-                <p className="text-sm text-blue-850 font-extrabold mt-1">
+                <p className="text-sm text-blue-900 font-extrabold mt-1">
                   Choose a chapter, then complete each lesson with a 1-minute practice.
                 </p>
               </div>
@@ -1458,7 +1356,7 @@ export default function App() {
                 <motion.div 
                   initial={{ opacity: 0, y: -10 }}
                   animate={{ opacity: 1, y: 0 }}
-                  className="max-w-xl mx-auto mb-6 bg-red-50 border-2 border-red-300 rounded-2xl p-4 text-center text-sm font-extrabold text-red-650 flex items-center justify-center gap-2 shadow-sm"
+                  className="max-w-xl mx-auto mb-6 bg-red-50 border-2 border-red-300 rounded-2xl p-4 text-center text-sm font-extrabold text-red-600 flex items-center justify-center gap-2 shadow-sm"
                 >
                   <span className="text-xl">⚠️</span> {lockTip}
                 </motion.div>
@@ -1530,7 +1428,7 @@ export default function App() {
 
                       {/* Score Indicator */}
                       <div className="mt-4 pt-2.5 border-t-2 border-slate-100 flex items-center justify-between w-full">
-                        <div className="flex items-center gap-1 text-[11px] font-black text-blue-850">
+                        <div className="flex items-center gap-1 text-[11px] font-black text-blue-900">
                           <Trophy className="w-3.5 h-3.5 text-yellow-500" />
                           <span className="font-mono">{stageMastered}/{stageTotal}</span>
                           <span className="text-[10px] text-gray-400">Lessons</span>
@@ -1681,11 +1579,11 @@ export default function App() {
                           
                           <div className="flex gap-1.5">
                             {isMastered ? (
-                              <span className="bg-emerald-100 text-emerald-700 text-[10px] px-2.5 py-1 rounded-full border border-emerald-250 flex items-center gap-1 font-black uppercase">
-                                <Check className="w-3.5 h-3.5 text-emerald-650 stroke-[3]" /> Complete
+                              <span className="bg-emerald-100 text-emerald-700 text-[10px] px-2.5 py-1 rounded-full border border-emerald-200 flex items-center gap-1 font-black uppercase">
+                                <Check className="w-3.5 h-3.5 text-emerald-600 stroke-[3]" /> Complete
                               </span>
                             ) : isUnlocked ? (
-                              <span className="bg-yellow-105 text-yellow-750 text-[10px] px-2.5 py-1 rounded-full border border-yellow-300 flex items-center gap-1 font-black uppercase">
+                              <span className="bg-yellow-100 text-yellow-700 text-[10px] px-2.5 py-1 rounded-full border border-yellow-300 flex items-center gap-1 font-black uppercase">
                                 <span className="w-1.5 h-1.5 rounded-full bg-yellow-500" /> Lesson Unlocked
                               </span>
                             ) : (
@@ -1701,7 +1599,7 @@ export default function App() {
                           {!isUnlocked ? "🔒 " : ""}{strategy.name}
                         </h4>
 
-                        <p className={`text-xs md:text-sm font-bold leading-relaxed ${isUnlocked ? "text-gray-650" : "text-slate-400"}`}>
+                        <p className={`text-xs md:text-sm font-bold leading-relaxed ${isUnlocked ? "text-gray-600" : "text-slate-400"}`}>
                           {isUnlocked ? strategy.explanation : "Complete the previous lesson to unlock this one."}
                         </p>
 
@@ -1791,7 +1689,7 @@ export default function App() {
                     }`}
                   >
                     {/* Header Row with no absolute overlap in mobile */}
-                    <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2.5 mb-4 border-b border-dashed border-slate-150 pb-3">
+                    <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2.5 mb-4 border-b border-dashed border-slate-200 pb-3">
                       {/* Badge / Stop Marker */}
                       <span className="text-xs bg-blue-50 border border-blue-200 font-mono font-black text-blue-700 px-3 py-1 rounded-full w-fit">
                         Lesson {strategy.id} of {STRATEGIES.length}
@@ -1807,8 +1705,8 @@ export default function App() {
                     <div className="max-w-xl">
 
                       {/* Chapter/Lesson Unlocking badge */}
-                      <div className="text-yellow-750 text-xs font-black mb-2 flex items-center gap-1 bg-yellow-50 border border-yellow-250 w-fit px-2.5 py-1 rounded-full">
-                        <Sparkles className="w-3.5 h-3.5 text-yellow-550" />
+                      <div className="text-yellow-700 text-xs font-black mb-2 flex items-center gap-1 bg-yellow-50 border border-yellow-200 w-fit px-2.5 py-1 rounded-full">
+                        <Sparkles className="w-3.5 h-3.5 text-yellow-500" />
                         {strategy.reason}
                       </div>
 
@@ -1818,7 +1716,7 @@ export default function App() {
                       </h3>
 
                       {/* Explanation */}
-                      <p className={`text-sm font-bold pr-10 mb-5 leading-relaxed ${isUnlocked ? "text-gray-650" : "text-slate-400"}`}>
+                      <p className={`text-sm font-bold pr-10 mb-5 leading-relaxed ${isUnlocked ? "text-gray-600" : "text-slate-400"}`}>
                         {isUnlocked ? strategy.explanation : "This lesson is locked. Complete the previous lesson first."}
                       </p>
 
@@ -1826,7 +1724,7 @@ export default function App() {
                       {isUnlocked ? (
                         <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-6">
                           {/* Example */}
-                          <div className="bg-blue-50/50 p-4 rounded-xl border-2 border-blue-105">
+                          <div className="bg-blue-50/50 p-4 rounded-xl border-2 border-blue-100">
                             <span className="text-[11px] font-mono uppercase tracking-widest text-[#FF4757] font-black block mb-1">
                               Example:
                             </span>
@@ -1836,7 +1734,7 @@ export default function App() {
                           </div>
 
                           {/* Think */}
-                          <div className="bg-yellow-50/50 p-4 rounded-xl border-2 border-yellow-105">
+                          <div className="bg-yellow-50/50 p-4 rounded-xl border-2 border-yellow-100">
                             <span className="text-[11px] font-mono uppercase tracking-widest text-yellow-700 font-black block mb-2">
                               Think:
                             </span>
@@ -1954,7 +1852,7 @@ export default function App() {
                   {!isRoundActive ? (
                     <div className="text-center py-6 space-y-6">
                       <div className="space-y-2">
-                        <span className="inline-block bg-blue-105 border-2 border-blue-200 text-blue-700 text-xs font-black px-3.5 py-1.5 rounded-full">
+                        <span className="inline-block bg-blue-100 border-2 border-blue-200 text-blue-700 text-xs font-black px-3.5 py-1.5 rounded-full">
                           1-Minute Practice
                         </span>
                         <h3 className="text-2xl md:text-3xl font-display font-black text-blue-950">
@@ -1983,7 +1881,7 @@ export default function App() {
                             <span className="font-mono text-sm text-slate-500">{Math.max(6, Math.round(speedTarget * 0.6))} correct</span>
                           </div>
 
-                          <div className="p-3 bg-white border-2 border-yellow-350 rounded-xl shadow-xs">
+                          <div className="p-3 bg-white border-2 border-yellow-300 rounded-xl shadow-xs">
                             <span className="block text-xl">🥇</span>
                             <span className="text-yellow-800 block mt-1">Gold Goal</span>
                             <span className="font-mono text-sm text-slate-500">{speedTarget} correct</span>
@@ -2022,7 +1920,7 @@ export default function App() {
                           <div className="timed-stats-grid grid grid-cols-4 gap-2 bg-slate-50/80 px-3 py-2 rounded-2xl border border-slate-100 text-center">
                             <div className="flex flex-col items-center justify-center">
                               <Clock className={`w-4 h-4 text-[#FF4757] stroke-[3.5] ${timeLeft <= 15 ? "animate-pulse" : ""}`} />
-                              <span className={`font-mono text-base font-black ${timeLeft <= 15 ? "text-red-650" : "text-blue-950"}`}>{timeLeft}s</span>
+                              <span className={`font-mono text-base font-black ${timeLeft <= 15 ? "text-red-600" : "text-blue-950"}`}>{timeLeft}s</span>
                               <span className="text-[9px] font-black uppercase text-slate-500">Time</span>
                             </div>
                             <div className="flex flex-col items-center justify-center">
@@ -2054,7 +1952,7 @@ export default function App() {
                             ? "border-emerald-500 bg-emerald-50/10" 
                             : isShaking 
                             ? "border-rose-500 bg-rose-50/10" 
-                            : "bg-slate-50/50 border-slate-200 hover:border-slate-350"
+                            : "bg-slate-50/50 border-slate-200 hover:border-slate-300"
                         }`}
                       >
                         <span className={`quiz-info-capsule text-[10px] font-mono uppercase border font-black px-3 py-1 rounded-full inline-flex items-center justify-center mb-2 ${questionCapsule.className}`}>
@@ -2240,7 +2138,7 @@ export default function App() {
                     <h3 className="text-2xl md:text-3xl font-display font-black text-blue-950">
                       Practice Complete! ⏱️
                     </h3>
-                    <p className="text-sm text-slate-650 font-extrabold max-w-sm mx-auto leading-relaxed">
+                    <p className="text-sm text-slate-600 font-extrabold max-w-sm mx-auto leading-relaxed">
                       Nice work on <strong className="text-blue-600 font-black">{activeStrategyRound.name}</strong>.
                     </p>
                   </div>
@@ -2251,7 +2149,7 @@ export default function App() {
                     <span className="text-4xl font-mono font-black text-blue-950">{roundScore} correct in 1 min</span>
                     <span className="block text-xs text-slate-500 font-black mt-1">{roundAccuracyPercent}% correct</span>
                     
-                    <div className="mt-4 pt-3 border-t border-yellow-250 text-xs text-blue-950 font-black space-y-1">
+                    <div className="mt-4 pt-3 border-t border-yellow-200 text-xs text-blue-950 font-black space-y-1">
                       {roundScore >= speedTarget ? (
                         <p className="text-amber-600 font-black text-sm">🏆 Gold! 3 stars earned! 🏆</p>
                       ) : roundScore >= Math.max(6, Math.round(speedTarget * 0.6)) ? (
@@ -2342,7 +2240,7 @@ export default function App() {
               {/* Close Button */}
               <button 
                 onClick={() => setActiveModalStrategy(null)}
-                className="absolute top-4 right-4 bg-white border-2 border-slate-200 p-1.5 rounded-full text-slate-500 hover:text-slate-805 transition cursor-pointer"
+                className="absolute top-4 right-4 bg-white border-2 border-slate-200 p-1.5 rounded-full text-slate-500 hover:text-slate-800 transition cursor-pointer"
               >
                 <X className="w-4 h-4 focus:outline-hidden" />
               </button>
@@ -2387,7 +2285,7 @@ export default function App() {
                     <h5 className="text-xs font-mono uppercase tracking-widest text-slate-400 font-black mb-1">
                       Example:
                     </h5>
-                    <p className="text-base md:text-lg font-mono font-black text-blue-950 bg-blue-50/50 p-2.5 rounded-xl border-2 border-blue-105 inline-block px-5">
+                    <p className="text-base md:text-lg font-mono font-black text-blue-950 bg-blue-50/50 p-2.5 rounded-xl border-2 border-blue-100 inline-block px-5">
                       {activeModalStrategy.example}
                     </p>
                   </div>
@@ -2397,7 +2295,7 @@ export default function App() {
                     <h5 className="text-xs font-mono uppercase tracking-widest text-[#FF4757] font-black">
                       Think:
                     </h5>
-                    <div className="bg-yellow-50/50 p-4 rounded-xl border-2 border-yellow-105 space-y-1.5">
+                    <div className="bg-yellow-50/50 p-4 rounded-xl border-2 border-yellow-100 space-y-1.5">
                       {activeModalStrategy.thinkSteps.map((step, idx) => (
                         <p 
                           key={idx} 

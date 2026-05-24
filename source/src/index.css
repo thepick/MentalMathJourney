@@ -21,6 +21,27 @@
   animation: bounce-slow 3s infinite ease-in-out;
 }
 
+@keyframes spin-slow {
+  from {
+    transform: rotate(0deg);
+  }
+  to {
+    transform: rotate(360deg);
+  }
+}
+
+.animate-spin-slow {
+  animation: spin-slow 3s linear infinite;
+}
+
+.animate-hover-spin {
+  transition: transform 0.3s ease;
+}
+
+.animate-hover-spin:hover {
+  transform: rotate(90deg);
+}
+
 /* Timed practice mobile layout fixes */
 html.timed-quiz-active,
 body.timed-quiz-active {
