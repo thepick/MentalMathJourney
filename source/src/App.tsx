@@ -1,4 +1,4 @@
-import { useState, useEffect, useRef } from "react";
+import { useState, useEffect, useRef, type CSSProperties } from "react";
 import { motion, AnimatePresence } from "motion/react";
 import { 
   Trophy, 
@@ -50,6 +50,17 @@ interface SavedProgress {
   bestStreaks?: { [key: number]: number };
   bestSpeeds?: { [key: number]: number };
   factStats?: FactStatsMap;
+}
+
+interface ConfettiPiece {
+  id: number;
+  left: number;
+  delay: number;
+  duration: number;
+  size: number;
+  color: string;
+  drift: number;
+  spin: number;
 }
 
 function printCertificate(
@@ -343,6 +354,7 @@ export default function App() {
   const roundWrongAttemptsRef = useRef<number>(0);
   const currentStrategyFactsRef = useRef<MathQuestion[]>([]);
   const questionPoolRef = useRef<MathQuestion[]>([]);
+  const confettiClearTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
   // State elements
   const [currentStageId, setCurrentStageId] = useState<StageId>(StageId.StarterIsland);
   const [activeStrategyRound, setActiveStrategyRound] = useState<Strategy | null>(null);
@@ -387,9 +399,11 @@ export default function App() {
   const [isAnimatingCorrect, setIsAnimatingCorrect] = useState<boolean>(false);
   const [isAnimatingIncorrect, setIsAnimatingIncorrect] = useState<boolean>(false);
   const [sparklesList, setSparklesList] = useState<{ id: number; x: number; y: number }[]>([]);
+  const [levelConfettiPieces, setLevelConfettiPieces] = useState<ConfettiPiece[]>([]);
   const [avatar, setAvatar] = useState<string>("🦊");
   const [encouragingText, setEncouragingText] = useState<string>("Let's go!");
   const [lockTip, setLockTip] = useState<string | null>(null);
+  const [expandedStagePreviewIds, setExpandedStagePreviewIds] = useState<{ [key: number]: boolean }>({});
   
   // Timed quiz state variables
   const [timeLeft, setTimeLeft] = useState<number>(60);
@@ -447,6 +461,9 @@ export default function App() {
   useEffect(() => {
     return () => {
       countdownTimersRef.current.forEach((timerId) => clearTimeout(timerId));
+      if (confettiClearTimerRef.current) {
+        clearTimeout(confettiClearTimerRef.current);
+      }
       document.body.classList.remove("timed-quiz-active");
       document.documentElement.classList.remove("timed-quiz-active");
     };
@@ -476,6 +493,39 @@ export default function App() {
     } catch (e) {
       console.error("Failed to save progress", e);
     }
+  };
+
+  const launchLevelConfetti = (isStageCelebration: boolean = false) => {
+    const colors = [
+      "#22c55e",
+      "#3b82f6",
+      "#facc15",
+      "#fb7185",
+      "#a855f7",
+      "#f97316",
+    ];
+    const pieceCount = isStageCelebration ? 120 : 82;
+    const pieces = Array.from({ length: pieceCount }, (_, index) => ({
+      id: Date.now() + index + Math.random(),
+      left: Math.random() * 100,
+      delay: Math.random() * 360,
+      duration: 1500 + Math.random() * 950,
+      size: 7 + Math.random() * 8,
+      color: colors[Math.floor(Math.random() * colors.length)],
+      drift: (Math.random() - 0.5) * 220,
+      spin: (Math.random() - 0.5) * 720,
+    }));
+
+    if (confettiClearTimerRef.current) {
+      clearTimeout(confettiClearTimerRef.current);
+      confettiClearTimerRef.current = null;
+    }
+
+    setLevelConfettiPieces(pieces);
+    confettiClearTimerRef.current = setTimeout(() => {
+      setLevelConfettiPieces([]);
+      confettiClearTimerRef.current = null;
+    }, isStageCelebration ? 2800 : 2300);
   };
 
   // Trigger strategy break modal
@@ -752,12 +802,20 @@ export default function App() {
       let currentViewed = [...viewedStrategyIds];
       
       if (isPassed) {
-        if (!currentMastered.includes(id)) {
+        const isNewMastery = !currentMastered.includes(id);
+        if (isNewMastery) {
           currentMastered.push(id);
         }
         const nextSlideId = id + 1;
         if (nextSlideId <= STRATEGIES.length && !currentViewed.includes(nextSlideId)) {
           currentViewed.push(nextSlideId);
+        }
+
+        if (isNewMastery) {
+          const stageStrategiesForRound = STRATEGIES.filter((strategy) => strategy.stageId === activeStrategyRound.stageId);
+          const stageCompleted = stageStrategiesForRound.every((strategy) => strategy.id === id || currentMastered.includes(strategy.id));
+          launchLevelConfetti(stageCompleted);
+          setEncouragingText(stageCompleted ? "Stage complete!" : "New lesson unlocked!");
         }
       }
 
@@ -971,6 +1029,13 @@ export default function App() {
   // Helper arrays for Stages filter
   const activeStage = STAGES.find(s => s.id === currentStageId) || STAGES[0];
   const activeStrategies = STRATEGIES.filter(s => s.stageId === currentStageId);
+  const isActiveStagePreviewOpen = !!expandedStagePreviewIds[activeStage.id];
+  const toggleActiveStagePreview = () => {
+    setExpandedStagePreviewIds((previous) => ({
+      ...previous,
+      [activeStage.id]: !previous[activeStage.id],
+    }));
+  };
   const practiceStatusSummary = getPracticeStatusSummary(currentStrategyFacts, factStats);
   const currentQuestionStatus = currentQuestion ? getFactStatus(factStats[currentQuestion.id]) : "empty";
   const currentLessonFactIds = new Set(currentStrategyFacts.map((fact) => fact.id));
@@ -992,6 +1057,42 @@ export default function App() {
     ? STRATEGIES.find((strategy) => strategy.id === activeStrategyRound.id + 1)
     : undefined;
   const roundPassTarget = Math.max(bronzeMilestoneForMastery, Math.max(6, Math.round(speedTarget * 0.6)));
+  const questionCapsule = (() => {
+    if (isQuickReviewFact) {
+      return {
+        label: "Quick Review",
+        className: "bg-amber-50 border-amber-300 text-amber-800",
+      };
+    }
+    if (currentQuestionStatus === "empty") {
+      return {
+        label: "New Fact",
+        className: "bg-emerald-50 border-emerald-300 text-emerald-800",
+      };
+    }
+    if (currentQuestionStatus === "fluent") {
+      return {
+        label: "Ready Fact",
+        className: "bg-green-50 border-green-300 text-green-800",
+      };
+    }
+    if (currentQuestionStatus === "review") {
+      return {
+        label: "Review Fact",
+        className: "bg-yellow-50 border-yellow-300 text-yellow-800",
+      };
+    }
+    if (currentQuestionStatus === "near-ready") {
+      return {
+        label: "Almost Ready",
+        className: "bg-sky-50 border-sky-300 text-sky-800",
+      };
+    }
+    return {
+      label: activeStrategyRound?.name || "Practice Fact",
+      className: "bg-blue-50 border-blue-300 text-blue-800",
+    };
+  })();
 
   // Quick reset progress helper (for teachers/testing)
   const handleResetProgress = () => {
@@ -1020,6 +1121,27 @@ export default function App() {
         <div className="absolute bottom-24 right-[5%] w-72 h-72 bg-emerald-300 rounded-full blur-3xl"></div>
         <div className="absolute top-[40%] left-[15%] w-56 h-56 bg-pink-300 rounded-full blur-3xl"></div>
       </div>
+
+      {levelConfettiPieces.length > 0 && (
+        <div className="level-confetti-layer" aria-hidden="true">
+          {levelConfettiPieces.map((piece) => (
+            <span
+              key={piece.id}
+              className="level-confetti-piece"
+              style={{
+                left: `${piece.left}%`,
+                backgroundColor: piece.color,
+                width: piece.size,
+                height: piece.size,
+                animationDelay: `${piece.delay}ms`,
+                animationDuration: `${piece.duration}ms`,
+                "--confetti-drift": `${piece.drift}px`,
+                "--confetti-spin": `${piece.spin}deg`,
+              } as CSSProperties}
+            />
+          ))}
+        </div>
+      )}
 
       {/* HEADER HUD */}
       {!isTimedQuizInProgress && (
@@ -1361,10 +1483,47 @@ export default function App() {
                     <p className="text-xs md:text-sm text-blue-800 font-bold">{activeStage.description}</p>
                   </div>
                 </div>
-                <div className="text-right text-xs text-blue-900 bg-white border-2 border-yellow-300 px-3.5 py-2 rounded-2xl font-black">
-                  Contains <strong className="text-blue-600 font-mono font-black">{activeStrategies.length} strategy stops</strong>
-                </div>
+                <button
+                  type="button"
+                  onClick={toggleActiveStagePreview}
+                  aria-expanded={isActiveStagePreviewOpen}
+                  className="text-xs text-blue-900 bg-white hover:bg-yellow-50 border-2 border-yellow-300 px-3.5 py-2 rounded-2xl font-black transition cursor-pointer flex items-center justify-center sm:justify-end gap-1.5 w-full sm:w-auto"
+                >
+                  <span>Contains</span>
+                  <strong className="text-blue-600 font-black">{activeStrategies.length}</strong>
+                  <span>strategy stops</span>
+                  <ChevronRight className={`w-3.5 h-3.5 transition-transform ${isActiveStagePreviewOpen ? "rotate-90" : ""}`} />
+                </button>
               </div>
+
+              <AnimatePresence initial={false}>
+                {isActiveStagePreviewOpen && (
+                  <motion.div
+                    initial={{ height: 0, opacity: 0, y: -6 }}
+                    animate={{ height: "auto", opacity: 1, y: 0 }}
+                    exit={{ height: 0, opacity: 0, y: -6 }}
+                    transition={{ duration: 0.2 }}
+                    className="overflow-hidden"
+                  >
+                    <div className="bg-white border-2 border-yellow-200 rounded-3xl p-4 shadow-sm">
+                      <div className="text-[10px] font-black tracking-widest uppercase text-amber-700 mb-3">
+                        Stage {activeStage.id} lesson stops
+                      </div>
+                      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-2">
+                        {activeStrategies.map((strategy, index) => (
+                          <div
+                            key={strategy.id}
+                            className="text-left px-3 py-2 rounded-xl border-2 border-slate-100 bg-slate-50"
+                          >
+                            <span className="block text-[10px] font-mono font-black text-blue-500">Stop {index + 1}</span>
+                            <span className="block text-xs font-black text-blue-950 leading-snug">{strategy.name}</span>
+                          </div>
+                        ))}
+                      </div>
+                    </div>
+                  </motion.div>
+                )}
+              </AnimatePresence>
 
               {/* STAGE COMPLETED CERTIFICATE BANNER */}
               {(() => {
@@ -1481,7 +1640,7 @@ export default function App() {
                           }`}
                         >
                           <BookOpen className={`w-3.5 h-3.5 ${isUnlocked ? "text-[#FF4757]" : "text-slate-300"}`} />
-                          View Info Slide
+                          View Lesson
                         </button>
 
                         {/* Practice Arena opener */}
@@ -1492,8 +1651,8 @@ export default function App() {
                             !isUnlocked
                               ? "bg-slate-50 border-slate-200 text-slate-300 cursor-not-allowed"
                               : isMastered
-                              ? "bg-emerald-100 border-emerald-300 text-emerald-700 hover:bg-emerald-250 cursor-pointer active:translate-y-0.5"
-                              : "bg-[#FF4757] hover:bg-[#FF6B81] border-[#D63031] text-white shadow-[0_3px_0px_0px_#D63031] cursor-pointer active:translate-y-0.5"
+                              ? "bg-emerald-100 border-emerald-300 text-emerald-700 hover:bg-emerald-200 cursor-pointer active:translate-y-0.5"
+                              : "bg-emerald-500 hover:bg-emerald-600 border-emerald-700 text-white shadow-[0_3px_0px_0px_#047857] cursor-pointer active:translate-y-0.5"
                           }`}
                         >
                           <Play className="w-3.5 h-3.5 fill-current" />
@@ -1626,7 +1785,7 @@ export default function App() {
                             className={`font-black py-2 px-4 rounded-xl flex items-center gap-1.5 transition border-2 w-full justify-center sm:w-auto ${
                               !isUnlocked
                                 ? "bg-slate-100 border-slate-200 text-slate-300 cursor-not-allowed"
-                                : "bg-[#FF4757] hover:bg-[#FF6B81] text-white shadow-[0_3px_0px_0px_#D63031] active:translate-y-0.5 active:shadow-none border-[#D63031] cursor-pointer"
+                                : "bg-emerald-500 hover:bg-emerald-600 text-white shadow-[0_3px_0px_0px_#047857] active:translate-y-0.5 active:shadow-none border-emerald-700 cursor-pointer"
                             }`}
                           >
                             <Play className="w-3 h-3 fill-current" />
@@ -1746,7 +1905,7 @@ export default function App() {
                           </div>
                         </div>
                         <p className="text-[10px] text-blue-800 font-extrabold">
-                          Pass: {roundPassTarget}+ correct and 80% correct.
+                          Pass: {roundPassTarget}+ facts with 80% accuracy.
                         </p>
                       </div>
 
@@ -1813,8 +1972,8 @@ export default function App() {
                             : "bg-slate-50/50 border-slate-200 hover:border-slate-350"
                         }`}
                       >
-                        <span className={`text-[10px] font-mono uppercase bg-white border font-black px-2.5 py-0.5 rounded-full inline-block mb-2 ${isQuickReviewFact ? "border-amber-200 text-amber-700" : "border-slate-250 text-slate-500"}`}>
-                          {isQuickReviewFact ? "Quick Review" : activeStrategyRound.name}
+                        <span className={`quiz-info-capsule text-[10px] font-mono uppercase border font-black px-3 py-1 rounded-full inline-flex items-center justify-center mb-2 ${questionCapsule.className}`}>
+                          {questionCapsule.label}
                         </span>
 
                         {/* Centered Question Formula */}
@@ -2016,7 +2175,7 @@ export default function App() {
                         <p className="text-amber-800 font-semibold">🥉 Bronze! 1 star earned! 🥉</p>
                       ) : (
                         <p className="text-slate-500 font-bold max-w-xs mx-auto leading-snug">
-                          🌿 Try again for {roundPassTarget}+ correct and 80% correct.
+                          🌿 Try again for {roundPassTarget}+ facts with 80% accuracy.
                         </p>
                       )}
                     </div>
@@ -2032,7 +2191,7 @@ export default function App() {
                       </p>
                     ) : (
                       <p className="text-sm text-slate-700 font-bold leading-relaxed">
-                        Goal: {roundPassTarget}+ correct and 80% correct.
+                        Goal: {roundPassTarget}+ facts with 80% accuracy.
                       </p>
                     )}
                   </div>
@@ -2062,7 +2221,7 @@ export default function App() {
                         onClick={() => {
                           handleOpenStrategySlide(nextStrategyAfterRound, "You unlocked a new stop on your math journey!");
                         }}
-                        className="bg-[#FF4757] hover:bg-[#FF6B81] text-white font-black py-3 px-6 rounded-xl text-xs sm:text-sm transition flex items-center justify-center gap-1.5 border-2 border-[#D63031] shadow-[0_4px_0px_0px_#D63031] active:translate-y-0.5 cursor-pointer"
+                        className="bg-emerald-500 hover:bg-emerald-600 text-white font-black py-3 px-6 rounded-xl text-xs sm:text-sm transition flex items-center justify-center gap-1.5 border-2 border-emerald-700 shadow-[0_4px_0px_0px_#047857] active:translate-y-0.5 cursor-pointer"
                       >
                         Next Lesson
                         <ChevronRight className="w-4 h-4 stroke-[3]" />
@@ -2183,10 +2342,10 @@ export default function App() {
               <div className="pt-2">
                 <button
                   onClick={() => handleStartPracticeRound(activeModalStrategy)}
-                  className="w-full bg-[#FF4757] hover:bg-[#FF6B81] text-white font-black py-4 px-6 rounded-2xl flex items-center justify-center gap-2 transition active:scale-95 text-sm md:text-base border-2 border-[#D63031] shadow-[0_4px_0px_0px_#D63031] cursor-pointer"
+                  className="w-full bg-emerald-500 hover:bg-emerald-600 text-white font-black py-4 px-6 rounded-2xl flex items-center justify-center gap-2 transition active:scale-95 text-sm md:text-base border-2 border-emerald-700 shadow-[0_4px_0px_0px_#047857] cursor-pointer"
                 >
                   <Play className="w-4 h-4 fill-current" />
-                  [Start Next Round]
+                  Practice Game
                 </button>
               </div>
 
