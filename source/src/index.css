@@ -21,7 +21,7 @@
   animation: bounce-slow 3s infinite ease-in-out;
 }
 
-/* Timed sprint mobile layout fixes */
+/* Timed practice mobile layout fixes */
 html.timed-quiz-active,
 body.timed-quiz-active {
   overscroll-behavior: none;
@@ -84,11 +84,11 @@ body.timed-quiz-active input {
     flex-direction: column;
   }
 
-  .timed-quiz-card > .space-y-6 > .timed-sprint-layout {
+  .timed-quiz-card > .space-y-6 > .timed-practice-layout {
     flex: 1 1 auto;
   }
 
-  .timed-sprint-layout {
+  .timed-practice-layout {
     height: 100% !important;
     min-height: 0 !important;
     display: grid;
@@ -164,7 +164,7 @@ body.timed-quiz-active input {
   }
 }
 
-/* Celebration burst for newly unlocked lessons and stage graduations */
+/* Celebration burst for newly unlocked lessons and chapter completions */
 .level-confetti-layer {
   position: fixed;
   inset: 0;

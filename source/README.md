@@ -1,284 +1,181 @@
 # Mental Math Journey
 
-Mental Math Journey is a classroom-friendly mental math practice app for elementary students. It turns addition, subtraction, and two-digit mental calculation strategies into a six-stage adventure with short timed sprints, strategy lesson slides, smart review, and local progress tracking.
+Mental Math Journey is a kid-friendly mental math web app for elementary students. It builds addition and subtraction fluency through short 1-minute practice sessions, clear chapter progression, and adaptive review.
 
-## What the app does
+The app is designed around this structure:
 
-Students move through a guided map of math strategy stops. Each stop introduces a specific mental math idea, gives a short explanation and example, then lets students practice with a 1-minute sprint.
+```text
+Journey -> Chapter -> Lesson -> Practice
+```
 
-During practice, the app tracks each fact or question by accuracy, response time, and recent performance. Facts that are slow, missed, or still developing appear more often. Facts that are fluent appear less often, but can still come back for review.
+Students move through 6 chapters and 35 lessons. Each lesson focuses on one mental math idea. A 1-minute practice session checks whether the student is ready to continue. Earlier facts come back as quick review when needed, but they should not slow down progress through new lessons.
 
-Progress is saved in the browser using `localStorage`. The app does not require Google sign-in, Google Drive sync, a database, or a custom backend.
+## What changed in the rebuilt version
 
-## Key features
+- Uses Chapters and Lessons instead of stages, levels, stops, or sprints.
+- Uses Practice instead of Sprint for timed quiz sessions.
+- Expands number ranges gradually instead of starting with one large 0-20 pool.
+- Chapter 1 now focuses on numbers 0-10, with small stretches to 11 or 12 when the lesson requires it.
+- Later chapters expand toward 20, then into two-digit mental math.
+- Older facts return as Quick Review when useful, but current lesson facts remain the main focus.
+- Student-facing wording is shorter and simpler.
+- Teacher/debug-style information has been removed from the student flow.
+- Mobile practice layout hides extra page elements and keeps the keypad usable.
+- Chapter and lesson completion confetti is included.
+- Favicons and Apple touch icons are linked in the page head.
 
-- Six adventure stages from anchor facts to two-digit mental math strategies
-- 28 lesson and review stops across the full journey
-- Strategy lesson slides with examples and step-by-step thinking prompts
-- 1-minute timed sprints for each unlocked strategy stop
-- Smart review engine that gives more practice to facts that need support
-- Star rewards based on the selected speed target
-- Journey map showing unlocked, locked, and mastered stops
-- All Lessons view for reviewing every strategy slide
-- Best speed and best streak tracking for each stop
-- Student-friendly visual feedback for correct and incorrect answers
-- Settings panel for speed target and progress reset
-- Printable completion certificates for stage completion and full journey completion
-- Static production build that can run from the top-level `index.html`
-- Editable React/Vite source included in the `source/` folder
+## Chapter plan
 
-## How students use it
+| Chapter | Name | Lessons | Main focus |
+|---:|---|---:|---|
+| 1 | Starter Island | 6 | Anchor facts with numbers 0-10 |
+| 2 | Counting Trail | 5 | Count on, count back, and count up within 20 |
+| 3 | Doubles Forest | 6 | Doubles, halves, and near doubles |
+| 4 | Bridge Town | 5 | Make 10 and bridge through 10 |
+| 5 | Family Village | 5 | Fact families and missing parts |
+| 6 | Big Number Mountain | 8 | Two-digit mental math methods |
 
-1. Open `index.html`.
-2. Choose an unlocked stop on the Adventure Map.
-3. Read or review the strategy slide.
-4. Start the 1-minute sprint.
-5. Type answers using the on-screen keypad or keyboard.
-6. Review the sprint results, speed score, accuracy, and unlock message.
-7. Continue to the next lesson after a passing sprint, practice again, or return to the map.
+Total: 35 lessons.
 
-## Main student screens
+## Lesson list
 
-### Adventure Map Stages
+### Chapter 1: Starter Island
 
-The map shows the six stages of the journey. Each stage contains a set of strategy stops. Students unlock new stops by completing a passing 1-minute sprint on the current stop.
+1. Same Number Facts
+2. One More and One Less
+3. Two More and Two Less
+4. Make 10 Pairs
+5. Subtract from 10
+6. Starter Island Practice
 
-### All Math Lessons
+### Chapter 2: Counting Trail
 
-This screen lists all 28 strategy slides. It works like a teacher and student guide, letting students review explanations, examples, and thinking steps before practicing.
+7. Count On to Add
+8. Count Back to Subtract
+9. Count Up to Subtract
+10. Counting Trail Practice
+11. Review: Chapters 1-2
 
-### Practice Game
+### Chapter 3: Doubles Forest
 
-This is the active sprint screen. Students answer as many questions as they can in 60 seconds. The app records correct answers, incorrect answers, speed, streaks, and fact-level progress.
+12. Doubles
+13. Half Facts
+14. Near Doubles: One Apart
+15. Near Doubles: Two Apart
+16. Doubles Forest Practice
+17. Review: Chapters 1-3
 
-### Sprint completion screen
+### Chapter 4: Bridge Town
 
-After each sprint, students see:
+18. Make 10 to Add
+19. Bridge Back to Subtract
+20. Missing Part to 10
+21. Bridge Town Practice
+22. Review: Chapters 1-4
 
-- Speed Score: how many facts were answered correctly in 1 minute
-- Accuracy: the percentage of attempted answers that were correct
-- Star reward: bronze, silver, or gold based on the speed target
-- A clear unlock message when the next lesson is available
-- A Continue to Next Lesson button after a passing sprint
+### Chapter 5: Family Village
 
-Unlocking is based on a strong sprint sample, not on turning every generated fact green. This keeps progression moving at a reasonable classroom pace while the review engine still brings back facts that need support over time.
+23. Fact Families to 10
+24. Fact Families to 20
+25. Missing Addend Thinking
+26. Family Village Practice
+27. Review: Chapters 1-5
 
-## Stages and content
+### Chapter 6: Big Number Mountain
 
-Mental Math Journey groups practice by strategy rather than by traditional number families. Cumulative quiz and mega review stops reuse facts from earlier strategy pools, so the counts below describe the unique generated base questions introduced in each stage.
+28. Add and Subtract Tens
+29. Add Ones to Two-Digit Numbers
+30. Subtract Ones from Two-Digit Numbers
+31. Bridge Ones in Two-Digit Numbers
+32. Add Two-Digit Numbers by Place Value
+33. Subtract Two-Digit Numbers by Place Value
+34. Compensation
+35. Big Number Mountain Practice
 
-| Stage | World | Main content | Strategy stops | Unique base questions |
-|---:|---|---|---:|---:|
-| 1 | Starter Island | Zero facts, one more/less, two more/less, make-10 pairs, subtract from 10 | 6 | 183 |
-| 2 | Counting Trail | Count-on addition, count-back subtraction, count-up subtraction | 5 | 92 |
-| 3 | Doubles Forest | Doubles, halves, near doubles, near-double subtraction | 5 | 44 |
-| 4 | Bridge Town | Make-10 addition and bridge-back subtraction | 4 | 42 |
-| 5 | Family Village | Inverse thinking and fact families to 20 | 3 | 20 |
-| 6 | Big Number Mountain | Compensation, partitioning, and bridging across tens | 5 | 588 |
-|  | Total |  | 28 | 969 |
+## Practice sessions
 
-## Strategy stops
+Each lesson uses a 1-minute practice session. The default speed target is adjustable in Settings.
 
-| Stop | Stage | Strategy |
-|---:|---|---|
-| 1 | Starter Island | Same Number Facts |
-| 2 | Starter Island | One More and One Less |
-| 3 | Starter Island | Two More and Two Less |
-| 4 | Starter Island | Make 10 Pairs |
-| 5 | Starter Island | Subtract from 10 |
-| 6 | Starter Island | Starter Island Cumulative Quiz |
-| 7 | Counting Trail | Count On to Add |
-| 8 | Counting Trail | Count Back to Subtract |
-| 9 | Counting Trail | Count Up to Subtract |
-| 10 | Counting Trail | Counting Trail Cumulative Quiz |
-| 11 | Counting Trail | Mega Review (Stages 1-2) |
-| 12 | Doubles Forest | Doubles and Half Facts |
-| 13 | Doubles Forest | Near Doubles to Add |
-| 14 | Doubles Forest | Near Doubles Backwards |
-| 15 | Doubles Forest | Doubles Forest Cumulative Quiz |
-| 16 | Doubles Forest | Mega Review (Stages 1-3) |
-| 17 | Bridge Town | Make 10 Addition |
-| 18 | Bridge Town | Bridge Back Subtraction |
-| 19 | Bridge Town | Bridge Town Cumulative Review |
-| 20 | Bridge Town | Mega Review (Stages 1-4) |
-| 21 | Family Village | Think Inverse |
-| 22 | Family Village | Family Village Cumulative Quiz |
-| 23 | Family Village | Mega Review (Stages 1-5) |
-| 24 | Big Number Mountain | Make a Friendly Number |
-| 25 | Big Number Mountain | Split Tens and Ones |
-| 26 | Big Number Mountain | Bridge Across Tens |
-| 27 | Big Number Mountain | Big Mountain Cumulative Review |
-| 28 | Big Number Mountain | Mega Review (ALL STAGES 1-6) |
+A lesson is passed when the student reaches a reasonable practice sample, including:
 
-## Smart review and mastery
+- enough correct answers for the selected speed target
+- at least 80% accuracy
+- enough facts seen from the lesson
+- not too many facts needing extra support
 
-The app tracks each fact or question individually. For each attempt, it records whether the answer was correct, how long the student took, and whether the fact has been slow or missed recently.
+The app does not require every possible fact in the lesson pool to become fully mastered before the next lesson unlocks.
 
-The review engine uses this information to choose what appears next. Facts that need support receive higher weight. Ready facts receive lower weight, so students spend more time on what still needs practice.
+## Review behavior
 
-A strategy stop unlocks the next stop when the student completes a passing sprint. The passing rule is intentionally based on a strong sample from the stop instead of requiring every generated fact to become fluent. This keeps the journey moving at a classroom-friendly pace, especially for stops with large question pools.
+Current lesson facts are the main practice pool. Older facts come back as Quick Review when the app has evidence they need attention, such as recent mistakes, timeouts, or repeated slow answers.
 
-The current pass check looks for:
+This keeps practice moving forward while still protecting earlier learning.
 
-- The Silver speed target or better for the selected speed setting
-- At least 80% accuracy in the sprint
-- Enough attempted answers to make the sprint meaningful
-- A small sample of different facts seen from the stop
-- No large cluster of facts that recently needed extra support
+## Storage
 
-Individual fact tracking still matters for smart review. Slow or missed facts continue to appear more often, even after the next lesson is unlocked.
+Progress is stored locally in the browser using `localStorage`.
 
-## Stars and speed targets
-
-Each sprint lasts 60 seconds, so the number of correct answers is also the student's facts-per-minute score for that sprint.
-
-The speed target can be changed in the settings menu.
-
-| Speed target | Bronze | Silver | Gold |
-|---:|---:|---:|---:|
-| 10 correct/min | 3 | 6 | 10 |
-| 15 correct/min | 5 | 9 | 15 |
-| 20 correct/min | 6 | 12 | 20 |
-| 30 correct/min | 9 | 18 | 30 |
-| 40 correct/min | 12 | 24 | 40 |
-
-The default speed target in the rebuilt app is 20 correct facts per minute.
-
-## Progress storage
-
-Progress is stored locally in the browser.
-
-Main storage key:
+Main key:
 
 ```text
 mental_math_journey_progress
 ```
 
-Stored progress includes:
-
-- Viewed strategy stops
-- Mastered strategy stops
-- Total stars earned
-- Current speed target
-- Best streaks by strategy stop
-- Best speeds by strategy stop
-- Fact-level learning statistics used internally by the smart review engine
-
-Because the app uses browser storage, progress is tied to the device and browser profile. Clearing site data, using a different browser, or changing devices may remove or hide existing progress.
-
-## Privacy and classroom use
-
-Mental Math Journey does not require students to sign in. It does not send student progress to Google Drive and does not require a remote database.
-
-For classroom use, this makes the app simple to open and practice. The trade-off is that progress is local to the browser. If long-term cross-device records are required, sync would need to be added separately.
-
-## File structure
-
-The distributed rebuild includes a ready-to-open production build and the editable source.
-
-```text
-index.html                  Production entry file
-assets/                     Built CSS and JavaScript assets
-source/                     Editable React/Vite project
-source/src/App.tsx          Main app UI and game flow
-source/src/strategies.ts    Stages, strategies, and question generation
-source/src/adaptiveEngine.ts Smart review and mastery logic
-source/src/index.css        App CSS
-source/package.json         Development scripts and dependencies
-README_OPEN_FIRST.txt       Quick start notes for the packaged build
-```
-
-## Running the packaged app
-
-Open the top-level file:
-
-```text
-index.html
-```
-
-The top-level `index.html` is the production build. It can be opened directly from the extracted folder because the asset paths are relative.
-
-Keep the `assets/` folder beside `index.html`. If the assets folder is moved or renamed, the app will not load correctly.
-
-## Local development
-
-Prerequisites:
-
-- Node.js
-- npm
-
-From the project root:
-
-```bash
-cd source
-npm install
-npm run dev
-```
-
-Then open the local Vite URL shown in the terminal.
-
-To check TypeScript:
-
-```bash
-npm run lint
-```
-
-To rebuild the production files:
-
-```bash
-npm run build
-```
-
-The current Vite configuration uses relative asset paths, so the rebuilt files can be copied into the package root for local static use.
+There is no custom backend and no database requirement.
 
 ## Deployment
 
-For simple static hosting, deploy the production build files:
+The built app is static. Deploy the root files from the package:
 
 ```text
 index.html
 assets/
+favicon files, if used
 ```
 
-For GitHub Pages, Netlify, Cloudflare Pages, or similar static hosts, make sure the built `assets/` folder stays beside `index.html`.
+The source code is in the `source/` folder.
 
-No OAuth setup, Google Cloud project, Google Drive API, backend server, or database is required for the rebuilt app.
+To build from source:
+
+```bash
+cd source
+npm install
+npm run build
+```
+
+Then copy `source/dist/index.html` and `source/dist/assets/` to the deploy root.
+
+## Favicons
+
+The page includes links for these files:
+
+```text
+favicon-16x16.png
+favicon-32x32.png
+favicon-48x48.png
+apple-touch-icon.png
+apple-touch-icon-152x152.png
+apple-touch-icon-167x167.png
+```
+
+Keep those files beside `index.html` when deploying.
 
 ## Testing checklist
 
-After changing the app, test:
+After changes, test:
 
-- Opening the top-level `index.html` after extracting the package
-- Adventure Map stage display
-- All Lessons strategy slide display
-- Starting a 1-minute sprint from an unlocked stop
-- Correct answer handling
-- Incorrect answer handling
-- On-screen keypad input
-- Keyboard input, including Enter and Backspace
-- Timer countdown and sprint completion
-- Speed Score and accuracy display
-- Sprint completion messages and next-lesson button behavior
-- Bronze, silver, and gold star rewards
-- Strategy stop unlocking
-- Best speed and best streak updates
-- Speed target settings: 10, 15, 20, 30, and 40 correct/min
-- Progress persistence after refreshing the page
-- Reset progress from the settings menu
-- Stage completion certificate printing
-- Full journey completion certificate printing
-- Mobile and tablet layout during active practice
-
-## Notes for future improvements
-
-Possible future additions:
-
-- Teacher dashboard or exportable progress summary
-- Class roster support
-- Optional cloud sync
-- Optional classroom settings panel
-- Separate student profiles on shared classroom devices
-- More print-friendly progress reports
+- starting a new practice session
+- 3, 2, 1, Go countdown
+- mobile keypad layout
+- mobile keyboard suppression
+- correct answers, wrong answers, and timeouts
+- passing a lesson
+- unlocking the next lesson
+- completing a chapter
+- confetti on lesson and chapter completion
+- Journey Map display on mobile
+- Lesson Guide display
+- Settings and reset progress
 
 ## License
 

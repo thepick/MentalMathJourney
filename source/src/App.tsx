@@ -26,7 +26,6 @@ import {
   STAGES, 
   STRATEGIES, 
   StageId, 
-  Stage, 
   Strategy, 
   MathQuestion,
   generateQuestionPoolForStrategy 
@@ -81,7 +80,7 @@ function printCertificate(
     <html lang="en">
       <head>
         <meta charset="utf-8">
-        <title>Certificate - Stage ${stageNum}: ${stageName}</title>
+        <title>Certificate - Chapter ${stageNum}: ${stageName}</title>
         <style>
           @import url('https://fonts.googleapis.com/css2?family=Playfair+Display:ital,wght@0,600;0,800;1,400&family=Inter:wght@400;600;800&family=JetBrains+Mono:wght@700&display=swap');
           
@@ -295,14 +294,14 @@ function printCertificate(
             </div>
             
             <div>
-              <h1 class="main-title" style="white-space: nowrap;">${stageName.toUpperCase().includes("GRAND") || stageName.toUpperCase().includes("JOURNEY") ? "GRANDMASTER CERTIFICATE" : "STAGE MASTER CERTIFICATE"}</h1>
+              <h1 class="main-title" style="white-space: nowrap;">${stageName.toUpperCase().includes("GRAND") || stageName.toUpperCase().includes("JOURNEY") ? "GRANDMASTER CERTIFICATE" : "CHAPTER MASTER CERTIFICATE"}</h1>
               <div class="award-line" style="white-space: nowrap;">This official math achievement diploma is proudly awarded to:</div>
               
               <div class="recipient" style="white-space: nowrap; overflow: hidden; text-overflow: ellipsis; max-width: 90%;">${userName || "Elite Math Scholar"}</div>
               
               <p class="descr" style="line-height: 1.6; max-width: 850px; margin: 15px auto;">
                 Who has successfully trained their brain, unlocked automaticity, and demonstrated outstanding mathematical fluency in<br>
-                <span style="display: inline-block; white-space: nowrap; font-weight: 800; color: #1e3a8a; font-size: 15px; background: rgba(30,58,138,0.06); padding: 2px 10px; border-radius: 6px; margin: 4px 0;">Stage ${stageNum}: ${stageName}</span>.<br>
+                <span style="display: inline-block; white-space: nowrap; font-weight: 800; color: #1e3a8a; font-size: 15px; background: rgba(30,58,138,0.06); padding: 2px 10px; border-radius: 6px; margin: 4px 0;">Chapter ${stageNum}: ${stageName}</span>.<br>
                 Approved by the Mental Math Masters of calculations!
               </p>
             </div>
@@ -318,7 +317,7 @@ function printCertificate(
               <div class="badge-box" style="white-space: nowrap;">
                 <div class="badge-large" style="white-space: nowrap;">
                   <span>✨</span>
-                  <span style="white-space: nowrap;">STAGE ${stageNum} COMPLETED</span>
+                  <span style="white-space: nowrap;">CHAPTER ${stageNum} COMPLETED</span>
                   <span>✨</span>
                 </div>
               </div>
@@ -358,7 +357,7 @@ export default function App() {
   const [currentStageId, setCurrentStageId] = useState<StageId>(StageId.StarterIsland);
   const [activeStrategyRound, setActiveStrategyRound] = useState<Strategy | null>(null);
   const [activeModalStrategy, setActiveModalStrategy] = useState<Strategy | null>(null);
-  const [activeModalReason, setActiveModalReason] = useState<string>("You unlocked a new stop on your math journey!");
+  const [activeModalReason, setActiveModalReason] = useState<string>("You unlocked a new lesson!");
   
   // Game progression
   const [viewedStrategyIds, setViewedStrategyIds] = useState<number[]>([1]);
@@ -514,11 +513,11 @@ export default function App() {
   const handleOpenStrategySlide = (strategy: Strategy, reasonOverride?: string) => {
     const reasons = [
       "You unlocked a new strategy!",
-      "You arrived at a fresh path stop!",
+      "You unlocked a new lesson!",
       "Helpful guide discovered!",
       "Sparkling math power unlocked!",
       "You earned a new star!",
-      "You reached a new stop on your math journey!"
+      "You unlocked a new lesson!"
     ];
     // Use the predefined reason if specific, otherwise random child-friendly celebration
     const reasonValue = reasonOverride || strategy.reason || reasons[Math.floor(Math.random() * reasons.length)];
@@ -797,7 +796,7 @@ export default function App() {
           const stageStrategiesForRound = STRATEGIES.filter((strategy) => strategy.stageId === activeStrategyRound.stageId);
           const stageCompleted = stageStrategiesForRound.every((strategy) => strategy.id === id || currentMastered.includes(strategy.id));
           launchLevelConfetti(stageCompleted);
-          setEncouragingText(stageCompleted ? "Stage complete!" : "New lesson unlocked!");
+          setEncouragingText(stageCompleted ? "Chapter complete!" : "New lesson unlocked!");
         }
       }
 
@@ -999,7 +998,7 @@ export default function App() {
 
   const currentLevelProgressPercent = Math.round((masteredStrategyIds.length / STRATEGIES.length) * 100);
 
-  // Dynamic stage unlocking logic
+  // Dynamic chapter unlocking logic
   const isStageUnlocked = (stageId: number) => {
     if (stageId === 1) return true;
     const prevStageId = stageId - 1;
@@ -1008,7 +1007,7 @@ export default function App() {
     return prevStageMasteredCount === prevStageStrategies.length;
   };
 
-  // Helper arrays for Stages filter
+  // Helper arrays for Chapters filter
   const activeStage = STAGES.find(s => s.id === currentStageId) || STAGES[0];
   const activeStrategies = STRATEGIES.filter(s => s.stageId === currentStageId);
   const isActiveStagePreviewOpen = !!expandedStagePreviewIds[activeStage.id];
@@ -1191,7 +1190,7 @@ export default function App() {
             }`}
           >
             <Compass className="w-4 h-4" />
-            Adventure Map Stages
+            Journey Map
           </button>
           
           <button
@@ -1204,7 +1203,7 @@ export default function App() {
             }`}
           >
             <BookOpen className="w-4 h-4" />
-            All {STRATEGIES.length} Math Lessons ({viewedStrategyIds.length}/{STRATEGIES.length})
+            Lesson Guide ({viewedStrategyIds.length}/{STRATEGIES.length})
           </button>
 
         </div>
@@ -1246,7 +1245,7 @@ export default function App() {
                       Mental Math Champion!
                     </h2>
                     <p className="text-sm md:text-lg text-amber-900 font-extrabold max-w-2xl mx-auto leading-relaxed">
-                      Amazing job, Explorer! You have conquered all <strong>{STRATEGIES.length} kingdoms of strategic mental arithmetic</strong> with rapid speed and automaticity.
+                      Amazing job, Explorer! You have conquered all <strong>{STRATEGIES.length} lessons</strong> with rapid speed and automaticity.
                     </p>
                   </div>
 
@@ -1314,10 +1313,10 @@ export default function App() {
                   <div className="flex flex-col sm:flex-row gap-3 justify-center pt-2">
                     <button
                       onClick={() => {
-                        if (confirm("Would you like to restart your adventure to beat your previous scores and improve your countdown records? (This keeps your Lessons visible!)")) {
+                        if (confirm("Would you like to restart your journey from Lesson 1? (This keeps your Lessons visible!)")) {
                           setMasteredStrategyIds([]);
                           setStars(0);
-                          // Back to initial Stop 1
+                          // Back to initial Lesson 1
                           setViewedStrategyIds([1]);
                           saveProgress([1], [], 0);
                         }
@@ -1325,14 +1324,14 @@ export default function App() {
                       className="bg-[#FF4757] hover:bg-[#FF6B81] text-white font-black py-4 px-8 rounded-2xl text-sm transition border-2 border-[#D63031] shadow-[0_4px_0px_0px_#D63031] active:translate-y-0.5 active:shadow-none cursor-pointer flex items-center justify-center gap-2"
                     >
                       <RefreshCw className="w-4 h-4 text-white" />
-                      Restart math adventure challenge
+                      Restart journey
                     </button>
 
                     <button
                       onClick={() => setActiveTab("encyclopedia")}
                       className="bg-white hover:bg-slate-50 text-slate-700 font-black py-4 px-8 rounded-2xl text-xs transition border-2 border-slate-200 cursor-pointer active:translate-y-0.5"
                     >
-                      Browse lessons index
+                      Browse lesson guide
                     </button>
                   </div>
                 </div>
@@ -1343,10 +1342,9 @@ export default function App() {
             <div>
               <div className="text-center max-w-xl mx-auto mb-6">
                 <span className="text-4xl">🧭</span>
-                <h2 className="text-2xl md:text-3xl font-display font-black text-blue-950 mt-2">Select Your Exploration Stop</h2>
+                <h2 className="text-2xl md:text-3xl font-display font-black text-blue-950 mt-2">Choose a Chapter</h2>
                 <p className="text-sm text-blue-850 font-extrabold mt-1">
-                  Each region unlocks fantastic, smart tricks to make math super fast in your brain. 
-                  Click a stop below to see what math powers lie inside!
+                  Choose a chapter, then complete each lesson with a 1-minute practice.
                 </p>
               </div>
 
@@ -1364,7 +1362,7 @@ export default function App() {
               <div className="grid grid-cols-2 lg:grid-cols-6 gap-4">
                 {STAGES.map((world, idx) => {
                   const isCurrent = currentStageId === world.id;
-                  const isUnlockedStage = isStageUnlocked(world.id);
+                  const isUnlockedChapter = isStageUnlocked(world.id);
                   
                   // Count total and mastered strategies in this stage
                   const stageStrategies = STRATEGIES.filter(s => s.stageId === world.id);
@@ -1375,18 +1373,18 @@ export default function App() {
                     <button
                       key={world.id}
                       onClick={() => {
-                        if (isUnlockedStage) {
+                        if (isUnlockedChapter) {
                           setCurrentStageId(world.id);
                           setLockTip(null);
                         } else {
-                          const prevStage = STAGES.find(s => s.id === world.id - 1);
-                          setLockTip(`🔒 To travel to ${world.name}, first master all mental math stops in Stage ${world.id - 1} (${prevStage?.name || ""})! 🚀`);
+                          const prevChapter = STAGES.find(s => s.id === world.id - 1);
+                          setLockTip(`🔒 To travel to ${world.name}, first master all lessons in Chapter ${world.id - 1} (${prevChapter?.name || ""})! 🚀`);
                         }
                       }}
                       className={`relative text-left p-4 rounded-2xl border-4 transition-all cursor-pointer flex flex-col justify-between overflow-hidden group ${
                         isCurrent 
                           ? "bg-white border-yellow-400 shadow-[0_6px_0px_0px_#F59E0B] scale-102"
-                          : isUnlockedStage
+                          : isUnlockedChapter
                           ? "bg-white border-blue-200 hover:border-blue-300 shadow-[0_6px_0px_0px_#DBEAFE]"
                           : "bg-slate-100/70 border-slate-200 shadow-none opacity-75 cursor-not-allowed"
                       }`}
@@ -1395,32 +1393,32 @@ export default function App() {
                       <div className={`absolute top-0 right-0 w-24 h-24 rounded-full -mr-8 -mt-8 opacity-15 bg-gradient-to-br ${world.color}`} />
                       
                       <div>
-                        {/* Stage Number badge */}
+                        {/* Chapter Number badge */}
                         <div className="flex items-center justify-between mb-2">
                           <span className="text-[10px] font-mono tracking-wider text-blue-500 uppercase font-black">
-                            Stage {world.id}
+                            Chapter {world.id}
                           </span>
-                          {!isUnlockedStage ? (
+                          {!isUnlockedChapter ? (
                             <span className="text-[10px] bg-slate-200 text-slate-600 border border-slate-300 px-1.5 py-0.5 rounded-full font-black uppercase flex items-center gap-1">
                               🔒 Locked
                             </span>
                           ) : stageMastered === stageTotal && stageTotal > 0 ? (
                             <span className="text-[10px] bg-green-100 text-green-700 border border-green-300 px-1.5 py-0.5 rounded-full font-black uppercase">
-                              🏰 Pass
+                              Complete
                             </span>
                           ) : null}
                         </div>
 
                         {/* Large Emoji & Name */}
                         <div className="flex items-center gap-2 mb-1.5">
-                          <span className="text-3xl">{isUnlockedStage ? world.emoji : "🔒"}</span>
+                          <span className="text-3xl">{isUnlockedChapter ? world.emoji : "🔒"}</span>
                           <h3 className="font-display font-black text-xs md:text-sm text-blue-950 group-hover:text-blue-600 transition-colors leading-tight">
                             {world.name}
                           </h3>
                         </div>
 
                         <p className="text-[11px] text-gray-500 font-bold leading-tight line-clamp-2 mt-1">
-                          {isUnlockedStage ? world.description : `Master all of Stage ${world.id - 1} first!`}
+                          {isUnlockedChapter ? world.description : `Complete Chapter ${world.id - 1} first!`}
                         </p>
                       </div>
 
@@ -1429,7 +1427,7 @@ export default function App() {
                         <div className="flex items-center gap-1 text-[11px] font-black text-blue-850">
                           <Trophy className="w-3.5 h-3.5 text-yellow-500" />
                           <span className="font-mono">{stageMastered}/{stageTotal}</span>
-                          <span className="text-[10px] text-gray-400">Stars</span>
+                          <span className="text-[10px] text-gray-400">Lessons</span>
                         </div>
                         <div className="w-10 bg-blue-100 rounded-full h-1.5 overflow-hidden">
                           <div 
@@ -1452,14 +1450,14 @@ export default function App() {
             {/* Divider */}
             <div className="border-t-2 border-slate-200/50 my-6" />
 
-            {/* Current Selected Stage strategies deck */}
+            {/* Current Selected Chapter lessons */}
             <div className="space-y-4">
               <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 bg-yellow-50 p-6 rounded-[32px] border-4 border-yellow-300 shadow-[0_4px_0px_0px_#FDE047]">
                 <div className="flex items-center gap-3">
                   <span className="text-4xl">{activeStage.emoji}</span>
                   <div>
                     <h3 className="text-lg md:text-xl font-display font-black text-blue-950 flex items-center gap-2">
-                      Stage {activeStage.id}: {activeStage.name}
+                      Chapter {activeStage.id}: {activeStage.name}
                     </h3>
                     <p className="text-xs md:text-sm text-blue-800 font-bold">{activeStage.description}</p>
                   </div>
@@ -1472,7 +1470,7 @@ export default function App() {
                 >
                   <span>Contains</span>
                   <strong className="text-blue-600 font-black">{activeStrategies.length}</strong>
-                  <span>strategy stops</span>
+                  <span>lessons</span>
                   <ChevronRight className={`w-3.5 h-3.5 transition-transform ${isActiveStagePreviewOpen ? "rotate-90" : ""}`} />
                 </button>
               </div>
@@ -1488,7 +1486,7 @@ export default function App() {
                   >
                     <div className="bg-white border-2 border-yellow-200 rounded-3xl p-4 shadow-sm">
                       <div className="text-[10px] font-black tracking-widest uppercase text-amber-700 mb-3">
-                        Stage {activeStage.id} lesson stops
+                        Chapter {activeStage.id} lessons
                       </div>
                       <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-2">
                         {activeStrategies.map((strategy, index) => (
@@ -1496,7 +1494,7 @@ export default function App() {
                             key={strategy.id}
                             className="text-left px-3 py-2 rounded-xl border-2 border-slate-100 bg-slate-50"
                           >
-                            <span className="block text-[10px] font-mono font-black text-blue-500">Stop {index + 1}</span>
+                            <span className="block text-[10px] font-mono font-black text-blue-500">Lesson {index + 1}</span>
                             <span className="block text-xs font-black text-blue-950 leading-snug">{strategy.name}</span>
                           </div>
                         ))}
@@ -1506,7 +1504,7 @@ export default function App() {
                 )}
               </AnimatePresence>
 
-              {/* STAGE COMPLETED CERTIFICATE BANNER */}
+              {/* CHAPTER COMPLETED CERTIFICATE BANNER */}
               {(() => {
                 const activeStageMasteredCount = activeStrategies.filter(s => masteredStrategyIds.includes(s.id)).length;
                 const isStageFullyMastered = activeStageMasteredCount === activeStrategies.length && activeStrategies.length > 0;
@@ -1523,10 +1521,10 @@ export default function App() {
                       <span className="text-4xl animate-pulse">📜</span>
                       <div>
                         <h4 className="font-display font-black text-indigo-950 text-base md:text-lg">
-                          🎉 Stage Completed! You have unlocked your Custom Diploma!
+                          🎉 Chapter Complete! You have unlocked your custom diploma!
                         </h4>
                         <p className="text-xs text-indigo-800 font-bold">
-                          Type your name below to print your custom <strong>Stage {activeStage.id} Diploma</strong>:
+                          Type your name below to print your custom <strong>Chapter {activeStage.id} Diploma</strong>:
                         </p>
                       </div>
                     </div>
@@ -1550,7 +1548,7 @@ export default function App() {
                 );
               })()}
 
-              {/* Strategy grid list for active level */}
+              {/* Lesson grid list for active chapter */}
               <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                 {activeStrategies.map((strategy, sIdx) => {
                   const isViewed = viewedStrategyIds.includes(strategy.id);
@@ -1572,13 +1570,13 @@ export default function App() {
                         {/* Top Line badge */}
                         <div className="flex items-center justify-between">
                           <span className="font-mono text-[11px] text-blue-700 font-black bg-blue-50 px-2.5 py-0.5 rounded-lg border border-blue-100">
-                            Stop {strategy.id}/{STRATEGIES.length}
+                            Lesson {strategy.id}/{STRATEGIES.length}
                           </span>
                           
                           <div className="flex gap-1.5">
                             {isMastered ? (
                               <span className="bg-emerald-100 text-emerald-700 text-[10px] px-2.5 py-1 rounded-full border border-emerald-250 flex items-center gap-1 font-black uppercase">
-                                <Check className="w-3.5 h-3.5 text-emerald-650 stroke-[3]" /> Mastered Fact
+                                <Check className="w-3.5 h-3.5 text-emerald-650 stroke-[3]" /> Complete
                               </span>
                             ) : isUnlocked ? (
                               <span className="bg-yellow-105 text-yellow-750 text-[10px] px-2.5 py-1 rounded-full border border-yellow-300 flex items-center gap-1 font-black uppercase">
@@ -1586,7 +1584,7 @@ export default function App() {
                               </span>
                             ) : (
                               <span className="bg-slate-100 text-slate-400 text-[10px] px-2.5 py-1 rounded-full border border-slate-200 flex items-center gap-1 font-bold uppercase">
-                                🔒 Locked Stop
+                                🔒 Locked Lesson
                               </span>
                             )}
                           </div>
@@ -1598,7 +1596,7 @@ export default function App() {
                         </h4>
 
                         <p className={`text-xs md:text-sm font-bold leading-relaxed ${isUnlocked ? "text-gray-650" : "text-slate-400"}`}>
-                          {isUnlocked ? strategy.explanation : "Master the previous math kingdoms to unlock this quest!"}
+                          {isUnlocked ? strategy.explanation : "Complete the previous lesson to unlock this one."}
                         </p>
 
                         {/* Example Box */}
@@ -1637,7 +1635,7 @@ export default function App() {
                           }`}
                         >
                           <Play className="w-3.5 h-3.5 fill-current" />
-                          Practice Game
+                          Start Practice
                         </button>
                       </div>
 
@@ -1661,9 +1659,9 @@ export default function App() {
           <div className="space-y-6">
             <div className="text-center max-w-lg mx-auto mb-6">
               <span className="text-4xl">📖</span>
-              <h2 className="text-2xl md:text-3xl font-display font-black text-blue-950 mt-2">All {STRATEGIES.length} Math Strategy Slides</h2>
+              <h2 className="text-2xl md:text-3xl font-display font-black text-blue-950 mt-2">All {STRATEGIES.length} Lessons</h2>
               <p className="text-sm text-blue-800 font-extrabold mt-1">
-                A handy guide for students and teachers. Browse each designed slide in order below, then launch its custom test arena anytime!
+                A simple guide for the lessons in order.
               </p>
             </div>
 
@@ -1690,10 +1688,10 @@ export default function App() {
                     <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2.5 mb-4 border-b border-dashed border-slate-150 pb-3">
                       {/* Badge / Stop Marker */}
                       <span className="text-xs bg-blue-50 border border-blue-200 font-mono font-black text-blue-700 px-3 py-1 rounded-full w-fit">
-                        Slide {strategy.id} of {STRATEGIES.length} • Strategy Stop
+                        Lesson {strategy.id} of {STRATEGIES.length}
                       </span>
 
-                      {/* Stage indicator */}
+                      {/* Chapter indicator */}
                       <span className="text-xs bg-blue-50 border border-blue-200 px-3 py-1 font-black flex items-center gap-1.5 rounded-full text-blue-900 w-fit">
                         <span>{ownStageValue.emoji}</span>
                         <span>{ownStageValue.name}</span>
@@ -1702,7 +1700,7 @@ export default function App() {
 
                     <div className="max-w-xl">
 
-                      {/* Stage/Stop Unlocking badge */}
+                      {/* Chapter/Lesson Unlocking badge */}
                       <div className="text-yellow-750 text-xs font-black mb-2 flex items-center gap-1 bg-yellow-50 border border-yellow-250 w-fit px-2.5 py-1 rounded-full">
                         <Sparkles className="w-3.5 h-3.5 text-yellow-550" />
                         {strategy.reason}
@@ -1710,12 +1708,12 @@ export default function App() {
 
                       {/* Strategy Name */}
                       <h3 className={`text-xl md:text-2xl font-display font-black tracking-tight mb-2 ${isUnlocked ? "text-blue-950" : "text-slate-400"}`}>
-                        {!isUnlocked ? "🔒 Stop Locked" : strategy.name}
+                        {!isUnlocked ? "🔒 Lesson Locked" : strategy.name}
                       </h3>
 
                       {/* Explanation */}
                       <p className={`text-sm font-bold pr-10 mb-5 leading-relaxed ${isUnlocked ? "text-gray-650" : "text-slate-400"}`}>
-                        {isUnlocked ? strategy.explanation : "This strategy stop is locked! Pass the previous stop to unlock this math superpower!"}
+                        {isUnlocked ? strategy.explanation : "This lesson is locked. Complete the previous lesson first."}
                       </p>
 
                       {/* Split section like requested: Example and Think */}
@@ -1749,14 +1747,14 @@ export default function App() {
                       ) : (
                         <div className="bg-slate-50 px-6 py-8 rounded-2xl border-2 border-dashed border-slate-200 mb-6 text-center text-xs font-black text-slate-400 flex flex-col items-center justify-center gap-1">
                           <span className="text-3xl mb-1">🔐</span>
-                          <span>Complete stop {strategy.id - 1} with a passing sprint to unlock!</span>
+                          <span>Complete Lesson {strategy.id - 1} with a passing practice to unlock.</span>
                         </div>
                       )}
 
                       {/* Footer Tip & Run */}
                       <div className="flex flex-col sm:flex-row items-baseline sm:items-center justify-between gap-3 pt-3.5 border-t-2 border-slate-100 text-xs">
                         <span className="text-gray-400 font-bold">
-                          {isUnlocked ? "Try this in the next round when it helps." : "Secret mental math trick hidden inside."}
+                          {isUnlocked ? "Use this when it helps." : "Secret mental math trick hidden inside."}
                         </span>
                         
                         <div className="flex items-center gap-2 w-full sm:w-auto mt-2 sm:mt-0">
@@ -1770,7 +1768,7 @@ export default function App() {
                             }`}
                           >
                             <Play className="w-3 h-3 fill-current" />
-                            Start Practice Round
+                            Start Practice
                           </button>
                         </div>
                       </div>
@@ -1851,7 +1849,7 @@ export default function App() {
                     <div className="text-center py-6 space-y-6">
                       <div className="space-y-2">
                         <span className="inline-block bg-blue-105 border-2 border-blue-200 text-blue-700 text-xs font-black px-3.5 py-1.5 rounded-full">
-                          1-Minute Sprint
+                          1-Minute Practice
                         </span>
                         <h3 className="text-2xl md:text-3xl font-display font-black text-blue-950">
                           {activeStrategyRound.name}
@@ -1861,10 +1859,10 @@ export default function App() {
                         </p>
                       </div>
 
-                      {/* Sprint goal grid */}
+                      {/* Practice goal grid */}
                       <div className="bg-slate-50 border-2 border-slate-100 p-4 rounded-2xl max-w-md mx-auto space-y-3">
                         <span className="text-[10px] text-slate-400 font-black font-mono uppercase tracking-widest block">
-                          1-Minute Sprint Goals
+                          1-Minute Practice Goals
                         </span>
                         <div className="grid grid-cols-3 gap-2 text-center text-xs font-black">
                           <div className="p-3 bg-white border-2 border-amber-200 rounded-xl shadow-xs">
@@ -1904,12 +1902,12 @@ export default function App() {
                         onClick={startTimedRoundCountdown}
                         className="w-full max-w-[340px] mx-auto block bg-emerald-500 hover:bg-emerald-600 text-white font-black py-4 rounded-2xl text-lg transition border-2 border-emerald-600 shadow-[0_5px_0px_#047857] active:scale-98 active:translate-y-0.5 cursor-pointer active:shadow-none"
                       >
-                        Start Sprint
+                        Start Practice
                       </button>
                     </div>
                   ) : (
-                    // Timed Active Sprint Playing Layout
-                    <div className="timed-sprint-layout">
+                    // Timed Active Practice Playing Layout
+                    <div className="timed-practice-layout">
                       
                       {(() => {
                         const elapsed = 60 - timeLeft;
@@ -2110,7 +2108,7 @@ export default function App() {
 
                 </div>
               ) : (
-                // Perfect / Completion Screen for Sprints
+                // Perfect / Completion Screen for Practices
                 <div className="text-center py-8 space-y-6">
                   
                   <div className="relative select-none">
@@ -2134,7 +2132,7 @@ export default function App() {
 
                   <div className="space-y-2">
                     <h3 className="text-2xl md:text-3xl font-display font-black text-blue-950">
-                      Sprint Complete! ⏱️
+                      Practice Complete! ⏱️
                     </h3>
                     <p className="text-sm text-slate-650 font-extrabold max-w-sm mx-auto leading-relaxed">
                       Nice work on <strong className="text-blue-600 font-black">{activeStrategyRound.name}</strong>.
@@ -2164,11 +2162,11 @@ export default function App() {
 
                   <div className={`border-2 p-4 rounded-2xl max-w-lg mx-auto text-center space-y-2 ${activeStrategyPassed ? "bg-emerald-50/80 border-emerald-200" : "bg-blue-50/70 border-blue-100"}`}>
                     <span className={`text-[10px] font-black font-mono uppercase tracking-widest block ${activeStrategyPassed ? "text-emerald-700" : "text-blue-700"}`}>
-                      {activeStrategyPassed ? "Next stop unlocked" : "Keep practicing"}
+                      {activeStrategyPassed ? "Next lesson unlocked" : "Keep practicing"}
                     </span>
                     {activeStrategyPassed ? (
                       <p className="text-sm text-emerald-800 font-black leading-relaxed">
-                        You passed this stop. Keep going!
+                        You passed this lesson. Keep going!
                       </p>
                     ) : (
                       <p className="text-sm text-slate-700 font-bold leading-relaxed">
@@ -2200,7 +2198,7 @@ export default function App() {
                     {activeStrategyPassed && nextStrategyAfterRound && (
                       <button
                         onClick={() => {
-                          handleOpenStrategySlide(nextStrategyAfterRound, "You unlocked a new stop on your math journey!");
+                          handleOpenStrategySlide(nextStrategyAfterRound, "You unlocked a new lesson!");
                         }}
                         className="bg-emerald-500 hover:bg-emerald-600 text-white font-black py-3 px-6 rounded-xl text-xs sm:text-sm transition flex items-center justify-center gap-1.5 border-2 border-emerald-700 shadow-[0_4px_0px_0px_#047857] active:translate-y-0.5 cursor-pointer"
                       >
@@ -2243,15 +2241,15 @@ export default function App() {
                 <X className="w-4 h-4 focus:outline-hidden" />
               </button>
 
-              {/* Exact content structures requested, including spaces & "Strategy Break" header */}
+              {/* Exact content structures requested, including spaces & "Lesson Tip" header */}
               <div className="space-y-5 text-left text-slate-900">
                 
-                {/* 1. Header label "Strategy Break" */}
+                {/* 1. Header label "Lesson Tip" */}
                 <div className="flex items-center gap-2">
                   <span className="inline-block bg-blue-50 text-blue-700 font-mono font-black tracking-wider text-[11px] uppercase border-2 border-blue-100 px-3 py-1 rounded-full">
-                    💡 Strategy Break
+                    💡 Lesson Tip
                   </span>
-                  <span className="text-xs text-slate-400 font-bold">Stop {activeModalStrategy.id}/{STRATEGIES.length}</span>
+                  <span className="text-xs text-slate-400 font-bold">Lesson {activeModalStrategy.id}/{STRATEGIES.length}</span>
                 </div>
 
                 {/* 2. Reason for screen */}
@@ -2313,7 +2311,7 @@ export default function App() {
                 {/* 6. Try this statement */}
                 <div>
                   <p className="text-xs text-gray-400 font-extrabold">
-                    Try this in the next round when it helps.
+                    Use this when it helps.
                   </p>
                 </div>
 
@@ -2326,7 +2324,7 @@ export default function App() {
                   className="w-full bg-emerald-500 hover:bg-emerald-600 text-white font-black py-4 px-6 rounded-2xl flex items-center justify-center gap-2 transition active:scale-95 text-sm md:text-base border-2 border-emerald-700 shadow-[0_4px_0px_0px_#047857] cursor-pointer"
                 >
                   <Play className="w-4 h-4 fill-current" />
-                  Practice Game
+                  Start Practice
                 </button>
               </div>
 
@@ -2366,7 +2364,7 @@ export default function App() {
                     Settings
                   </h3>
                   <p className="text-xs text-slate-500 font-bold">
-                    Choose the sprint speed.
+                    Choose the practice speed.
                   </p>
                 </div>
 
@@ -2375,7 +2373,7 @@ export default function App() {
                 {/* 1. Goal Speed Settings */}
                 <div className="space-y-2">
                   <label className="text-xs font-mono uppercase tracking-widest text-[#FF4757] font-black block">
-                    ⚡ Sprint Speed
+                    ⚡ Practice Speed
                   </label>
                   <div className="bg-blue-50/50 p-4 rounded-xl border-2 border-blue-100">
                     <select

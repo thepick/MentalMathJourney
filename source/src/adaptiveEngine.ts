@@ -320,12 +320,12 @@ export function getStrategyAdaptiveMastery(
   const total = Math.max(1, pool.length);
   const roundAccuracy = roundAttempts > 0 ? roundCorrect / roundAttempts : 0;
 
-  // Passing a strategy stop should be based on a strong sprint sample, not on
-  // turning every possible generated fact green. Some stops intentionally have
+  // Passing a lesson should be based on a strong practice sample, not on
+  // turning every possible generated fact green. Some lessons intentionally have
   // very large question pools, so requiring 60/60, 456/456, or more would make
   // progression far too slow for students. The adaptive system still tracks and
-  // reviews individual facts, but unlocking the next stop uses a reasonable
-  // classroom sprint target.
+  // reviews individual facts, but unlocking the next lesson uses a reasonable
+  // classroom practice target.
   const silverMilestone = Math.max(6, Math.round(speedTarget * 0.6));
   const passCorrectTarget = Math.max(bronzeMilestone, silverMilestone);
   const minimumAttempts = Math.max(6, Math.min(12, passCorrectTarget));
