@@ -1,6 +1,6 @@
 import { MathQuestion } from "./strategies";
 
-export type FactStatus = "empty" | "learning" | "near-ready" | "review" | "fluent" | "struggling";
+export type FactStatus = "empty" | "learning" | "near-ready" | "review" | "fluent" | "needs-support";
 
 export interface FactAttempt {
   isCorrect: boolean;
@@ -38,7 +38,7 @@ export interface PracticeStatusSummary {
 export interface StrategyMasterySummary extends PracticeStatusSummary {
   seen: number;
   fluentOrReview: number;
-  struggling: number;
+  needsSupport: number;
   roundAccuracy: number;
   speedPassed: boolean;
   isMastered: boolean;
@@ -102,10 +102,14 @@ export function getFactStatus(stats?: FactStats): FactStatus {
 
   const recent = stats.recent.slice(-5);
   const recentWeak = recent.filter((attempt) => !attempt.isCorrect || attempt.timeout).length;
+  const lastAttempt = recent.length > 0 ? recent[recent.length - 1] : null;
 
-  if (recentWeak >= 2 || stats.confidence < 35) return "struggling";
+  // A brand-new correct fact should look like learning, not like a problem.
+  // Only mark a fact as needing support when there is recent weak evidence.
+  if (recent.length >= 2 && recentWeak >= 2) return "needs-support";
+  if (lastAttempt && (!lastAttempt.isCorrect || lastAttempt.timeout) && stats.confidence < 45) return "needs-support";
   if (stats.confidence >= 80 && recentWeak === 0) return "fluent";
-  if (stats.confidence >= 65) return "review";
+  if (stats.confidence >= 65 && recentWeak <= 1) return "review";
   if (stats.confidence >= 45) return "near-ready";
   return "learning";
 }
@@ -191,7 +195,7 @@ export function getFactWeight(fact: MathQuestion, stats: FactStats | undefined, 
   weight += Math.min(2, overdueHours / 24);
 
   if (stats.avgMs > fluentMs * 2.2) weight += 1.5;
-  if (status === "struggling") weight += 3;
+  if (status === "needs-support") weight += 3;
   if (status === "learning") weight += 2;
   if (status === "near-ready") weight += 1;
   if (status === "review") weight += 0.5;
@@ -235,7 +239,7 @@ export function getPriorityReviewQuestions(
   return pool
     .filter((fact) => {
       const status = getFactStatus(factStats[fact.id]);
-      return status === "struggling" || status === "learning" || status === "near-ready";
+      return status === "needs-support" || status === "learning" || status === "near-ready";
     })
     .sort((a, b) => getFactWeight(b, factStats[b.id], speedTarget) - getFactWeight(a, factStats[a.id], speedTarget))
     .slice(0, limit);
@@ -293,21 +297,38 @@ export function getStrategyAdaptiveMastery(
     const status = getFactStatus(factStats[fact.id]);
     return status === "fluent" || status === "review";
   }).length;
-  const struggling = pool.filter((fact) => getFactStatus(factStats[fact.id]) === "struggling").length;
+  const needsSupport = pool.filter((fact) => getFactStatus(factStats[fact.id]) === "needs-support").length;
   const total = Math.max(1, pool.length);
   const roundAccuracy = roundAttempts > 0 ? roundCorrect / roundAttempts : 0;
-  const speedPassed = roundCorrect >= bronzeMilestone;
-  const enoughCoverage = seen / total >= 0.35;
-  const enoughFluentOrReview = fluentOrReview / total >= 0.7;
-  const notTooManyStruggling = struggling / total <= 0.15;
+
+  // Passing a strategy stop should be based on a strong sprint sample, not on
+  // turning every possible generated fact green. Some stops intentionally have
+  // very large question pools, so requiring 60/60, 456/456, or more would make
+  // progression far too slow for students. The adaptive system still tracks and
+  // reviews individual facts, but unlocking the next stop uses a reasonable
+  // classroom sprint target.
+  const silverMilestone = Math.max(6, Math.round(speedTarget * 0.6));
+  const passCorrectTarget = Math.max(bronzeMilestone, silverMilestone);
+  const minimumAttempts = Math.max(6, Math.min(12, passCorrectTarget));
+  const minimumSeenTarget = Math.min(total, total <= 12 ? 6 : total <= 30 ? 8 : total <= 80 ? 10 : 12);
+  const seenNeedsSupport = pool.filter((fact) => {
+    const stats = factStats[fact.id];
+    return (stats?.shown || 0) > 0 && getFactStatus(stats) === "needs-support";
+  }).length;
+  const allowedNeedsSupport = Math.max(2, Math.floor(Math.max(1, seen) * 0.25));
+
+  const speedPassed = roundCorrect >= passCorrectTarget;
+  const enoughAttempts = roundAttempts >= minimumAttempts;
+  const enoughCoverage = seen >= minimumSeenTarget;
+  const notTooManyNeedsSupport = seenNeedsSupport <= allowedNeedsSupport;
 
   return {
     ...summary,
     seen,
     fluentOrReview,
-    struggling,
+    needsSupport,
     roundAccuracy,
     speedPassed,
-    isMastered: speedPassed && roundAccuracy >= 0.8 && enoughCoverage && enoughFluentOrReview && notTooManyStruggling,
+    isMastered: speedPassed && enoughAttempts && roundAccuracy >= 0.8 && enoughCoverage && notTooManyNeedsSupport,
   };
 }

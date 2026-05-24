@@ -26,6 +26,8 @@
 html.timed-quiz-active,
 body.timed-quiz-active {
   overscroll-behavior: none;
+  overflow: hidden;
+  height: 100%;
 }
 
 body.timed-quiz-active input {

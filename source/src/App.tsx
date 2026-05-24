@@ -355,6 +355,7 @@ export default function App() {
   const [stars, setStars] = useState<number>(0);
   const [studentName, setStudentName] = useState<string>("Elite Math Explorer");
   const [showSettingsModal, setShowSettingsModal] = useState<boolean>(false);
+  const [showDebugDetails, setShowDebugDetails] = useState<boolean>(false);
 
   // Settings
   const [speedTarget, setSpeedTarget] = useState<number>(20);
@@ -400,6 +401,23 @@ export default function App() {
   // Tab control: "map" or "encyclopedia"
   const [activeTab, setActiveTab] = useState<"map" | "encyclopedia" | "practice">("map");
   const isTimedQuizInProgress = activeTab === "practice" && !!activeStrategyRound && !roundCompleted && (isRoundActive || countdownValue !== null);
+
+  const getLearnerStatusLabel = (status: ReturnType<typeof getFactStatus>) => {
+    switch (status) {
+      case "fluent":
+        return "Ready";
+      case "review":
+        return "Review soon";
+      case "near-ready":
+        return "Almost ready";
+      case "learning":
+        return "Building";
+      case "needs-support":
+        return "Needs extra practice";
+      default:
+        return "Not started yet";
+    }
+  };
 
   // Load progress from localStorage
   useEffect(() => {
@@ -838,6 +856,15 @@ export default function App() {
     document.body.classList.add("timed-quiz-active");
     document.documentElement.classList.add("timed-quiz-active");
 
+    const alignQuizView = () => {
+      const quizCard = document.querySelector(".timed-quiz-card") as HTMLElement | null;
+      if (quizCard && typeof quizCard.scrollIntoView === "function") {
+        quizCard.scrollIntoView({ block: "start", inline: "nearest" });
+      } else {
+        window.scrollTo(0, 0);
+      }
+    };
+
     const blurFocusedInput = () => {
       const activeElement = document.activeElement as HTMLElement | null;
       if (activeElement && typeof activeElement.blur === "function") {
@@ -846,10 +873,14 @@ export default function App() {
       inputRef.current?.blur();
     };
 
+    alignQuizView();
+    window.requestAnimationFrame(alignQuizView);
     blurFocusedInput();
+    const alignTimer = window.setTimeout(alignQuizView, 140);
     const blurTimer = window.setTimeout(blurFocusedInput, 75);
 
     return () => {
+      window.clearTimeout(alignTimer);
       window.clearTimeout(blurTimer);
       document.body.classList.remove("timed-quiz-active");
       document.documentElement.classList.remove("timed-quiz-active");
@@ -946,6 +977,13 @@ export default function App() {
     roundAttempts,
     bronzeMilestoneForMastery
   );
+  const activeStrategyPassed = !!activeStrategyRound && (
+    currentMasterySummary.isMastered || masteredStrategyIds.includes(activeStrategyRound.id)
+  );
+  const nextStrategyAfterRound = activeStrategyRound
+    ? STRATEGIES.find((strategy) => strategy.id === activeStrategyRound.id + 1)
+    : undefined;
+  const roundPassTarget = Math.max(bronzeMilestoneForMastery, Math.max(6, Math.round(speedTarget * 0.6)));
 
   // Quick reset progress helper (for teachers/testing)
   const handleResetProgress = () => {
@@ -1529,7 +1567,7 @@ export default function App() {
 
                       {/* Explanation */}
                       <p className={`text-sm font-bold pr-10 mb-5 leading-relaxed ${isUnlocked ? "text-gray-650" : "text-slate-400"}`}>
-                        {isUnlocked ? strategy.explanation : "This strategy stop is locked! Earn at least 3 stars (correct answers) in previous stops to unlock this math superpower!"}
+                        {isUnlocked ? strategy.explanation : "This strategy stop is locked! Pass the previous stop to unlock this math superpower!"}
                       </p>
 
                       {/* Split section like requested: Example and Think */}
@@ -1563,7 +1601,7 @@ export default function App() {
                       ) : (
                         <div className="bg-slate-50 px-6 py-8 rounded-2xl border-2 border-dashed border-slate-200 mb-6 text-center text-xs font-black text-slate-400 flex flex-col items-center justify-center gap-1">
                           <span className="text-3xl mb-1">🔐</span>
-                          <span>Complete stop {strategy.id - 1} with a pass score (3+ stars) to unlock!</span>
+                          <span>Complete stop {strategy.id - 1} with a passing sprint to unlock!</span>
                         </div>
                       )}
 
@@ -1675,10 +1713,10 @@ export default function App() {
                         </p>
                       </div>
 
-                      {/* Adaptive Milestones Grid */}
+                      {/* Sprint goal grid */}
                       <div className="bg-slate-50 border-2 border-slate-100 p-4 rounded-2xl max-w-md mx-auto space-y-3">
                         <span className="text-[10px] text-slate-400 font-black font-mono uppercase tracking-widest block">
-                          Your Adaptive Sprint Targets
+                          1-Minute Sprint Goals
                         </span>
                         <div className="grid grid-cols-3 gap-2 text-center text-xs font-black">
                           <div className="p-3 bg-white border-2 border-amber-200 rounded-xl shadow-xs">
@@ -1700,38 +1738,8 @@ export default function App() {
                           </div>
                         </div>
                         <p className="text-[10px] text-blue-800 font-extrabold">
-                          * Adjust your speed target goal at the top and milestones will self-adapt!
+                          * Passing sprint: {roundPassTarget} correct with at least 80% accuracy. Gold is the challenge goal.
                         </p>
-                      </div>
-
-                      {/* Adaptive fact status summary */}
-                      <div className="bg-blue-50/60 border-2 border-blue-100 p-4 rounded-2xl max-w-md mx-auto space-y-3 text-left">
-                        <div>
-                          <span className="text-[10px] text-blue-700 font-black font-mono uppercase tracking-widest block">
-                            Adaptive Practice Engine
-                          </span>
-                          <p className="text-[10px] text-slate-600 font-bold leading-relaxed mt-1">
-                            The app tracks each fact by speed and accuracy. Facts that are slow or missed will appear more often.
-                          </p>
-                        </div>
-                        <div className="grid grid-cols-2 sm:grid-cols-4 gap-2 text-center text-[10px] font-black">
-                          <div className="bg-white border border-rose-100 rounded-xl p-2">
-                            <span className="block text-rose-600 text-base">{practiceStatusSummary.needsPractice}</span>
-                            <span className="text-slate-500">Needs Practice</span>
-                          </div>
-                          <div className="bg-white border border-yellow-100 rounded-xl p-2">
-                            <span className="block text-yellow-700 text-base">{practiceStatusSummary.almostThere}</span>
-                            <span className="text-slate-500">Almost There</span>
-                          </div>
-                          <div className="bg-white border border-blue-100 rounded-xl p-2">
-                            <span className="block text-blue-700 text-base">{practiceStatusSummary.reviewSoon}</span>
-                            <span className="text-slate-500">Review Soon</span>
-                          </div>
-                          <div className="bg-white border border-emerald-100 rounded-xl p-2">
-                            <span className="block text-emerald-700 text-base">{practiceStatusSummary.fluent}</span>
-                            <span className="text-slate-500">Fluent</span>
-                          </div>
-                        </div>
                       </div>
 
                       {/* Lesson slide shortcut prior to start */}
@@ -1815,21 +1823,6 @@ export default function App() {
                           </div>
                         );
                       })()}
-
-                      {/* Adaptive current fact status */}
-                      <div className="p-3 bg-blue-50/60 rounded-2xl border border-blue-100 space-y-1">
-                        <div className="flex flex-wrap justify-between gap-2 text-[11px] font-black uppercase text-slate-500">
-                          <span>
-                            Accuracy: <strong className="text-blue-900">{roundAccuracyPercent}%</strong>
-                          </span>
-                          <span>
-                            Adaptive focus: <strong className="text-[#FF4757]">{currentQuestionStatus.replace("-", " ")}</strong>
-                          </span>
-                          <span>
-                            Practice pool: <strong className="text-blue-900">{roundQuestions.length}</strong> facts
-                          </span>
-                        </div>
-                      </div>
 
                       {/* Math Question Arena Display */}
                       <motion.div 
@@ -2028,7 +2021,7 @@ export default function App() {
                       1-Minute Sprint Complete! ⏱️
                     </h3>
                     <p className="text-sm text-slate-650 font-extrabold max-w-sm mx-auto leading-relaxed">
-                      Nice work! You finished a 1-minute sprint for <strong className="text-blue-600 font-black">{activeStrategyRound.name}</strong>. Check your speed, accuracy, and fact readiness below.
+                      Nice work! You finished a 1-minute sprint for <strong className="text-blue-600 font-black">{activeStrategyRound.name}</strong>. Check your speed and accuracy below.
                     </p>
                   </div>
 
@@ -2047,40 +2040,23 @@ export default function App() {
                         <p className="text-amber-800 font-semibold">🥉 Bronze speed reached! You earned 1 star! 🥉</p>
                       ) : (
                         <p className="text-slate-500 font-bold max-w-xs mx-auto leading-snug">
-                          🌿 Great effort! Practice again to answer at least {Math.max(3, Math.round(speedTarget * 0.3))} correct facts in 1 minute. That reaches bronze speed, earns stars, and helps unlock more kingdom stops.
+                          🌿 Great effort! Practice again to answer at least {roundPassTarget} correct facts with 80% accuracy to unlock the next stop.
                         </p>
                       )}
                     </div>
                   </div>
 
-                  <div className="bg-blue-50/70 border-2 border-blue-100 p-4 rounded-2xl max-w-lg mx-auto text-left space-y-2">
-                    <span className="text-[10px] text-blue-700 font-black font-mono uppercase tracking-widest block">
-                      Fact Readiness Check
+                  <div className={`border-2 p-4 rounded-2xl max-w-lg mx-auto text-center space-y-2 ${activeStrategyPassed ? "bg-emerald-50/80 border-emerald-200" : "bg-blue-50/70 border-blue-100"}`}>
+                    <span className={`text-[10px] font-black font-mono uppercase tracking-widest block ${activeStrategyPassed ? "text-emerald-700" : "text-blue-700"}`}>
+                      {activeStrategyPassed ? "Next stop unlocked" : "Keep practicing"}
                     </span>
-                    <p className="text-xs text-slate-600 font-bold leading-snug">
-                      Ready facts are marked Review Soon or Fluent. Tried so far shows how many different facts have appeared at least once.
-                    </p>
-                    <div className="grid grid-cols-3 gap-2 text-center text-[10px] font-black">
-                      <div className="bg-white border border-blue-100 rounded-xl p-2">
-                        <span className="block text-blue-900 text-base">{currentMasterySummary.fluentOrReview}/{currentMasterySummary.total}</span>
-                        <span className="text-slate-500">Ready facts</span>
-                      </div>
-                      <div className="bg-white border border-rose-100 rounded-xl p-2">
-                        <span className="block text-rose-600 text-base">{currentMasterySummary.struggling}</span>
-                        <span className="text-slate-500">Need practice</span>
-                      </div>
-                      <div className="bg-white border border-emerald-100 rounded-xl p-2">
-                        <span className="block text-emerald-700 text-base">{currentMasterySummary.seen}</span>
-                        <span className="text-slate-500">Tried so far</span>
-                      </div>
-                    </div>
-                    {currentMasterySummary.isMastered ? (
-                      <p className="text-xs text-emerald-700 font-black leading-relaxed">
-                        Ready to unlock! You met the speed goal, kept accuracy high, and enough facts are now ready for review.
+                    {activeStrategyPassed ? (
+                      <p className="text-sm text-emerald-800 font-black leading-relaxed">
+                        Great sprint! You passed this stop. Continue to the next lesson, or try again to beat your speed.
                       </p>
                     ) : (
-                      <p className="text-xs text-slate-600 font-bold leading-relaxed">
-                        Not ready to unlock yet. Your sprint score can be strong, but this check also needs most facts to become ready. Keep practicing until more facts move from Need Practice into Ready Facts.
+                      <p className="text-sm text-slate-700 font-bold leading-relaxed">
+                        To unlock the next stop, aim for at least {roundPassTarget} correct answers in 1 minute with 80% accuracy.
                       </p>
                     )}
                   </div>
@@ -2105,19 +2081,14 @@ export default function App() {
                       Try Again
                     </button>
 
-                    {activeStrategyRound.id < STRATEGIES.length && viewedStrategyIds.includes(activeStrategyRound.id + 1) && (
+                    {activeStrategyPassed && nextStrategyAfterRound && (
                       <button
                         onClick={() => {
-                          const nextStrategy = STRATEGIES.find(s => s.id === activeStrategyRound.id + 1);
-                          if (nextStrategy) {
-                            handleOpenStrategySlide(nextStrategy, "You unlocked a new stop on your math journey!");
-                          } else {
-                            setActiveTab("map");
-                          }
+                          handleOpenStrategySlide(nextStrategyAfterRound, "You unlocked a new stop on your math journey!");
                         }}
                         className="bg-[#FF4757] hover:bg-[#FF6B81] text-white font-black py-3 px-6 rounded-xl text-xs sm:text-sm transition flex items-center justify-center gap-1.5 border-2 border-[#D63031] shadow-[0_4px_0px_0px_#D63031] active:translate-y-0.5 cursor-pointer"
                       >
-                        Next Stop Lesson
+                        Continue to Next Lesson
                         <ChevronRight className="w-4 h-4 stroke-[3]" />
                       </button>
                     )}
@@ -2133,6 +2104,7 @@ export default function App() {
       </main>
 
       {/* FOOTER METADATA */}
+      {!isTimedQuizInProgress && (
       <footer className="border-t-2 border-blue-100 bg-blue-50/40 mt-12 py-6 px-4 text-center">
         <div className="max-w-6xl mx-auto space-y-2">
           <p className="text-xs text-blue-800 font-bold leading-snug">
@@ -2143,6 +2115,7 @@ export default function App() {
           </p>
         </div>
       </footer>
+      )}
 
       {/* STRATEGY BREAK MODAL OVERLAY */}
       <AnimatePresence>
@@ -2266,7 +2239,7 @@ export default function App() {
               animate={{ scale: 1, opacity: 1 }}
               exit={{ scale: 0.93, opacity: 0 }}
               transition={{ type: "spring", damping: 25, stiffness: 350 }}
-              className="bg-white border-[6px] border-blue-400 rounded-[36px] p-6 md:p-8 max-w-md w-full relative overflow-hidden shadow-[0_20px_0px_0px_#BFDBFE] flex flex-col gap-5"
+              className="bg-white border-[6px] border-blue-400 rounded-[36px] p-6 md:p-8 max-w-lg w-full relative overflow-y-auto max-h-[90dvh] shadow-[0_20px_0px_0px_#BFDBFE] flex flex-col gap-5"
             >
               {/* Cute top graphic frame */}
               <div className="absolute top-0 left-0 w-full h-[6px] bg-blue-500" />
@@ -2326,7 +2299,71 @@ export default function App() {
 
                 <div className="border-t-2 border-slate-100 my-1" />
 
-                {/* 2. Reset Progress Button */}
+                {/* 2. Teacher/debug learning data */}
+                <div className="space-y-2">
+                  <span className="text-xs font-mono uppercase tracking-widest text-slate-400 font-black block">
+                    Teacher Debug Area:
+                  </span>
+                  <div className="bg-slate-50/70 p-4 rounded-xl border-2 border-slate-100 space-y-3">
+                    <button
+                      type="button"
+                      onClick={() => setShowDebugDetails(!showDebugDetails)}
+                      className="w-full py-2.5 px-4 bg-white hover:bg-slate-50 text-blue-900 font-black rounded-lg text-xs border-2 border-slate-200 transition active:translate-y-0.5 cursor-pointer text-center"
+                    >
+                      {showDebugDetails ? "Hide learning data" : "Show learning data"}
+                    </button>
+
+                    {showDebugDetails && (
+                      <div className="space-y-3 text-[10px] text-slate-600 font-bold leading-relaxed">
+                        <p>
+                          This area is for checking the practice engine. It stays hidden during student sprints so the quiz screen can focus on time, score, streak, the question, and the keypad.
+                        </p>
+
+                        <div className="grid grid-cols-2 gap-2 text-center font-black">
+                          <div className="bg-white border border-slate-200 rounded-xl p-2">
+                            <span className="block text-blue-900 text-sm">{activeStrategyRound ? activeStrategyRound.name : "None"}</span>
+                            <span className="text-slate-500">Current lesson</span>
+                          </div>
+                          <div className="bg-white border border-slate-200 rounded-xl p-2">
+                            <span className="block text-blue-900 text-sm">{getLearnerStatusLabel(currentQuestionStatus)}</span>
+                            <span className="text-slate-500">Current fact support</span>
+                          </div>
+                          <div className="bg-white border border-slate-200 rounded-xl p-2">
+                            <span className="block text-blue-900 text-sm">{roundAccuracyPercent}%</span>
+                            <span className="text-slate-500">Sprint correct rate</span>
+                          </div>
+                          <div className="bg-white border border-slate-200 rounded-xl p-2">
+                            <span className="block text-blue-900 text-sm">{roundQuestions.length || currentStrategyFacts.length}</span>
+                            <span className="text-slate-500">Questions available</span>
+                          </div>
+                        </div>
+
+                        <div className="grid grid-cols-2 sm:grid-cols-4 gap-2 text-center font-black">
+                          <div className="bg-white border border-slate-200 rounded-xl p-2">
+                            <span className="block text-slate-700 text-sm">{practiceStatusSummary.needsPractice}</span>
+                            <span className="text-slate-500">Extra practice</span>
+                          </div>
+                          <div className="bg-white border border-slate-200 rounded-xl p-2">
+                            <span className="block text-slate-700 text-sm">{practiceStatusSummary.almostThere}</span>
+                            <span className="text-slate-500">Almost ready</span>
+                          </div>
+                          <div className="bg-white border border-slate-200 rounded-xl p-2">
+                            <span className="block text-slate-700 text-sm">{practiceStatusSummary.reviewSoon}</span>
+                            <span className="text-slate-500">Review soon</span>
+                          </div>
+                          <div className="bg-white border border-slate-200 rounded-xl p-2">
+                            <span className="block text-slate-700 text-sm">{practiceStatusSummary.fluent}</span>
+                            <span className="text-slate-500">Ready</span>
+                          </div>
+                        </div>
+                      </div>
+                    )}
+                  </div>
+                </div>
+
+                <div className="border-t-2 border-slate-100 my-1" />
+
+                {/* 3. Reset Progress Button */}
                 <div className="space-y-2">
                   <span className="text-xs font-mono uppercase tracking-widest text-slate-400 font-black block">
                     ⚠️ Danger Zone:

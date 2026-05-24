@@ -1,6 +1,6 @@
 # Mental Math Journey
 
-Mental Math Journey is a classroom-friendly mental math practice app for elementary students. It turns addition, subtraction, and two-digit mental calculation strategies into a six-stage adventure with short timed sprints, strategy lesson slides, adaptive review, and local progress tracking.
+Mental Math Journey is a classroom-friendly mental math practice app for elementary students. It turns addition, subtraction, and two-digit mental calculation strategies into a six-stage adventure with short timed sprints, strategy lesson slides, smart review, and local progress tracking.
 
 ## What the app does
 
@@ -16,9 +16,8 @@ Progress is saved in the browser using `localStorage`. The app does not require 
 - 28 lesson and review stops across the full journey
 - Strategy lesson slides with examples and step-by-step thinking prompts
 - 1-minute timed sprints for each unlocked strategy stop
-- Adaptive practice engine that prioritizes slow, missed, or weaker facts
-- Fact status tracking: Needs Practice, Almost There, Review Soon, and Fluent
-- Fact Readiness Check after each sprint
+- Smart review engine that gives more practice to facts that need support
+- Hidden fact status tracking for teacher/debug review
 - Star rewards based on the selected speed target
 - Journey map showing unlocked, locked, and mastered stops
 - All Lessons view for reviewing every strategy slide
@@ -36,14 +35,14 @@ Progress is saved in the browser using `localStorage`. The app does not require 
 3. Read or review the strategy slide.
 4. Start the 1-minute sprint.
 5. Type answers using the on-screen keypad or keyboard.
-6. Review the sprint results, speed score, accuracy, and Fact Readiness Check.
-7. Practice again or return to the map to continue the journey.
+6. Review the sprint results, speed score, accuracy, and unlock message.
+7. Continue to the next lesson after a passing sprint, practice again, or return to the map.
 
 ## Main student screens
 
 ### Adventure Map Stages
 
-The map shows the six stages of the journey. Each stage contains a set of strategy stops. Students unlock new stops by showing enough readiness on the current stop.
+The map shows the six stages of the journey. Each stage contains a set of strategy stops. Students unlock new stops by completing a passing 1-minute sprint on the current stop.
 
 ### All Math Lessons
 
@@ -60,15 +59,10 @@ After each sprint, students see:
 - Speed Score: how many facts were answered correctly in 1 minute
 - Accuracy: the percentage of attempted answers that were correct
 - Star reward: bronze, silver, or gold based on the speed target
-- Fact Readiness Check: a clearer summary of whether the strategy is ready to unlock
+- A clear unlock message when the next lesson is available
+- A Continue to Next Lesson button after a passing sprint
 
-The Fact Readiness Check uses these labels:
-
-| Label | Meaning |
-|---|---|
-| Ready facts | Facts currently marked Review Soon or Fluent |
-| Need practice | Facts currently marked Struggling |
-| Tried so far | Different facts from the strategy pool that have appeared at least once |
+Unlocking is based on a strong sprint sample, not on turning every generated fact green. This keeps progression moving at a reasonable classroom pace while the review engine still brings back facts that need support over time.
 
 ## Stages and content
 
@@ -117,32 +111,34 @@ Mental Math Journey groups practice by strategy rather than by traditional numbe
 | 27 | Big Number Mountain | Big Mountain Cumulative Review |
 | 28 | Big Number Mountain | Mega Review (ALL STAGES 1-6) |
 
-## Adaptive practice and mastery
+## Smart review and mastery
 
 The app tracks each fact or question individually. For each attempt, it records whether the answer was correct, how long the student took, and whether the fact has been slow or missed recently.
 
-The adaptive engine uses this information to choose what appears next. Facts with weaker performance receive higher weight. Fluent facts receive lower weight, so students spend more time on what still needs practice.
+The review engine uses this information to choose what appears next. Facts that need support receive higher weight. Ready facts receive lower weight, so students spend more time on what still needs practice.
 
-A strategy stop is ready to unlock the next stop when the student shows enough overall readiness. The current mastery check looks for:
+A strategy stop unlocks the next stop when the student completes a passing sprint. The passing rule is intentionally based on a strong sample from the stop instead of requiring every generated fact to become fluent. This keeps the journey moving at a classroom-friendly pace, especially for stops with large question pools.
 
-- At least bronze speed for the current speed target
+The current pass check looks for:
+
+- The Silver speed target or better for the selected speed setting
 - At least 80% accuracy in the sprint
-- At least 35% of the strategy facts seen
-- At least 70% of the strategy facts marked Review Soon or Fluent
-- No more than 15% of the strategy facts marked Struggling
+- Enough attempted answers to make the sprint meaningful
+- A small sample of different facts seen from the stop
+- No large cluster of facts that recently needed extra support
 
-This means a high sprint score alone is not always enough. The app also checks whether enough individual facts are becoming ready.
+Individual fact tracking still matters for smart review. Slow or missed facts continue to appear more often, even after the next lesson is unlocked.
 
-## Fact status labels
+## Hidden fact status labels
 
-| Internal status | Student-facing idea | What it means |
+| Hidden engine state | Teacher/debug label | What it means |
 |---|---|---|
-| Struggling | Needs Practice | The fact has been missed, slow, or weak recently |
-| Learning | Needs Practice | The fact has started but is not ready yet |
-| Near-ready | Almost There | The fact is improving but needs more evidence |
-| Review | Review Soon | The fact is mostly ready but should return for review |
-| Fluent | Fluent | The fact is accurate and quick enough for now |
-| Empty | Not Started | The fact has not appeared yet |
+| Needs support | Extra practice | The fact has been missed, slow, or weak recently |
+| Building | Building | The fact has started but is not ready yet |
+| Almost ready | Almost ready | The fact is improving but needs more evidence |
+| Review soon | Review soon | The fact is mostly ready but should return for review |
+| Ready | Ready | The fact is accurate and quick enough for now |
+| Not started | Not started yet | The fact has not appeared yet |
 
 ## Stars and speed targets
 
@@ -178,7 +174,7 @@ Stored progress includes:
 - Current speed target
 - Best streaks by strategy stop
 - Best speeds by strategy stop
-- Fact-level adaptive statistics
+- Fact-level learning statistics hidden under the settings debug area
 
 Because the app uses browser storage, progress is tied to the device and browser profile. Clearing site data, using a different browser, or changing devices may remove or hide existing progress.
 
@@ -198,7 +194,7 @@ assets/                     Built CSS and JavaScript assets
 source/                     Editable React/Vite project
 source/src/App.tsx          Main app UI and game flow
 source/src/strategies.ts    Stages, strategies, and question generation
-source/src/adaptiveEngine.ts Adaptive fact tracking and mastery logic
+source/src/adaptiveEngine.ts Smart review and mastery logic
 source/src/index.css        App CSS
 source/package.json         Development scripts and dependencies
 README_OPEN_FIRST.txt       Quick start notes for the packaged build
@@ -274,7 +270,7 @@ After changing the app, test:
 - Keyboard input, including Enter and Backspace
 - Timer countdown and sprint completion
 - Speed Score and accuracy display
-- Fact Readiness Check labels and numbers
+- Sprint completion messages and next-lesson button behavior
 - Bronze, silver, and gold star rewards
 - Strategy stop unlocking
 - Best speed and best streak updates
