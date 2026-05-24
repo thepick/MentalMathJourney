@@ -1,0 +1,6 @@
+{
+  "name": "Mental Math Journey",
+  "description": "An interactive kid-friendly mental math training app with 17 progressive strategy slides and a playful adventure map.",
+  "requestFramePermissions": [],
+  "majorCapabilities": ["MAJOR_CAPABILITY_SERVER_SIDE_GEMINI_API"]
+}
