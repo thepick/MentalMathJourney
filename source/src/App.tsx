@@ -92,6 +92,18 @@ const getStarsForScore = (score: number, speedTargetValue: number) => {
   return 0;
 };
 
+const getMostRecentStageId = (viewedIds: number[], masteredIds: number[]): StageId => {
+  const progressIds = [...viewedIds, ...masteredIds]
+    .filter((id) => Number.isInteger(id) && id >= 1 && id <= STRATEGIES.length);
+
+  if (progressIds.length === 0) return StageId.StarterIsland;
+
+  const mostRecentStrategyId = Math.max(...progressIds);
+  const mostRecentStrategy = STRATEGIES.find((strategy) => strategy.id === mostRecentStrategyId);
+
+  return mostRecentStrategy?.stageId || StageId.StarterIsland;
+};
+
 const migrateLegacyStars = (savedStars: number, masteredIds: number[], viewedIds: number[]): StrategyStarAwards => {
   const orderedIds = [...masteredIds, ...viewedIds]
     .filter((id, index, list) => Number.isInteger(id) && id >= 1 && id <= STRATEGIES.length && list.indexOf(id) === index)
@@ -478,6 +490,7 @@ export default function App() {
         const savedMasteredIds = Array.isArray(parsed.masteredStrategyIds) ? parsed.masteredStrategyIds : [];
         if (parsed.viewedStrategyIds) setViewedStrategyIds(savedViewedIds);
         if (parsed.masteredStrategyIds) setMasteredStrategyIds(savedMasteredIds);
+        setCurrentStageId(getMostRecentStageId(savedViewedIds, savedMasteredIds));
         if (parsed.strategyStars && typeof parsed.strategyStars === "object") {
           const savedAwards = parsed.strategyStars as StrategyStarAwards;
           setStrategyStars(savedAwards);
