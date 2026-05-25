@@ -341,29 +341,18 @@ export function getStrategyAdaptiveMastery(
     return status === "fluent" || status === "review";
   }).length;
   const needsSupport = pool.filter((fact) => getFactStatus(factStats[fact.id]) === "needs-support").length;
-  const total = Math.max(1, pool.length);
   const roundAccuracy = roundAttempts > 0 ? roundCorrect / roundAttempts : 0;
 
-  // Passing a lesson should be based on a strong practice sample, not on
-  // turning every possible generated fact green. Some lessons intentionally have
-  // very large question pools, so requiring 60/60, 456/456, or more would make
-  // progression far too slow for students. The adaptive system still tracks and
-  // reviews individual facts, but unlocking the next lesson uses a reasonable
-  // classroom practice target.
+  // Passing a lesson should match the student-facing star rules. If a student
+  // reaches the 2-star target for the selected speed setting and has at least
+  // 80% accuracy, the next lesson should unlock. The adaptive fact data below
+  // still guides review, but it should not block graduation after a strong round.
   const silverMilestone = Math.max(6, Math.round(speedTarget * 0.6));
   const passCorrectTarget = Math.max(bronzeMilestone, silverMilestone);
   const minimumAttempts = Math.max(6, Math.min(12, passCorrectTarget));
-  const minimumSeenTarget = Math.min(total, total <= 12 ? 6 : total <= 30 ? 8 : total <= 80 ? 10 : 12);
-  const seenNeedsSupport = pool.filter((fact) => {
-    const stats = factStats[fact.id];
-    return (stats?.shown || 0) > 0 && getFactStatus(stats) === "needs-support";
-  }).length;
-  const allowedNeedsSupport = Math.max(2, Math.floor(Math.max(1, seen) * 0.25));
 
   const speedPassed = roundCorrect >= passCorrectTarget;
   const enoughAttempts = roundAttempts >= minimumAttempts;
-  const enoughCoverage = seen >= minimumSeenTarget;
-  const notTooManyNeedsSupport = seenNeedsSupport <= allowedNeedsSupport;
 
   return {
     ...summary,
@@ -372,6 +361,6 @@ export function getStrategyAdaptiveMastery(
     needsSupport,
     roundAccuracy,
     speedPassed,
-    isMastered: speedPassed && enoughAttempts && roundAccuracy >= 0.8 && enoughCoverage && notTooManyNeedsSupport,
+    isMastered: speedPassed && enoughAttempts && roundAccuracy >= 0.8,
   };
 }

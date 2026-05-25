@@ -87,14 +87,9 @@ Total: 25 lessons.
 
 Each lesson uses a 1-minute practice session. The default speed target is adjustable in Settings.
 
-A lesson is passed when the student reaches a reasonable practice sample, including:
+A lesson is passed when the student reaches the 2-star target for the selected speed setting and has at least 80% accuracy. For example, if the selected speed setting makes 9 correct answers the 2-star target, then 9 correct answers with 80% or higher accuracy unlocks the next lesson.
 
-- enough correct answers for the selected speed target
-- at least 80% accuracy
-- enough facts seen from the lesson
-- not too many facts needing extra support
-
-The app does not require every possible fact in the lesson pool to become fully mastered before the next lesson unlocks.
+The app does not require every possible fact in the lesson pool to become fully mastered before the next lesson unlocks. Adaptive review still brings back older or weaker facts when useful.
 
 ## Review behavior
 
