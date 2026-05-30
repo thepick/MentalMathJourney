@@ -8,161 +8,81 @@ The app is designed around this structure:
 Journey -> Chapter -> Lesson -> Practice
 ```
 
-Students move through 6 chapters and 25 lessons. Each lesson focuses on one mental math idea. A 1-minute practice session checks whether the student is ready to continue. Earlier facts come back as quick review when needed, so separate chapter-practice and cumulative-review lessons are no longer needed.
-
-## What changed in the rebuilt version
-
-- Uses Chapters and Lessons instead of stages, levels, stops, or sprints.
-- Uses Practice for timed quiz sessions.
-- Removes separate chapter-practice and cumulative-review lessons.
-- Expands number ranges gradually instead of starting with one large 0-20 pool.
-- Chapter 1 focuses on numbers 0-10, with small stretches to 11 or 12 when the lesson requires it.
-- Later chapters expand toward 20, then into two-digit mental math.
-- Older facts return as Quick Review when useful, but current lesson facts remain the main focus.
-- Student-facing wording is shorter and simpler.
-- Teacher/debug-style information has been removed from the student flow.
-- Mobile practice layout hides extra page elements and keeps the keypad usable.
-- Chapter and lesson completion confetti is included.
-- Favicons and Apple touch icons are linked in the page head.
+Students move through 6 chapters and 30 lessons. Each lesson focuses on one mental math idea or mixed Strategy Bridge practice. Earlier facts return as quick review when useful, but the current lesson facts remain the main focus.
 
 ## Chapter plan
 
 | Chapter | Name | Lessons | Main focus |
 |---:|---|---:|---|
-| 1 | Starter Island | 5 | Anchor facts with numbers 0-10 |
-| 2 | Counting Trail | 3 | Count on, count back, and count up within 20 |
-| 3 | Doubles Forest | 4 | Doubles, halves, and near doubles |
-| 4 | Bridge Town | 3 | Make 10 and bridge through 10 |
-| 5 | Family Village | 3 | Fact families and missing parts |
-| 6 | Big Number Mountain | 7 | Two-digit mental math methods |
+| 1 | Starter Island | 6 | Instant anchor facts with numbers 0-10 |
+| 2 | Doubles Forest | 3 | Doubles and near doubles |
+| 3 | Bridge Town | 4 | Make 10, bridge back, and Strategy Bridge practice |
+| 4 | Family Village | 4 | Fact families, missing parts, and count-up subtraction |
+| 5 | Big Number Mountain | 8 | Two-digit mental math methods |
+| 6 | The Summit | 5 | Mixed Strategy Bridge practice, speed, and backup counting |
 
-Total: 25 lessons.
+Total: 30 lessons.
 
 ## Lesson list
 
 ### Chapter 1: Starter Island
 
-1. Same Number Facts
+1. Zero Rule
 2. One More and One Fewer
 3. Two More and Two Fewer
-4. Make 10 Pairs
-5. Subtract from 10
+4. Doubles to 10
+5. Make 10 Pairs
+6. Subtract from 10
 
-### Chapter 2: Counting Trail
+### Chapter 2: Doubles Forest
 
-6. Count On to Add
-7. Count Back to Subtract
-8. Count Up to Subtract
+7. Doubles to 18
+8. Near Doubles: One Apart
+9. Near Doubles: Two Apart
 
-### Chapter 3: Doubles Forest
+### Chapter 3: Bridge Town
 
-9. Doubles
-10. Half Facts
-11. Near Doubles: One Apart
-12. Near Doubles: Two Apart
+10. Make 10 to Add
+11. Bridge Back to Subtract
+12. Missing Part to 10
+13. Strategy Bridge: Facts to 20
 
-### Chapter 4: Bridge Town
+### Chapter 4: Family Village
 
-13. Make 10 to Add
-14. Bridge Back to Subtract
-15. Missing Part to 10
+14. Fact Families to 10
+15. Fact Families to 20
+16. Missing Addend Thinking
+17. Count Up to Subtract
 
-### Chapter 5: Family Village
+### Chapter 5: Big Number Mountain
 
-16. Fact Families to 10
-17. Fact Families to 20
-18. Missing Addend Thinking
-
-### Chapter 6: Big Number Mountain
-
-19. Add and Subtract Tens
-20. Add Ones to Two-Digit Numbers
-21. Subtract Ones from Two-Digit Numbers
+18. Add and Subtract Tens
+19. Add Ones to Two-Digit Numbers
+20. Subtract Ones from Two-Digit Numbers
+21. Add and Subtract 10
 22. Bridge Ones in Two-Digit Numbers
-23. Add Two-Digit Numbers by Place Value
-24. Subtract Two-Digit Numbers by Place Value
-25. Compensation
+23. Two-Digit Place Value
+24. Compensation
+25. Strategy Bridge: Two-Digit Mix
+
+### Chapter 6: The Summit
+
+26. Strategy Bridge: Fast Facts to 20
+27. Strategy Bridge: Missing Parts
+28. Strategy Bridge: Two-Digit Review
+29. Speed Challenge
+30. The Backup Plan
+
+## Teaching-flow notes
+
+- Counting is no longer an early main chapter. It appears later as count-up subtraction and finally as a backup plan.
+- Small doubles come before near doubles so students have anchor facts ready.
+- Make 10 Pairs and Subtract from 10 are adjacent because they teach inverse relationships.
+- Near Doubles: One Apart now models the higher double minus 1.
+- Near Doubles: Two Apart now models the middle double.
+- Add and Subtract 10 has its own two-digit lesson.
+- Strategy Bridge lessons provide mixed practice without asking students to report which strategy they used.
 
 ## Practice sessions
 
-Each lesson uses a 1-minute practice session. The default speed target is adjustable in Settings.
-
-A lesson is passed when the student reaches the 2-star target for the selected speed setting and has at least 80% accuracy. For example, if the selected speed setting makes 9 correct answers the 2-star target, then 9 correct answers with 80% or higher accuracy unlocks the next lesson.
-
-The app does not require every possible fact in the lesson pool to become fully mastered before the next lesson unlocks. Adaptive review still brings back older or weaker facts when useful.
-
-## Review behavior
-
-Current lesson facts are the main practice pool. Older facts come back as Quick Review when the app has evidence they need attention, such as recent mistakes, timeouts, or repeated slow answers.
-
-This keeps practice moving forward while still protecting earlier learning. Because this review happens automatically, there are no separate chapter-practice or cumulative-review lessons.
-
-## Storage
-
-Progress is stored locally in the browser using `localStorage`.
-
-Main key:
-
-```text
-mental_math_journey_progress
-```
-
-There is no custom backend and no database requirement.
-
-## Deployment
-
-The built app is static. Deploy the root files from the package:
-
-```text
-index.html
-assets/
-favicon files, if used
-```
-
-The source code is in the `source/` folder.
-
-To build from source:
-
-```bash
-cd source
-npm install
-npm run build
-```
-
-Then copy `source/dist/index.html` and `source/dist/assets/` to the deploy root.
-
-## Favicons
-
-The page includes links for these files:
-
-```text
-favicon-16x16.png
-favicon-32x32.png
-favicon-48x48.png
-apple-touch-icon.png
-apple-touch-icon-152x152.png
-apple-touch-icon-167x167.png
-```
-
-Keep those files beside `index.html` when deploying.
-
-## Testing checklist
-
-After changes, test:
-
-- starting a new practice session
-- 3, 2, 1, Go countdown
-- mobile keypad layout
-- mobile keyboard suppression
-- correct answers, wrong answers, and timeouts
-- passing a lesson
-- unlocking the next lesson
-- completing a chapter
-- confetti on lesson and chapter completion
-- Journey Map display on mobile
-- Lesson Guide display
-- Settings and reset progress
-
-## License
-
-MIT
+Each lesson uses a 1-minute practice session. The default speed target is adjustable in Settings. A lesson is passed when the student reaches the app's adaptive mastery target during practice.

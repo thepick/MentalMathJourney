@@ -1,10 +1,10 @@
 export enum StageId {
   StarterIsland = 1,
-  CountingTrail = 2,
-  DoublesForest = 3,
-  BridgeTown = 4,
-  FamilyVillage = 5,
-  BigNumberMountain = 6,
+  DoublesForest = 2,
+  BridgeTown = 3,
+  FamilyVillage = 4,
+  BigNumberMountain = 5,
+  TheSummit = 6,
 }
 
 export interface Stage {
@@ -49,16 +49,7 @@ export const STAGES: Stage[] = [
     color: "from-emerald-400 to-teal-500",
     bgColor: "bg-teal-50/75",
     accentColor: "teal",
-    description: "Meet the numbers 0 to 10.",
-  },
-  {
-    id: StageId.CountingTrail,
-    name: "Counting Trail",
-    emoji: "🍂",
-    color: "from-amber-400 to-orange-500",
-    bgColor: "bg-orange-50/75",
-    accentColor: "orange",
-    description: "Grow toward facts within 20.",
+    description: "Facts you just know. No counting needed.",
   },
   {
     id: StageId.DoublesForest,
@@ -67,7 +58,7 @@ export const STAGES: Stage[] = [
     color: "from-green-400 to-emerald-600",
     bgColor: "bg-emerald-50/75",
     accentColor: "emerald",
-    description: "Use twin facts to think fast.",
+    description: "Stretch doubles into nearby facts.",
   },
   {
     id: StageId.BridgeTown,
@@ -76,7 +67,7 @@ export const STAGES: Stage[] = [
     color: "from-sky-400 to-blue-500",
     bgColor: "bg-blue-50/75",
     accentColor: "blue",
-    description: "Cross through 10 with confidence.",
+    description: "Make ten do the work.",
   },
   {
     id: StageId.FamilyVillage,
@@ -85,7 +76,7 @@ export const STAGES: Stage[] = [
     color: "from-indigo-400 to-violet-500",
     bgColor: "bg-violet-50/75",
     accentColor: "violet",
-    description: "Connect addition and subtraction.",
+    description: "See how addition and subtraction connect.",
   },
   {
     id: StageId.BigNumberMountain,
@@ -94,36 +85,55 @@ export const STAGES: Stage[] = [
     color: "from-rose-400 to-pink-500",
     bgColor: "bg-pink-50/75",
     accentColor: "pink",
-    description: "Mental math with bigger numbers.",
+    description: "Use the same shortcuts with bigger numbers.",
+  },
+  {
+    id: StageId.TheSummit,
+    name: "The Summit",
+    emoji: "🏆",
+    color: "from-yellow-400 to-amber-500",
+    bgColor: "bg-amber-50/75",
+    accentColor: "amber",
+    description: "Choose the fastest strategy and keep going.",
   },
 ];
 
 export const STRATEGIES: Strategy[] = [
-  { id: 1, stageId: StageId.StarterIsland, code: "same-number", name: "Same Number Facts", reason: "Lesson 1", explanation: "Adding or subtracting zero keeps the number the same.", example: "7 + 0 = 7", thinkSteps: ["Adding 0 means nothing is added.", "Taking away 0 means nothing is removed.", "The number stays the same."] },
+  { id: 1, stageId: StageId.StarterIsland, code: "same-number", name: "Zero Rule", reason: "Lesson 1", explanation: "Adding or subtracting zero keeps the number the same.", example: "7 + 0 = 7", thinkSteps: ["Adding 0 means nothing is added.", "Taking away 0 means nothing is removed.", "The number stays the same."] },
   { id: 2, stageId: StageId.StarterIsland, code: "one-more-less", name: "One More and One Fewer", reason: "Lesson 2", explanation: "Move one step forward or one step back.", example: "6 + 1 = 7", thinkSteps: ["For +1, say the next number.", "For -1, say the number before."] },
   { id: 3, stageId: StageId.StarterIsland, code: "two-more-less", name: "Two More and Two Fewer", reason: "Lesson 3", explanation: "Move two small steps forward or backward.", example: "5 + 2 = 7", thinkSteps: ["For +2, count forward two steps.", "For -2, count back two steps."] },
-  { id: 4, stageId: StageId.StarterIsland, code: "bond-10", name: "Make 10 Pairs", reason: "Lesson 4", explanation: "Find the missing partner that makes 10.", example: "4 + ? = 10", thinkSteps: ["Look at the number you have.", "Think of the partner that fills 10.", "1-9, 2-8, 3-7, 4-6, 5-5 all make 10."] },
-  { id: 5, stageId: StageId.StarterIsland, code: "subtract-from-10", name: "Subtract from 10", reason: "Lesson 5", explanation: "Use your make-10 partners to subtract from 10.", example: "10 - 6 = 4", thinkSteps: ["What goes with 6 to make 10?", "That partner is the answer."] },
-  { id: 6, stageId: StageId.CountingTrail, code: "count-on", name: "Count On to Add", reason: "Lesson 6", explanation: "Start with the bigger number, then count on.", example: "8 + 3 = 11", thinkSteps: ["Start with 8.", "Count on 3 jumps: 9, 10, 11."] },
-  { id: 7, stageId: StageId.CountingTrail, code: "count-back", name: "Count Back to Subtract", reason: "Lesson 7", explanation: "Count backward when taking away a small amount.", example: "13 - 4 = 9", thinkSteps: ["Start at 13.", "Count back 4 jumps: 12, 11, 10, 9."] },
-  { id: 8, stageId: StageId.CountingTrail, code: "count-up", name: "Count Up to Subtract", reason: "Lesson 8", explanation: "Count up from the smaller number to find the difference.", example: "14 - 9 = 5", thinkSteps: ["Start at 9.", "Count up to 14.", "The number of jumps is the answer."] },
-  { id: 9, stageId: StageId.DoublesForest, code: "doubles", name: "Doubles", reason: "Lesson 9", explanation: "Double a number by adding it to itself.", example: "6 + 6 = 12", thinkSteps: ["Spot the twin numbers.", "Use the double fact you know."] },
-  { id: 10, stageId: StageId.DoublesForest, code: "half-facts", name: "Half Facts", reason: "Lesson 10", explanation: "Use doubles backward to find half.", example: "14 - 7 = 7", thinkSteps: ["Think: 7 + 7 = 14.", "So half of 14 is 7."] },
-  { id: 11, stageId: StageId.DoublesForest, code: "near-double-one", name: "Near Doubles: One Apart", reason: "Lesson 11", explanation: "Use a double, then adjust by 1.", example: "6 + 7 = 13", thinkSteps: ["Think of 6 + 6.", "Add 1 more."] },
-  { id: 12, stageId: StageId.DoublesForest, code: "near-double-two", name: "Near Doubles: Two Apart", reason: "Lesson 12", explanation: "Use a nearby double, then adjust by 2.", example: "6 + 8 = 14", thinkSteps: ["Think of 6 + 6.", "Add 2 more."] },
-  { id: 13, stageId: StageId.BridgeTown, code: "make-10-add", name: "Make 10 to Add", reason: "Lesson 13", explanation: "Fill up to 10 first, then add what is left.", example: "8 + 5 = 13", thinkSteps: ["8 needs 2 to make 10.", "Split 5 into 2 and 3.", "10 + 3 = 13."] },
-  { id: 14, stageId: StageId.BridgeTown, code: "bridge-back", name: "Bridge Back to Subtract", reason: "Lesson 14", explanation: "Jump back to 10 first, then subtract the rest.", example: "14 - 6 = 8", thinkSteps: ["14 goes back 4 to reach 10.", "Split 6 into 4 and 2.", "10 - 2 = 8."] },
-  { id: 15, stageId: StageId.BridgeTown, code: "missing-part-10", name: "Missing Part to 10", reason: "Lesson 15", explanation: "Find the missing partner that makes 10.", example: "7 + ? = 10", thinkSteps: ["What goes with 7 to make 10?", "The missing partner is 3."] },
-  { id: 16, stageId: StageId.FamilyVillage, code: "fact-family-10", name: "Fact Families to 10", reason: "Lesson 16", explanation: "Use related addition and subtraction facts.", example: "4 + 6 = 10, 10 - 4 = 6", thinkSteps: ["Think of the whole number.", "Use the two parts that make it.", "Addition and subtraction belong together."] },
-  { id: 17, stageId: StageId.FamilyVillage, code: "fact-family-20", name: "Fact Families to 20", reason: "Lesson 17", explanation: "Use related facts with totals up to 20.", example: "8 + 7 = 15, 15 - 8 = 7", thinkSteps: ["Think of the addition fact.", "Use it backward for subtraction.", "The parts and whole stay connected."] },
-  { id: 18, stageId: StageId.FamilyVillage, code: "missing-addend", name: "Missing Addend Thinking", reason: "Lesson 18", explanation: "Find the missing part by thinking about the difference.", example: "8 + ? = 15", thinkSteps: ["Start at 8.", "Count or think up to 15.", "The difference is the missing part."] },
-  { id: 19, stageId: StageId.BigNumberMountain, code: "add-tens", name: "Add and Subtract Tens", reason: "Lesson 19", explanation: "Use tens like friendly building blocks.", example: "30 + 40 = 70", thinkSteps: ["Count the tens.", "Keep the zero at the end.", "Check: adding or subtracting?"] },
-  { id: 20, stageId: StageId.BigNumberMountain, code: "add-ones-two-digit", name: "Add Ones to Two-Digit Numbers", reason: "Lesson 20", explanation: "Add a small number without crossing the next ten.", example: "34 + 5 = 39", thinkSteps: ["Keep the tens the same.", "Add the ones.", "Check you didn't pass the next ten."] },
-  { id: 21, stageId: StageId.BigNumberMountain, code: "subtract-ones-two-digit", name: "Subtract Ones from Two-Digit Numbers", reason: "Lesson 21", explanation: "Take away a small number from the ones place.", example: "48 - 6 = 42", thinkSteps: ["Keep the tens the same.", "Subtract the ones.", "Check if you crossed a ten."] },
+  { id: 4, stageId: StageId.StarterIsland, code: "doubles-small", name: "Doubles to 10", reason: "Lesson 4", explanation: "Double a small number by adding it to itself.", example: "5 + 5 = 10", thinkSteps: ["Spot the twin numbers.", "Use the double fact you know.", "Small doubles become anchor facts."] },
+  { id: 5, stageId: StageId.StarterIsland, code: "bond-10", name: "Make 10 Pairs", reason: "Lesson 5", explanation: "Find the missing partner that makes 10.", example: "4 + ? = 10", thinkSteps: ["Look at the number you have.", "Think of the partner that fills 10.", "1-9, 2-8, 3-7, 4-6, 5-5 all make 10."] },
+  { id: 6, stageId: StageId.StarterIsland, code: "subtract-from-10", name: "Subtract from 10", reason: "Lesson 6", explanation: "Use your make-10 partners to subtract from 10.", example: "10 - 6 = 4", thinkSteps: ["What goes with 6 to make 10?", "That partner is the answer."] },
+
+  { id: 7, stageId: StageId.DoublesForest, code: "doubles-big", name: "Doubles to 18", reason: "Lesson 7", explanation: "Use bigger doubles as fast anchor facts.", example: "8 + 8 = 16", thinkSteps: ["Spot the twin numbers.", "Use the double fact you know.", "Big doubles help with nearby facts."] },
+  { id: 8, stageId: StageId.DoublesForest, code: "near-double-one", name: "Near Doubles: One Apart", reason: "Lesson 8", explanation: "Use the higher double, then subtract 1.", example: "5 + 4 = 9", thinkSteps: ["Think of 5 + 5.", "5 + 5 is 10.", "Take away 1, so the answer is 9."] },
+  { id: 9, stageId: StageId.DoublesForest, code: "near-double-two", name: "Near Doubles: Two Apart", reason: "Lesson 9", explanation: "Use the middle double when the numbers are two apart.", example: "6 + 8 = 14", thinkSteps: ["The middle number is 7.", "Think 7 + 7.", "7 + 7 = 14."] },
+
+  { id: 10, stageId: StageId.BridgeTown, code: "make-10-add", name: "Make 10 to Add", reason: "Lesson 10", explanation: "Fill up to 10 first, then add what is left.", example: "8 + 5 = 13", thinkSteps: ["8 needs 2 to make 10.", "Split 5 into 2 and 3.", "10 + 3 = 13."] },
+  { id: 11, stageId: StageId.BridgeTown, code: "bridge-back", name: "Bridge Back to Subtract", reason: "Lesson 11", explanation: "Jump back to 10 first, then subtract the rest.", example: "14 - 6 = 8", thinkSteps: ["14 goes back 4 to reach 10.", "Split 6 into 4 and 2.", "10 - 2 = 8."] },
+  { id: 12, stageId: StageId.BridgeTown, code: "missing-part-10", name: "Missing Part to 10", reason: "Lesson 12", explanation: "Find the missing partner that makes 10.", example: "7 + ? = 10", thinkSteps: ["What goes with 7 to make 10?", "The missing partner is 3."] },
+  { id: 13, stageId: StageId.BridgeTown, code: "strategy-bridge-1", name: "Strategy Bridge: Facts to 20", reason: "Lesson 13", explanation: "Use the fastest shortcut you see: near doubles, make 10, or a known fact.", example: "6 + 7 or 8 + 5", thinkSteps: ["Look at the numbers.", "Choose the easiest strategy in your head.", "Solve it and keep moving."] },
+
+  { id: 14, stageId: StageId.FamilyVillage, code: "fact-family-10", name: "Fact Families to 10", reason: "Lesson 14", explanation: "Use related addition and subtraction facts.", example: "4 + 6 = 10, 10 - 4 = 6", thinkSteps: ["Think of the whole number.", "Use the two parts that make it.", "Addition and subtraction belong together."] },
+  { id: 15, stageId: StageId.FamilyVillage, code: "fact-family-20", name: "Fact Families to 20", reason: "Lesson 15", explanation: "Use related facts with totals up to 20.", example: "8 + 7 = 15, 15 - 8 = 7", thinkSteps: ["Think of the addition fact.", "Use it backward for subtraction.", "The parts and whole stay connected."] },
+  { id: 16, stageId: StageId.FamilyVillage, code: "missing-addend", name: "Missing Addend Thinking", reason: "Lesson 16", explanation: "Find the missing part by thinking about the difference.", example: "8 + ? = 15", thinkSteps: ["Think: 8 and what makes 15?", "Use related addition and subtraction.", "The difference is the missing part."] },
+  { id: 17, stageId: StageId.FamilyVillage, code: "count-up", name: "Count Up to Subtract", reason: "Lesson 17", explanation: "Count up when subtraction is really asking for the missing part.", example: "14 - 9 = 5", thinkSteps: ["Think: 9 + ? = 14.", "Count up from 9 to 14 if needed.", "The number of jumps is the answer."] },
+
+  { id: 18, stageId: StageId.BigNumberMountain, code: "add-tens", name: "Add and Subtract Tens", reason: "Lesson 18", explanation: "Use tens like friendly building blocks.", example: "30 + 40 = 70", thinkSteps: ["Count the tens.", "Keep the zero at the end.", "Check: adding or subtracting?"] },
+  { id: 19, stageId: StageId.BigNumberMountain, code: "add-ones-two-digit", name: "Add Ones to Two-Digit Numbers", reason: "Lesson 19", explanation: "Add a small number without crossing the next ten.", example: "34 + 5 = 39", thinkSteps: ["Keep the tens the same.", "Add the ones.", "Check you didn't pass the next ten."] },
+  { id: 20, stageId: StageId.BigNumberMountain, code: "subtract-ones-two-digit", name: "Subtract Ones from Two-Digit Numbers", reason: "Lesson 20", explanation: "Take away a small number from the ones place.", example: "48 - 6 = 42", thinkSteps: ["Keep the tens the same.", "Subtract the ones.", "Check if you crossed a ten."] },
+  { id: 21, stageId: StageId.BigNumberMountain, code: "add-subtract-10-two-digit", name: "Add and Subtract 10", reason: "Lesson 21", explanation: "Move one ten up or down while the ones stay the same.", example: "56 - 10 = 46", thinkSteps: ["Only the tens digit changes.", "The ones digit stays the same.", "Check if you added or subtracted one ten."] },
   { id: 22, stageId: StageId.BigNumberMountain, code: "bridge-ones-two-digit", name: "Bridge Ones in Two-Digit Numbers", reason: "Lesson 22", explanation: "Use the next or previous ten when ones cross a ten.", example: "38 + 7 = 45", thinkSteps: ["Jump to the nearest ten first.", "Then finish with what is left.", "Like bridging within 20."] },
-  { id: 23, stageId: StageId.BigNumberMountain, code: "add-two-digit-place", name: "Add Two-Digit Numbers by Place Value", reason: "Lesson 23", explanation: "Add tens first, then ones.", example: "35 + 22 = 57", thinkSteps: ["Add the tens.", "Add the ones.", "Put the parts together."] },
-  { id: 24, stageId: StageId.BigNumberMountain, code: "subtract-two-digit-place", name: "Subtract Two-Digit Numbers by Place Value", reason: "Lesson 24", explanation: "Subtract tens first, then ones.", example: "58 - 24 = 34", thinkSteps: ["Subtract the tens.", "Subtract the ones.", "Put the answer together."] },
-  { id: 25, stageId: StageId.BigNumberMountain, code: "compensation", name: "Compensation", reason: "Lesson 25", explanation: "Make a friendly number, then adjust.", example: "39 + 6 = 45", thinkSteps: ["Change one number to a friendly ten.", "Do the easier calculation.", "Adjust back if needed."] },
+  { id: 23, stageId: StageId.BigNumberMountain, code: "two-digit-place", name: "Two-Digit Place Value", reason: "Lesson 23", explanation: "Use tens and ones to add or subtract two-digit numbers.", example: "35 + 22 = 57", thinkSteps: ["Work with the tens.", "Work with the ones.", "Put the parts together."] },
+  { id: 24, stageId: StageId.BigNumberMountain, code: "compensation", name: "Compensation", reason: "Lesson 24", explanation: "Make a friendly number, then adjust.", example: "39 + 6 = 45", thinkSteps: ["Change one number to a friendly ten.", "Do the easier calculation.", "Adjust back if needed."] },
+  { id: 25, stageId: StageId.BigNumberMountain, code: "strategy-bridge-2", name: "Strategy Bridge: Two-Digit Mix", reason: "Lesson 25", explanation: "Use the two-digit shortcut that feels easiest or fastest.", example: "49 + 6 or 56 - 10", thinkSteps: ["Look for tens, ones, bridging, or compensation.", "Choose the shortcut that fits.", "Solve it and keep moving."] },
+
+  { id: 26, stageId: StageId.TheSummit, code: "summit-facts-20", name: "Strategy Bridge: Fast Facts to 20", reason: "Lesson 26", explanation: "Mix facts to 20 and choose the fastest strategy.", example: "7 + 8, 13 - 6, or 9 + 4", thinkSteps: ["Use any shortcut you know.", "You do not need to explain it.", "Just solve efficiently."] },
+  { id: 27, stageId: StageId.TheSummit, code: "summit-missing-families", name: "Strategy Bridge: Missing Parts", reason: "Lesson 27", explanation: "Use fact families, missing parts, and count-up thinking.", example: "8 + ? = 15", thinkSteps: ["Think of the related fact.", "Find the missing part.", "Use counting only if you need it."] },
+  { id: 28, stageId: StageId.TheSummit, code: "summit-two-digit", name: "Strategy Bridge: Two-Digit Review", reason: "Lesson 28", explanation: "Practice bigger-number shortcuts in a mixed set.", example: "28 + 5 or 47 - 3", thinkSteps: ["Look for the easiest shortcut.", "Use tens, ones, bridging, or compensation.", "Keep going."] },
+  { id: 29, stageId: StageId.TheSummit, code: "speed-challenge", name: "Speed Challenge", reason: "Lesson 29", explanation: "A fast mixed review of the mental math journey.", example: "Different facts, different shortcuts", thinkSteps: ["Use the shortcut that appears first.", "Trust the facts you know.", "Keep your rhythm."] },
+  { id: 30, stageId: StageId.TheSummit, code: "backup-plan", name: "The Backup Plan", reason: "Lesson 30", explanation: "If no shortcut appears, count on or count back carefully.", example: "13 + 4 = 17", thinkSteps: ["Try a known shortcut first.", "If you are truly stuck, count on or count back.", "Counting is the backup plan, not the first plan."] },
 ];
 
 function normalizeIdPart(value: string): string {
@@ -179,6 +189,12 @@ function range(min: number, max: number): number[] {
   return values;
 }
 
+function poolsForCodes(codes: string[]): MathQuestion[] {
+  const groups: MathQuestion[][] = [];
+  codes.forEach((code) => groups.push(buildSingleStrategyQuestionPool(code)));
+  return uniqueQuestions(groups.flat());
+}
+
 function buildSingleStrategyQuestionPool(strategyCode: string): MathQuestion[] {
   const list: MathQuestion[] = [];
   switch (strategyCode) {
@@ -191,21 +207,36 @@ function buildSingleStrategyQuestionPool(strategyCode: string): MathQuestion[] {
     }
     case "one-more-less": {
       range(0, 10).forEach((x) => {
-        list.push(makeQuestion({ strategyCode, question: `${x} + 1`, answer: x + 1, hint: `Start at ${x} and move one step forward.`, family: "one-more", difficulty: 1 }));
-        if (x !== 1) list.push(makeQuestion({ strategyCode, question: `1 + ${x}`, answer: x + 1, hint: `Start at ${x} and move one step forward.`, family: "one-more", difficulty: 1 }));
+        list.push(makeQuestion({ strategyCode, question: `${x} + 1`, answer: x + 1, hint: `Move one step forward from ${x}.`, family: "one-more", difficulty: 1 }));
+        if (x !== 1) list.push(makeQuestion({ strategyCode, question: `1 + ${x}`, answer: x + 1, hint: `Move one step forward from ${x}.`, family: "one-more", difficulty: 1 }));
       });
       range(1, 11).forEach((x) => {
-        list.push(makeQuestion({ strategyCode, question: `${x} - 1`, answer: x - 1, hint: `Start at ${x} and move one step back.`, family: "one-less", difficulty: 1 }));
+        list.push(makeQuestion({ strategyCode, question: `${x} - 1`, answer: x - 1, hint: `Move one step back from ${x}.`, family: "one-less", difficulty: 1 }));
       }); break;
     }
     case "two-more-less": {
       range(0, 10).forEach((x) => {
-        list.push(makeQuestion({ strategyCode, question: `${x} + 2`, answer: x + 2, hint: `Start at ${x} and move two steps forward.`, family: "two-more", difficulty: 1 }));
-        if (x !== 2) list.push(makeQuestion({ strategyCode, question: `2 + ${x}`, answer: x + 2, hint: `Start at ${x} and move two steps forward.`, family: "two-more", difficulty: 1 }));
+        list.push(makeQuestion({ strategyCode, question: `${x} + 2`, answer: x + 2, hint: `Move two steps forward from ${x}.`, family: "two-more", difficulty: 1 }));
+        if (x !== 2) list.push(makeQuestion({ strategyCode, question: `2 + ${x}`, answer: x + 2, hint: `Move two steps forward from ${x}.`, family: "two-more", difficulty: 1 }));
       });
       range(2, 12).forEach((x) => {
-        list.push(makeQuestion({ strategyCode, question: `${x} - 2`, answer: x - 2, hint: `Start at ${x} and move two steps back.`, family: "two-less", difficulty: 1 }));
+        list.push(makeQuestion({ strategyCode, question: `${x} - 2`, answer: x - 2, hint: `Move two steps back from ${x}.`, family: "two-less", difficulty: 1 }));
       }); break;
+    }
+    case "doubles-small": {
+      range(0, 5).forEach((x) => {
+        list.push(makeQuestion({ strategyCode, question: `${x} + ${x}`, answer: x + x, hint: `Double ${x}.`, family: "double-small", difficulty: 1 }));
+      }); break;
+    }
+    case "doubles-big": {
+      range(6, 9).forEach((x) => {
+        list.push(makeQuestion({ strategyCode, question: `${x} + ${x}`, answer: x + x, hint: `Double ${x}.`, family: "double-big", difficulty: 2 }));
+      }); break;
+    }
+    case "doubles": {
+      list.push(...buildSingleStrategyQuestionPool("doubles-small"));
+      list.push(...buildSingleStrategyQuestionPool("doubles-big"));
+      break;
     }
     case "bond-10": {
       range(0, 10).forEach((part) => {
@@ -225,60 +256,34 @@ function buildSingleStrategyQuestionPool(strategyCode: string): MathQuestion[] {
         list.push(makeQuestion({ strategyCode, question: `10 - ${x}`, answer: 10 - x, hint: `Think of the partner that goes with ${x} to make 10.`, family: "subtract-from-10", difficulty: 1 }));
       }); break;
     }
-    case "count-on": {
-      range(5, 16).forEach((main) => {
-        range(1, 4).forEach((extra) => {
-          if (main + extra <= 20) {
-            list.push(makeQuestion({ strategyCode, question: `${main} + ${extra}`, answer: main + extra, hint: `Start with ${main} and count on ${extra} jumps.`, family: "count-on-add", difficulty: 2 }));
-            list.push(makeQuestion({ strategyCode, question: `${extra} + ${main}`, answer: main + extra, hint: `Start with ${main} and count on ${extra} jumps.`, family: "count-on-add", difficulty: 2 }));
-          }
-        });
-      }); break;
-    }
-    case "count-back": {
-      range(5, 20).forEach((start) => {
-        range(1, 4).forEach((sub) => {
-          if (start - sub >= 0) list.push(makeQuestion({ strategyCode, question: `${start} - ${sub}`, answer: start - sub, hint: `Start at ${start} and count back ${sub} steps.`, family: "count-back-subtract", difficulty: 2 }));
-        });
-      }); break;
-    }
-    case "count-up": {
-      range(5, 19).forEach((bottom) => {
-        range(1, 5).forEach((diff) => {
-          const top = bottom + diff;
-          if (top <= 20) list.push(makeQuestion({ strategyCode, question: `${top} - ${bottom}`, answer: diff, hint: `Count up from ${bottom} to ${top}.`, family: "count-up-subtract", difficulty: 2 }));
-        });
-      }); break;
-    }
-    case "doubles": {
-      range(0, 10).forEach((x) => {
-        list.push(makeQuestion({ strategyCode, question: `${x} + ${x}`, answer: x + x, hint: `Double ${x}.`, family: "double", difficulty: 2 }));
-      }); break;
-    }
-    case "half-facts": {
-      range(1, 10).forEach((x) => {
-        list.push(makeQuestion({ strategyCode, question: `${x * 2} - ${x}`, answer: x, hint: `Since ${x} + ${x} = ${x * 2}, half of ${x * 2} is ${x}.`, family: "half", difficulty: 2 }));
-      }); break;
-    }
     case "near-double-one": {
-      range(1, 9).forEach((x) => {
-        const sum = x + x + 1;
-        list.push(makeQuestion({ strategyCode, question: `${x} + ${x + 1}`, answer: sum, hint: `Use ${x} + ${x}, then add 1 more.`, family: "near-double-one", difficulty: 2 }));
-        list.push(makeQuestion({ strategyCode, question: `${x + 1} + ${x}`, answer: sum, hint: `Use ${x} + ${x}, then add 1 more.`, family: "near-double-one", difficulty: 2 }));
+      range(2, 9).forEach((high) => {
+        const low = high - 1;
+        const sum = high + low;
+        const hint = `Use the higher double ${high} + ${high}, then subtract 1.`;
+        list.push(makeQuestion({ strategyCode, question: `${high} + ${low}`, answer: sum, hint, family: "near-double-one", difficulty: 2 }));
+        list.push(makeQuestion({ strategyCode, question: `${low} + ${high}`, answer: sum, hint, family: "near-double-one", difficulty: 2 }));
       }); break;
     }
     case "near-double-two": {
-      range(1, 8).forEach((x) => {
-        const sum = x + x + 2;
-        list.push(makeQuestion({ strategyCode, question: `${x} + ${x + 2}`, answer: sum, hint: `Use ${x} + ${x}, then add 2 more.`, family: "near-double-two", difficulty: 2 }));
-        list.push(makeQuestion({ strategyCode, question: `${x + 2} + ${x}`, answer: sum, hint: `Use ${x} + ${x}, then add 2 more.`, family: "near-double-two", difficulty: 2 }));
+      range(2, 8).forEach((middle) => {
+        const low = middle - 1;
+        const high = middle + 1;
+        const sum = low + high;
+        const hint = `Use the middle double ${middle} + ${middle}.`;
+        list.push(makeQuestion({ strategyCode, question: `${low} + ${high}`, answer: sum, hint, family: "near-double-two", difficulty: 2 }));
+        list.push(makeQuestion({ strategyCode, question: `${high} + ${low}`, answer: sum, hint, family: "near-double-two", difficulty: 2 }));
       }); break;
     }
     case "make-10-add": {
-      range(2, 9).forEach((a) => {
+      range(6, 9).forEach((a) => {
         range(2, 9).forEach((b) => {
           const sum = a + b;
-          if (sum > 10 && sum <= 18) list.push(makeQuestion({ strategyCode, question: `${a} + ${b}`, answer: sum, hint: `${a} needs ${10 - a} to make 10. Split the other number and finish from 10.`, family: "make-10-add", difficulty: 3 }));
+          const need = 10 - a;
+          if (sum > 10 && sum <= 18 && b > need) {
+            list.push(makeQuestion({ strategyCode, question: `${a} + ${b}`, answer: sum, hint: `${a} needs ${need} to make 10. Split the other number and finish from 10.`, family: "make-10-add", difficulty: 3 }));
+            if (a !== b) list.push(makeQuestion({ strategyCode, question: `${b} + ${a}`, answer: sum, hint: `${a} needs ${need} to make 10. Split the other number and finish from 10.`, family: "make-10-add", difficulty: 3 }));
+          }
         });
       }); break;
     }
@@ -321,7 +326,32 @@ function buildSingleStrategyQuestionPool(strategyCode: string): MathQuestion[] {
       range(11, 20).forEach((total) => {
         range(2, 9).forEach((part) => {
           const missing = total - part;
-          if (missing >= 2 && missing <= 9) list.push(makeQuestion({ strategyCode, question: `${part} + ? = ${total}`, answer: missing, hint: `Count up from ${part} to ${total}.`, family: "missing-addend", difficulty: 3 }));
+          if (missing >= 2 && missing <= 9) list.push(makeQuestion({ strategyCode, question: `${part} + ? = ${total}`, answer: missing, hint: `Think of ${total} - ${part}, or count up from ${part} to ${total}.`, family: "missing-addend", difficulty: 3 }));
+        });
+      }); break;
+    }
+    case "count-up": {
+      range(5, 19).forEach((bottom) => {
+        range(1, 6).forEach((diff) => {
+          const top = bottom + diff;
+          if (top <= 20) list.push(makeQuestion({ strategyCode, question: `${top} - ${bottom}`, answer: diff, hint: `Think ${bottom} + ? = ${top}. Count up only if you need to.`, family: "count-up-subtract", difficulty: 2 }));
+        });
+      }); break;
+    }
+    case "count-on": {
+      range(5, 16).forEach((main) => {
+        range(1, 4).forEach((extra) => {
+          if (main + extra <= 20) {
+            list.push(makeQuestion({ strategyCode, question: `${main} + ${extra}`, answer: main + extra, hint: `Start with ${main} and count on ${extra} jumps.`, family: "count-on-add", difficulty: 2 }));
+            list.push(makeQuestion({ strategyCode, question: `${extra} + ${main}`, answer: main + extra, hint: `Start with ${main} and count on ${extra} jumps.`, family: "count-on-add", difficulty: 2 }));
+          }
+        });
+      }); break;
+    }
+    case "count-back": {
+      range(5, 20).forEach((start) => {
+        range(1, 4).forEach((sub) => {
+          if (start - sub >= 0) list.push(makeQuestion({ strategyCode, question: `${start} - ${sub}`, answer: start - sub, hint: `Start at ${start} and count back ${sub} steps.`, family: "count-back-subtract", difficulty: 2 }));
         });
       }); break;
     }
@@ -348,6 +378,15 @@ function buildSingleStrategyQuestionPool(strategyCode: string): MathQuestion[] {
           range(1, 4).forEach((sub) => {
             if (ones - sub >= 0) { const n = tens * 10 + ones; list.push(makeQuestion({ strategyCode, question: `${n} - ${sub}`, answer: n - sub, hint: `Keep the tens and subtract the ones: ${ones} - ${sub}.`, family: "subtract-ones-two-digit", difficulty: 3 })); }
           });
+        });
+      }); break;
+    }
+    case "add-subtract-10-two-digit": {
+      [2, 3, 4, 5, 6, 7, 8].forEach((tens) => {
+        [1, 2, 3, 4, 5, 6, 7, 8, 9].forEach((ones) => {
+          const n = tens * 10 + ones;
+          if (n + 10 < 100) list.push(makeQuestion({ strategyCode, question: `${n} + 10`, answer: n + 10, hint: "Add one ten. The ones stay the same.", family: "add-10-two-digit", difficulty: 3 }));
+          if (n - 10 >= 10) list.push(makeQuestion({ strategyCode, question: `${n} - 10`, answer: n - 10, hint: "Subtract one ten. The ones stay the same.", family: "subtract-10-two-digit", difficulty: 3 }));
         });
       }); break;
     }
@@ -389,6 +428,11 @@ function buildSingleStrategyQuestionPool(strategyCode: string): MathQuestion[] {
         });
       }); break;
     }
+    case "two-digit-place": {
+      list.push(...buildSingleStrategyQuestionPool("add-two-digit-place"));
+      list.push(...buildSingleStrategyQuestionPool("subtract-two-digit-place"));
+      break;
+    }
     case "compensation": {
       [1, 2, 3, 4, 5, 6, 7, 8].forEach((tens) => {
         const nearTen = tens * 10 + 9;
@@ -403,10 +447,38 @@ function buildSingleStrategyQuestionPool(strategyCode: string): MathQuestion[] {
         });
       }); break;
     }
+    case "strategy-bridge-1": {
+      list.push(...poolsForCodes(["near-double-one", "near-double-two", "make-10-add", "bridge-back"]));
+      break;
+    }
+    case "strategy-bridge-2": {
+      list.push(...poolsForCodes(["add-tens", "add-ones-two-digit", "subtract-ones-two-digit", "add-subtract-10-two-digit", "bridge-ones-two-digit", "two-digit-place", "compensation"]));
+      break;
+    }
+    case "summit-facts-20": {
+      list.push(...poolsForCodes(["doubles", "near-double-one", "near-double-two", "make-10-add", "bridge-back", "fact-family-20"]));
+      break;
+    }
+    case "summit-missing-families": {
+      list.push(...poolsForCodes(["bond-10", "subtract-from-10", "missing-part-10", "fact-family-10", "fact-family-20", "missing-addend", "count-up"]));
+      break;
+    }
+    case "summit-two-digit": {
+      list.push(...poolsForCodes(["add-tens", "add-ones-two-digit", "subtract-ones-two-digit", "add-subtract-10-two-digit", "bridge-ones-two-digit", "two-digit-place", "compensation"]));
+      break;
+    }
+    case "speed-challenge": {
+      list.push(...poolsForCodes(["same-number", "one-more-less", "two-more-less", "doubles", "bond-10", "subtract-from-10", "near-double-one", "near-double-two", "make-10-add", "bridge-back", "fact-family-20", "missing-addend", "add-tens", "add-subtract-10-two-digit", "bridge-ones-two-digit", "compensation"]));
+      break;
+    }
+    case "backup-plan": {
+      list.push(...poolsForCodes(["count-on", "count-back", "count-up"]));
+      break;
+    }
     default: {
       range(1, 10).forEach((a) => {
         range(1, 10).forEach((b) => {
-          list.push(makeQuestion({ strategyCode, question: `${a} + ${b}`, answer: a + b, hint: "Count on if needed.", family: "fallback-add", difficulty: 1 }));
+          list.push(makeQuestion({ strategyCode, question: `${a} + ${b}`, answer: a + b, hint: "Use any strategy you know.", family: "fallback-add", difficulty: 1 }));
         });
       });
     }
