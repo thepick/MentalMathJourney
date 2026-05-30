@@ -1,103 +1,163 @@
 # Mental Math Journey
 
-Mental Math Journey is a kid-friendly mental math web app for elementary students. It builds addition and subtraction fluency through short 1-minute practice sessions, clear chapter progression, and adaptive review.
+Mental Math Journey is a kid-friendly mental math web app for elementary students. It builds addition and subtraction fluency through short practice sessions, clear chapter progression, and adaptive review.
 
-The app is designed around this structure:
+The app is organized like this:
 
 ```text
 Journey -> Chapter -> Lesson -> Practice
 ```
 
-Students move through 6 chapters and 25 lessons. Each lesson focuses on one mental math idea. A 1-minute practice session checks whether the student is ready to continue. Earlier facts come back as quick review when needed, so separate chapter-practice and cumulative-review lessons are no longer needed.
+Students move through 6 chapters and 30 lessons. Each lesson introduces one mental math idea, then later lessons mix those ideas through Strategy Bridge practice. The goal is not just to answer facts correctly, but to build a useful path from anchor facts to flexible mental math.
 
-## What changed in the rebuilt version
+## Teaching flow logic
 
-- Uses Chapters and Lessons instead of stages, levels, stops, or sprints.
-- Uses Practice for timed quiz sessions.
-- Removes separate chapter-practice and cumulative-review lessons.
-- Expands number ranges gradually instead of starting with one large 0-20 pool.
-- Chapter 1 focuses on numbers 0-10, with small stretches to 11 or 12 when the lesson requires it.
-- Later chapters expand toward 20, then into two-digit mental math.
-- Older facts return as Quick Review when useful, but current lesson facts remain the main focus.
-- Student-facing wording is shorter and simpler.
-- Teacher/debug-style information has been removed from the student flow.
-- Mobile practice layout hides extra page elements and keeps the keypad usable.
-- Chapter and lesson completion confetti is included.
-- Favicons and Apple touch icons are linked in the page head.
+The lesson sequence is designed around this progression:
+
+```text
+Instant anchor facts -> derived facts -> make-10 thinking -> operation relationships -> two-digit strategies -> mixed strategy fluency
+```
+
+### 1. Start with facts students can know instantly
+
+Chapter 1 focuses on simple, high-value facts that should become automatic: zero, one more, two more, small doubles, make-10 pairs, and subtracting from 10.
+
+These facts are not meant to be solved by slow counting. They become anchors that students can use later to solve harder facts.
+
+### 2. Use doubles as early anchors
+
+Doubles are introduced earlier than in the previous flow. Small doubles come first, then larger doubles, then near doubles.
+
+This supports mental strategies such as:
+
+```text
+5 + 4 -> think 5 + 5, then subtract 1
+6 + 8 -> think 7 + 7
+```
+
+Near doubles are taught after students already have doubles ready to use.
+
+### 3. Use 10 as a major thinking tool
+
+Make-10 pairs and subtract-from-10 facts are placed next to each other because they are inverse ideas. Later, students use that knowledge to bridge through 10.
+
+Examples:
+
+```text
+8 + 5 -> 8 + 2 + 3 -> 13
+14 - 6 -> 14 - 4 - 2 -> 8
+```
+
+The flow treats 10 as a friendly number that helps students move beyond counting.
+
+### 4. Connect addition and subtraction
+
+Fact families, missing addends, and count-up subtraction are grouped together because they all rely on the relationship between parts and a whole.
+
+Examples:
+
+```text
+8 + 7 = 15
+15 - 8 = 7
+8 + ? = 15
+```
+
+Count-up subtraction appears here because it is really missing-addend thinking. It is not treated as an early default strategy for all addition and subtraction.
+
+### 5. Scale the same ideas to two-digit numbers
+
+Two-digit lessons show that the same shortcuts still work with bigger numbers. Students work with tens, ones, adding or subtracting 10, bridging across tens, place value, and compensation.
+
+Examples:
+
+```text
+56 - 10 -> 46
+38 + 7 -> 38 + 2 + 5 -> 45
+39 + 6 -> 40 + 5 -> 45
+```
+
+### 6. Use Strategy Bridge lessons for flexible practice
+
+Strategy Bridge lessons provide mixed practice after students have learned enough strategies to choose from. The app does not ask students to report which strategy they used. Students simply solve each problem using whichever strategy feels easiest or fastest.
+
+This keeps the app focused on fluency while still giving students practice choosing efficient methods.
+
+### 7. Keep counting as the backup plan
+
+Counting is not removed, but it is moved later and framed carefully. Students first learn stronger mental math strategies. Counting on or counting back is taught as a backup when no shortcut appears.
 
 ## Chapter plan
 
 | Chapter | Name | Lessons | Main focus |
 |---:|---|---:|---|
-| 1 | Starter Island | 5 | Anchor facts with numbers 0-10 |
-| 2 | Counting Trail | 3 | Count on, count back, and count up within 20 |
-| 3 | Doubles Forest | 4 | Doubles, halves, and near doubles |
-| 4 | Bridge Town | 3 | Make 10 and bridge through 10 |
-| 5 | Family Village | 3 | Fact families and missing parts |
-| 6 | Big Number Mountain | 7 | Two-digit mental math methods |
+| 1 | Starter Island | 6 | Instant anchor facts with numbers 0-10 |
+| 2 | Doubles Forest | 3 | Doubles and near doubles |
+| 3 | Bridge Town | 4 | Make 10, bridge through 10, and Strategy Bridge practice |
+| 4 | Family Village | 4 | Fact families, missing parts, and count-up subtraction |
+| 5 | Big Number Mountain | 8 | Two-digit mental math methods |
+| 6 | The Summit | 5 | Mixed Strategy Bridge practice, speed, and backup counting |
 
-Total: 25 lessons.
+Total: 30 lessons.
 
 ## Lesson list
 
 ### Chapter 1: Starter Island
 
-1. Same Number Facts
+1. Zero Rule
 2. One More and One Fewer
 3. Two More and Two Fewer
-4. Make 10 Pairs
-5. Subtract from 10
+4. Doubles to 10
+5. Make 10 Pairs
+6. Subtract from 10
 
-### Chapter 2: Counting Trail
+### Chapter 2: Doubles Forest
 
-6. Count On to Add
-7. Count Back to Subtract
-8. Count Up to Subtract
+7. Doubles to 18
+8. Near Doubles: One Apart
+9. Near Doubles: Two Apart
 
-### Chapter 3: Doubles Forest
+### Chapter 3: Bridge Town
 
-9. Doubles
-10. Half Facts
-11. Near Doubles: One Apart
-12. Near Doubles: Two Apart
+10. Make 10 to Add
+11. Bridge Back to Subtract
+12. Missing Part to 10
+13. Strategy Bridge: Facts to 20
 
-### Chapter 4: Bridge Town
+### Chapter 4: Family Village
 
-13. Make 10 to Add
-14. Bridge Back to Subtract
-15. Missing Part to 10
+14. Fact Families to 10
+15. Fact Families to 20
+16. Missing Addend Thinking
+17. Count Up to Subtract
 
-### Chapter 5: Family Village
+### Chapter 5: Big Number Mountain
 
-16. Fact Families to 10
-17. Fact Families to 20
-18. Missing Addend Thinking
-
-### Chapter 6: Big Number Mountain
-
-19. Add and Subtract Tens
-20. Add Ones to Two-Digit Numbers
-21. Subtract Ones from Two-Digit Numbers
+18. Add and Subtract Tens
+19. Add Ones to Two-Digit Numbers
+20. Subtract Ones from Two-Digit Numbers
+21. Add and Subtract 10
 22. Bridge Ones in Two-Digit Numbers
-23. Add Two-Digit Numbers by Place Value
-24. Subtract Two-Digit Numbers by Place Value
-25. Compensation
+23. Two-Digit Place Value
+24. Compensation
+25. Strategy Bridge: Two-Digit Mix
 
-## Practice sessions
+### Chapter 6: The Summit
+
+26. Strategy Bridge: Fast Facts to 20
+27. Strategy Bridge: Missing Parts
+28. Strategy Bridge: Two-Digit Review
+29. Speed Challenge
+30. The Backup Plan
+
+## Practice and review
 
 Each lesson uses a 1-minute practice session. The default speed target is adjustable in Settings.
 
-A lesson is passed when the student reaches the 2-star target for the selected speed setting and has at least 80% accuracy. For example, if the selected speed setting makes 9 correct answers the 2-star target, then 9 correct answers with 80% or higher accuracy unlocks the next lesson.
+Current lesson facts are the main practice pool. Older facts return as Quick Review when the app has evidence they need attention, such as recent mistakes, timeouts, or repeated slow answers.
 
-The app does not require every possible fact in the lesson pool to become fully mastered before the next lesson unlocks. Adaptive review still brings back older or weaker facts when useful.
+This keeps students moving forward while still protecting earlier learning.
 
-## Review behavior
-
-Current lesson facts are the main practice pool. Older facts come back as Quick Review when the app has evidence they need attention, such as recent mistakes, timeouts, or repeated slow answers.
-
-This keeps practice moving forward while still protecting earlier learning. Because this review happens automatically, there are no separate chapter-practice or cumulative-review lessons.
-
-## Storage
+## Progress storage
 
 Progress is stored locally in the browser using `localStorage`.
 
@@ -109,17 +169,9 @@ mental_math_journey_progress
 
 There is no custom backend and no database requirement.
 
-## Deployment
+## Build from source
 
-The built app is static. Deploy the root files from the package:
-
-```text
-index.html
-assets/
-favicon files, if used
-```
-
-The source code is in the `source/` folder.
+The built app is static. The source code is in the `source/` folder.
 
 To build from source:
 
@@ -129,39 +181,7 @@ npm install
 npm run build
 ```
 
-Then copy `source/dist/index.html` and `source/dist/assets/` to the deploy root.
-
-## Favicons
-
-The page includes links for these files:
-
-```text
-favicon-16x16.png
-favicon-32x32.png
-favicon-48x48.png
-apple-touch-icon.png
-apple-touch-icon-152x152.png
-apple-touch-icon-167x167.png
-```
-
-Keep those files beside `index.html` when deploying.
-
-## Testing checklist
-
-After changes, test:
-
-- starting a new practice session
-- 3, 2, 1, Go countdown
-- mobile keypad layout
-- mobile keyboard suppression
-- correct answers, wrong answers, and timeouts
-- passing a lesson
-- unlocking the next lesson
-- completing a chapter
-- confetti on lesson and chapter completion
-- Journey Map display on mobile
-- Lesson Guide display
-- Settings and reset progress
+Then copy the generated `source/dist/index.html` and `source/dist/assets/` into the deploy root.
 
 ## License
 

@@ -1,14 +1,90 @@
 # Mental Math Journey
 
-Mental Math Journey is a kid-friendly mental math web app for elementary students. It builds addition and subtraction fluency through short 1-minute practice sessions, clear chapter progression, and adaptive review.
+Mental Math Journey is a kid-friendly mental math web app for elementary students. It builds addition and subtraction fluency through short practice sessions, clear chapter progression, and adaptive review.
 
-The app is designed around this structure:
+The app is organized like this:
 
 ```text
 Journey -> Chapter -> Lesson -> Practice
 ```
 
-Students move through 6 chapters and 30 lessons. Each lesson focuses on one mental math idea or mixed Strategy Bridge practice. Earlier facts return as quick review when useful, but the current lesson facts remain the main focus.
+Students move through 6 chapters and 30 lessons. Each lesson introduces one mental math idea, then later lessons mix those ideas through Strategy Bridge practice. The goal is not just to answer facts correctly, but to build a useful path from anchor facts to flexible mental math.
+
+## Teaching flow logic
+
+The lesson sequence is designed around this progression:
+
+```text
+Instant anchor facts -> derived facts -> make-10 thinking -> operation relationships -> two-digit strategies -> mixed strategy fluency
+```
+
+### 1. Start with facts students can know instantly
+
+Chapter 1 focuses on simple, high-value facts that should become automatic: zero, one more, two more, small doubles, make-10 pairs, and subtracting from 10.
+
+These facts are not meant to be solved by slow counting. They become anchors that students can use later to solve harder facts.
+
+### 2. Use doubles as early anchors
+
+Doubles are introduced earlier than in the previous flow. Small doubles come first, then larger doubles, then near doubles.
+
+This supports mental strategies such as:
+
+```text
+5 + 4 -> think 5 + 5, then subtract 1
+6 + 8 -> think 7 + 7
+```
+
+Near doubles are taught after students already have doubles ready to use.
+
+### 3. Use 10 as a major thinking tool
+
+Make-10 pairs and subtract-from-10 facts are placed next to each other because they are inverse ideas. Later, students use that knowledge to bridge through 10.
+
+Examples:
+
+```text
+8 + 5 -> 8 + 2 + 3 -> 13
+14 - 6 -> 14 - 4 - 2 -> 8
+```
+
+The flow treats 10 as a friendly number that helps students move beyond counting.
+
+### 4. Connect addition and subtraction
+
+Fact families, missing addends, and count-up subtraction are grouped together because they all rely on the relationship between parts and a whole.
+
+Examples:
+
+```text
+8 + 7 = 15
+15 - 8 = 7
+8 + ? = 15
+```
+
+Count-up subtraction appears here because it is really missing-addend thinking. It is not treated as an early default strategy for all addition and subtraction.
+
+### 5. Scale the same ideas to two-digit numbers
+
+Two-digit lessons show that the same shortcuts still work with bigger numbers. Students work with tens, ones, adding or subtracting 10, bridging across tens, place value, and compensation.
+
+Examples:
+
+```text
+56 - 10 -> 46
+38 + 7 -> 38 + 2 + 5 -> 45
+39 + 6 -> 40 + 5 -> 45
+```
+
+### 6. Use Strategy Bridge lessons for flexible practice
+
+Strategy Bridge lessons provide mixed practice after students have learned enough strategies to choose from. The app does not ask students to report which strategy they used. Students simply solve each problem using whichever strategy feels easiest or fastest.
+
+This keeps the app focused on fluency while still giving students practice choosing efficient methods.
+
+### 7. Keep counting as the backup plan
+
+Counting is not removed, but it is moved later and framed carefully. Students first learn stronger mental math strategies. Counting on or counting back is taught as a backup when no shortcut appears.
 
 ## Chapter plan
 
@@ -16,7 +92,7 @@ Students move through 6 chapters and 30 lessons. Each lesson focuses on one ment
 |---:|---|---:|---|
 | 1 | Starter Island | 6 | Instant anchor facts with numbers 0-10 |
 | 2 | Doubles Forest | 3 | Doubles and near doubles |
-| 3 | Bridge Town | 4 | Make 10, bridge back, and Strategy Bridge practice |
+| 3 | Bridge Town | 4 | Make 10, bridge through 10, and Strategy Bridge practice |
 | 4 | Family Village | 4 | Fact families, missing parts, and count-up subtraction |
 | 5 | Big Number Mountain | 8 | Two-digit mental math methods |
 | 6 | The Summit | 5 | Mixed Strategy Bridge practice, speed, and backup counting |
@@ -73,16 +149,40 @@ Total: 30 lessons.
 29. Speed Challenge
 30. The Backup Plan
 
-## Teaching-flow notes
+## Practice and review
 
-- Counting is no longer an early main chapter. It appears later as count-up subtraction and finally as a backup plan.
-- Small doubles come before near doubles so students have anchor facts ready.
-- Make 10 Pairs and Subtract from 10 are adjacent because they teach inverse relationships.
-- Near Doubles: One Apart now models the higher double minus 1.
-- Near Doubles: Two Apart now models the middle double.
-- Add and Subtract 10 has its own two-digit lesson.
-- Strategy Bridge lessons provide mixed practice without asking students to report which strategy they used.
+Each lesson uses a 1-minute practice session. The default speed target is adjustable in Settings.
 
-## Practice sessions
+Current lesson facts are the main practice pool. Older facts return as Quick Review when the app has evidence they need attention, such as recent mistakes, timeouts, or repeated slow answers.
 
-Each lesson uses a 1-minute practice session. The default speed target is adjustable in Settings. A lesson is passed when the student reaches the app's adaptive mastery target during practice.
+This keeps students moving forward while still protecting earlier learning.
+
+## Progress storage
+
+Progress is stored locally in the browser using `localStorage`.
+
+Main key:
+
+```text
+mental_math_journey_progress
+```
+
+There is no custom backend and no database requirement.
+
+## Build from source
+
+The built app is static. The source code is in the `source/` folder.
+
+To build from source:
+
+```bash
+cd source
+npm install
+npm run build
+```
+
+Then copy the generated `source/dist/index.html` and `source/dist/assets/` into the deploy root.
+
+## License
+
+MIT
