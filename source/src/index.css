@@ -7,39 +7,17 @@
   --font-mono: "JetBrains Mono", ui-monospace, SFMono-Regular, monospace;
 }
 
-/* Animations and styling support */
 @keyframes bounce-slow {
-  0%, 100% {
-    transform: translateY(0);
-  }
-  50% {
-    transform: translateY(-8px);
-  }
+  0%, 100% { transform: translateY(0); }
+  50% { transform: translateY(-8px); }
 }
+.animate-bounce-slow { animation: bounce-slow 3s infinite ease-in-out; }
 
-.animate-bounce-slow {
-  animation: bounce-slow 3s infinite ease-in-out;
-}
-
-@keyframes spin-slow {
-  from {
-    transform: rotate(0deg);
-  }
-  to {
-    transform: rotate(360deg);
-  }
-}
-
-.animate-spin-slow {
-  animation: spin-slow 3s linear infinite;
-}
-
-.animate-hover-spin {
-  transition: transform 0.3s ease;
-}
-
-.animate-hover-spin:hover {
-  transform: rotate(90deg);
+.quiz-info-capsule {
+  width: fit-content;
+  max-width: calc(100% - 1rem);
+  white-space: nowrap;
+  align-self: center;
 }
 
 /* Timed practice mobile layout fixes */
@@ -49,13 +27,11 @@ body.timed-quiz-active {
   overflow: hidden;
   height: 100%;
 }
-
 body.timed-quiz-active {
   position: fixed;
   inset: 0;
   width: 100%;
 }
-
 body.timed-quiz-active input {
   caret-color: transparent;
 }
@@ -72,7 +48,6 @@ body.timed-quiz-active input {
     z-index: 40;
     background: #E0F2FE;
   }
-
   .timed-practice-shell {
     width: 100% !important;
     max-width: none !important;
@@ -81,7 +56,6 @@ body.timed-quiz-active input {
     display: flex;
     flex-direction: column;
   }
-
   .timed-quiz-card {
     width: 100% !important;
     height: 100dvh !important;
@@ -97,18 +71,15 @@ body.timed-quiz-active input {
     box-shadow: none !important;
     padding: calc(0.55rem + env(safe-area-inset-top)) 0.7rem max(0.4rem, env(safe-area-inset-bottom)) !important;
   }
-
   .timed-quiz-card > .space-y-6 {
     height: 100% !important;
     min-height: 0 !important;
     display: flex;
     flex-direction: column;
   }
-
   .timed-quiz-card > .space-y-6 > .timed-practice-layout {
     flex: 1 1 auto;
   }
-
   .timed-practice-layout {
     height: 100% !important;
     min-height: 0 !important;
@@ -116,11 +87,9 @@ body.timed-quiz-active input {
     grid-template-rows: auto minmax(0, 1fr) auto;
     gap: 0.45rem;
   }
-
   .timed-stats-grid {
     flex: 0 0 auto;
   }
-
   .timed-question-card {
     min-height: 0 !important;
     display: flex;
@@ -130,23 +99,19 @@ body.timed-quiz-active input {
     padding-top: 0.75rem !important;
     padding-bottom: 0.75rem !important;
   }
-
   .timed-question-card h4 {
     font-size: clamp(3rem, 16vw, 4.8rem) !important;
     line-height: 1 !important;
   }
-
   .timed-keypad-wrap {
     margin-top: 0 !important;
     padding-bottom: max(0rem, env(safe-area-inset-bottom));
   }
-
   .timed-keypad-wrap .grid {
     width: min(350px, 96vw);
     max-width: min(350px, 96vw) !important;
     gap: 0.42rem !important;
   }
-
   .timed-keypad-wrap button {
     padding-top: 0.62rem !important;
     padding-bottom: 0.62rem !important;
@@ -160,68 +125,42 @@ body.timed-quiz-active input {
     padding-left: 0.55rem !important;
     padding-right: 0.55rem !important;
   }
-
-  .timed-stats-grid {
-    padding-top: 0.35rem !important;
-    padding-bottom: 0.35rem !important;
-  }
-
   .timed-question-card {
     padding-top: 0.45rem !important;
     padding-bottom: 0.45rem !important;
   }
-
   .timed-question-card h4 {
     font-size: clamp(2.7rem, 14vw, 4.2rem) !important;
   }
-
   .timed-question-card .h-16 {
     height: 3.1rem !important;
   }
-
   .timed-keypad-wrap button {
     padding-top: 0.5rem !important;
     padding-bottom: 0.5rem !important;
   }
 }
 
-/* Celebration burst for newly unlocked lessons and chapter completions */
-.level-confetti-layer {
+/* Chapter completion confetti */
+.confetti-layer {
   position: fixed;
   inset: 0;
   pointer-events: none;
   overflow: hidden;
   z-index: 90;
 }
-
-.level-confetti-piece {
+.confetti-piece {
   position: absolute;
   top: -14px;
   border-radius: 3px;
   opacity: 0;
-  animation-name: level-confetti-fall;
+  animation-name: confetti-fall;
   animation-timing-function: cubic-bezier(0.12, 0.65, 0.35, 1);
   animation-fill-mode: forwards;
   will-change: transform, opacity;
 }
-
-@keyframes level-confetti-fall {
-  0% {
-    opacity: 0;
-    transform: translate3d(0, -20px, 0) rotate(0deg) scale(0.8);
-  }
-  12% {
-    opacity: 1;
-  }
-  100% {
-    opacity: 0;
-    transform: translate3d(var(--confetti-drift, 0px), 108vh, 0) rotate(var(--confetti-spin, 540deg)) scale(1);
-  }
-}
-
-.quiz-info-capsule {
-  width: fit-content;
-  max-width: calc(100% - 1rem);
-  white-space: nowrap;
-  align-self: center;
+@keyframes confetti-fall {
+  0% { opacity: 0; transform: translate3d(0, -20px, 0) rotate(0deg) scale(0.8); }
+  12% { opacity: 1; }
+  100% { opacity: 0; transform: translate3d(var(--drift, 0px), 108vh, 0) rotate(var(--spin, 540deg)) scale(1); }
 }

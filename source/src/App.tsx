@@ -1,406 +1,94 @@
 import { useState, useEffect, useRef, type CSSProperties } from "react";
 import { motion, AnimatePresence } from "motion/react";
-import { 
-  Trophy, 
-  BookOpen, 
-  Star, 
-  ArrowRight, 
-  Lightbulb, 
-  Play, 
-  ArrowLeft, 
-  X, 
-  Sparkles, 
-  Check, 
-  ChevronRight, 
-  HelpCircle, 
-  Clock,
-  Compass,
-  ArrowRightCircle,
-  TrendingUp,
-  Award,
-  Unlock,
-  RefreshCw,
-  Settings
+import {
+  Star, BookOpen, Play, ArrowLeft, X, Sparkles, Check,
+  ChevronLeft, ChevronRight, Trophy, RefreshCw,
 } from "lucide-react";
-import { 
-  STAGES, 
-  STRATEGIES, 
-  StageId, 
-  Strategy, 
-  MathQuestion,
-  generateQuestionPoolForStrategy 
+import {
+  STAGES, STRATEGIES, StageId, Strategy, MathQuestion,
+  generateQuestionPoolForStrategy,
 } from "./strategies";
 import {
-  FactStatsMap,
-  chooseNextFact,
-  getFactStatus,
-  getPriorityReviewQuestions,
-  getStrategyAdaptiveMastery,
-  mergeUniqueQuestions,
-  updateFactStats,
+  FactStatsMap, chooseNextFact, getPriorityReviewQuestions,
+  getStrategyAdaptiveMastery, mergeUniqueQuestions, updateFactStats,
 } from "./adaptiveEngine";
+
+// ─── Types ──────────────────────────────────────────────
 
 type StrategyStarAwards = { [key: number]: number };
 
 interface RoundStarResult {
-  strategyId: number;
-  earnedStars: number;
-  previousBestStars: number;
-  bestStars: number;
-  improved: boolean;
-  reachedThreeStars: boolean;
+  strategyId: number; earnedStars: number; previousBestStars: number;
+  bestStars: number; improved: boolean; reachedThreeStars: boolean;
 }
 
 interface SavedProgress {
-  viewedStrategyIds: number[];
-  masteredStrategyIds: number[];
-  stars: number;
-  strategyStars?: StrategyStarAwards;
-  speedTarget?: number;
-  bestStreaks?: { [key: number]: number };
-  bestSpeeds?: { [key: number]: number };
-  factStats?: FactStatsMap;
+  viewedStrategyIds: number[]; masteredStrategyIds: number[];
+  stars: number; strategyStars?: StrategyStarAwards;
+  speedTarget?: number; bestStreaks?: { [key: number]: number };
+  bestSpeeds?: { [key: number]: number }; factStats?: FactStatsMap;
 }
 
 interface ConfettiPiece {
-  id: number;
-  left: number;
-  delay: number;
-  duration: number;
-  size: number;
-  color: string;
-  drift: number;
-  spin: number;
+  id: number; left: number; delay: number; duration: number;
+  size: number; color: string; drift: number; spin: number;
 }
 
+// ─── Constants ──────────────────────────────────────────
+
 const STARS_PER_STRATEGY = 3;
-const TOTAL_POSSIBLE_STARS = STRATEGIES.length * STARS_PER_STRATEGY;
+const clampStars = (v: number) => Math.max(0, Math.min(STARS_PER_STRATEGY, v));
+const countStars = (a: StrategyStarAwards) =>
+  Object.values(a).reduce((t, v) => t + clampStars(v || 0), 0);
 
-const clampStrategyStars = (value: number) => Math.max(0, Math.min(STARS_PER_STRATEGY, value));
-
-const countStrategyStars = (awards: StrategyStarAwards) =>
-  Object.values(awards).reduce((total, value) => total + clampStrategyStars(value || 0), 0);
-
-const getStarsForScore = (score: number, speedTargetValue: number) => {
-  const goldMilestone = speedTargetValue;
-  const silverMilestone = Math.max(6, Math.round(speedTargetValue * 0.6));
-  const bronzeMilestone = Math.max(3, Math.round(speedTargetValue * 0.3));
-
-  if (score >= goldMilestone) return 3;
-  if (score >= silverMilestone) return 2;
-  if (score >= bronzeMilestone) return 1;
+const getStarsForScore = (score: number, target: number) => {
+  if (score >= target) return 3;
+  if (score >= Math.max(6, Math.round(target * 0.6))) return 2;
+  if (score >= Math.max(3, Math.round(target * 0.3))) return 1;
   return 0;
 };
 
-const getMostRecentStageId = (viewedIds: number[], masteredIds: number[]): StageId => {
-  const progressIds = [...viewedIds, ...masteredIds]
-    .filter((id) => Number.isInteger(id) && id >= 1 && id <= STRATEGIES.length);
-
-  if (progressIds.length === 0) return StageId.StarterIsland;
-
-  const mostRecentStrategyId = Math.max(...progressIds);
-  const mostRecentStrategy = STRATEGIES.find((strategy) => strategy.id === mostRecentStrategyId);
-
-  return mostRecentStrategy?.stageId || StageId.StarterIsland;
-};
-
-const migrateLegacyStars = (savedStars: number, masteredIds: number[], viewedIds: number[]): StrategyStarAwards => {
-  const orderedIds = [...masteredIds, ...viewedIds]
-    .filter((id, index, list) => Number.isInteger(id) && id >= 1 && id <= STRATEGIES.length && list.indexOf(id) === index)
-    .sort((a, b) => a - b);
-
-  let remainingStars = Math.max(0, Math.min(savedStars, orderedIds.length * STARS_PER_STRATEGY, TOTAL_POSSIBLE_STARS));
-  const awards: StrategyStarAwards = {};
-
-  for (const id of orderedIds) {
-    if (remainingStars <= 0) break;
-    const award = Math.min(STARS_PER_STRATEGY, remainingStars);
-    awards[id] = award;
-    remainingStars -= award;
-  }
-
-  return awards;
-};
+// ─── Certificate Print ──────────────────────────────────
 
 function printCertificate(
-  stageNum: number, 
-  stageName: string, 
-  emoji: string, 
-  description: string, 
-  starsCount: number, 
-  userName: string
+  stageNum: number, stageName: string, emoji: string,
+  starsCount: number, userName: string,
 ) {
-  const printWindow = window.open("", "_blank");
-  if (!printWindow) {
-    alert("Please allow popups to save or print certificates!");
-    return;
-  }
-  
-  const htmlContent = `
-    <!DOCTYPE html>
-    <html lang="en">
-      <head>
-        <meta charset="utf-8">
-        <title>Certificate - Chapter ${stageNum}: ${stageName}</title>
-        <style>
-          @import url('https://fonts.googleapis.com/css2?family=Playfair+Display:ital,wght@0,600;0,800;1,400&family=Inter:wght@400;600;800&family=JetBrains+Mono:wght@700&display=swap');
-          
-          @page {
-            size: A4 landscape;
-            margin: 0;
-          }
-          
-          body {
-            margin: 0;
-            padding: 0;
-            background: #f1f5f9;
-            font-family: 'Inter', sans-serif;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            min-height: 100vh;
-            -webkit-print-color-adjust: exact;
-            print-color-adjust: exact;
-          }
-          
-          .certificate {
-            width: 297mm;
-            height: 210mm;
-            box-sizing: border-box;
-            background: #ffffff;
-            border: 22px solid #1e3a8a;
-            padding: 24px;
-            position: relative;
-            display: flex;
-            flex-direction: column;
-            justify-content: space-between;
-            align-items: center;
-            text-align: center;
-            box-shadow: 0 10px 40px rgba(0,0,0,0.12);
-            overflow: hidden;
-          }
-
-          .certificate-inner {
-            border: 4px solid #d97706;
-            width: 100%;
-            height: 100%;
-            box-sizing: border-box;
-            padding: 24px 36px;
-            display: flex;
-            flex-direction: column;
-            justify-content: space-between;
-            align-items: center;
-            background: radial-gradient(circle, rgba(254,243,199,0.12) 0%, rgba(255,255,255,1) 85%);
-          }
-
-          .header {
-            margin-top: 5px;
-          }
-          
-          .org {
-            font-size: 11px;
-            font-weight: 800;
-            text-transform: uppercase;
-            letter-spacing: 4px;
-            color: #475569;
-          }
-          
-          .guild-seal {
-            margin-top: 8px;
-            font-size: 42px;
-            line-height: 1;
-            filter: drop-shadow(0 4px 6px rgba(0,0,0,0.1));
-          }
-          
-          .main-title {
-            font-family: 'Playfair Display', serif;
-            font-size: 34px;
-            font-weight: 800;
-            color: #1e3a8a;
-            margin: 8px 0 3px 0;
-            letter-spacing: 0.5px;
-            text-transform: uppercase;
-          }
-          
-          .award-line {
-            font-size: 14px;
-            font-style: italic;
-            color: #64748b;
-            margin-bottom: 12px;
-          }
-          
-          .recipient {
-            font-family: 'Playfair Display', serif;
-            font-size: 38px;
-            font-weight: 800;
-            color: #d97706;
-            border-bottom: 2.5px solid #cbd5e1;
-            padding-bottom: 4px;
-            width: 75%;
-            margin: 0 auto;
-            text-transform: capitalize;
-            letter-spacing: 0.5px;
-          }
-          
-          .descr {
-            font-size: 13px;
-            line-height: 1.5;
-            color: #334155;
-            max-width: 80%;
-            margin: 12px auto;
-            font-weight: 500;
-          }
-          
-          .meta-info {
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-            width: 100%;
-            margin-top: 15px;
-          }
-          
-          .signature-box {
-            display: flex;
-            flex-direction: column;
-            align-items: center;
-            width: 180px;
-          }
-          
-          .signature-line {
-            width: 100%;
-            border-bottom: 1.5px solid #cbd5e1;
-            margin-bottom: 4px;
-            padding-bottom: 2px;
-            color: #1e3a8a;
-            font-weight: bold;
-          }
-
-          .sig-text {
-            font-size: 9px;
-            font-weight: 800;
-            color: #475569;
-            text-transform: uppercase;
-            letter-spacing: 1px;
-          }
-          
-          .badge-box {
-            background: #fffbeb;
-            border: 2.5px solid #f59e0b;
-            padding: 8px 16px;
-            border-radius: 16px;
-          }
-
-          .badge-large {
-            font-size: 14px;
-            font-weight: 800;
-            color: #1e3a8a;
-            display: flex;
-            align-items: center;
-            gap: 5px;
-            letter-spacing: 1px;
-          }
-          
-          .print-btn-container {
-            position: fixed;
-            top: 16px;
-            right: 16px;
-            z-index: 1000;
-          }
-          
-          .print-btn {
-            background: #2563eb;
-            color: white;
-            border: none;
-            padding: 10px 20px;
-            font-size: 13px;
-            font-weight: bold;
-            border-radius: 24px;
-            cursor: pointer;
-            box-shadow: 0 4px 12px rgba(37,99,235,0.35);
-            transition: all 0.15s ease;
-            font-family: 'Inter', sans-serif;
-          }
-          
-          .print-btn:hover {
-            background: #1d4ed8;
-            transform: translateY(-1.5px);
-          }
-
-          @media print {
-            .print-btn-container {
-              display: none !important;
-            }
-            body {
-              background: #ffffff;
-            }
-            .certificate {
-              box-shadow: none;
-              width: 297mm;
-              height: 210mm;
-              page-break-inside: avoid;
-            }
-          }
-        </style>
-      </head>
-      <body>
-        <div class="print-btn-container">
-          <button class="print-btn" onclick="window.print()">🖨️ Print Diploma (Save PDF)</button>
-        </div>
-        
-        <div class="certificate">
-          <div class="certificate-inner">
-            <div class="header">
-              <div class="org">🏆 Mental Math Journey Master Guild 🏆</div>
-              <div class="guild-seal">${emoji}</div>
-            </div>
-            
-            <div>
-              <h1 class="main-title" style="white-space: nowrap;">${stageName.toUpperCase().includes("GRAND") || stageName.toUpperCase().includes("JOURNEY") ? "GRANDMASTER CERTIFICATE" : "CHAPTER MASTER CERTIFICATE"}</h1>
-              <div class="award-line" style="white-space: nowrap;">This official math achievement diploma is proudly awarded to:</div>
-              
-              <div class="recipient" style="white-space: nowrap; overflow: hidden; text-overflow: ellipsis; max-width: 90%;">${userName || "Elite Math Scholar"}</div>
-              
-              <p class="descr" style="line-height: 1.6; max-width: 850px; margin: 15px auto;">
-                Who has successfully trained their brain, unlocked automaticity, and demonstrated outstanding mathematical fluency in<br>
-                <span style="display: inline-block; white-space: nowrap; font-weight: 800; color: #1e3a8a; font-size: 15px; background: rgba(30,58,138,0.06); padding: 2px 10px; border-radius: 6px; margin: 4px 0;">Chapter ${stageNum}: ${stageName}</span>.<br>
-                Approved by the Mental Math Masters of calculations!
-              </p>
-            </div>
-            
-            <div class="meta-info">
-              <div class="signature-box" style="white-space: nowrap;">
-                <div class="signature-line" style="font-family:'Playfair Display', serif; font-size:14px; font-style:italic; white-space: nowrap;">
-                  Mental Math Journey
-                </div>
-                <div class="sig-text" style="white-space: nowrap;">Primary Guild Registrar</div>
-              </div>
-              
-              <div class="badge-box" style="white-space: nowrap;">
-                <div class="badge-large" style="white-space: nowrap;">
-                  <span>✨</span>
-                  <span style="white-space: nowrap;">CHAPTER ${stageNum} COMPLETED</span>
-                  <span>✨</span>
-                </div>
-              </div>
-              
-              <div class="signature-box" style="white-space: nowrap;">
-                <div class="signature-line" style="font-family:'JetBrains Mono', monospace; font-size:10px; color:#475569; white-space: nowrap;">
-                  ID-SEC-${starsCount * 9 + 42}-${stageNum}
-                </div>
-                <div class="sig-text" style="white-space: nowrap;">Verification Security Stamp</div>
-              </div>
-            </div>
-          </div>
-        </div>
-      </body>
-    </html>
-  `;
-  
-  printWindow.document.write(htmlContent);
-  printWindow.document.close();
+  const w = window.open("", "_blank");
+  if (!w) { alert("Please allow popups to print!"); return; }
+  w.document.write(`<!DOCTYPE html><html lang="en"><head><meta charset="utf-8"><title>Certificate</title><style>
+    @import url('https://fonts.googleapis.com/css2?family=Playfair+Display:ital,wght@0,600;0,800&family=Inter:wght@400;600;800&display=swap');
+    @page{size:A4 landscape;margin:0} body{margin:0;background:#f1f5f9;font-family:Inter,sans-serif;display:flex;align-items:center;justify-content:center;min-height:100vh;-webkit-print-color-adjust:exact;print-color-adjust:exact}
+    .cert{width:297mm;height:210mm;box-sizing:border-box;background:#fff;border:22px solid #1e3a8a;padding:24px;display:flex;flex-direction:column;justify-content:space-between;align-items:center;text-align:center}
+    .inner{border:4px solid #d97706;width:100%;height:100%;box-sizing:border-box;padding:24px 36px;display:flex;flex-direction:column;justify-content:space-between;align-items:center;background:radial-gradient(circle,rgba(254,243,199,.12) 0%,#fff 85%)}
+    .org{font-size:13px;letter-spacing:.16em;text-transform:uppercase;color:#475569;font-weight:800}
+    .emoji{font-size:64px;margin:4px 0 6px}
+    .title{font-size:20px;color:#0f172a;font-family:'Playfair Display',serif;font-weight:800;margin:4px 0}
+    .award{font-size:12px;color:#64748b;font-weight:600;margin:6px 0 2px}
+    .name{font-size:32px;color:#1e3a8a;font-family:'Playfair Display',serif;font-weight:800;margin:4px 0}
+    .chapter{font-size:14px;color:#d97706;font-weight:800;margin:6px 0}
+    .stars-row{display:flex;gap:6px;justify-content:center;margin:6px 0}
+    .stars-row span{font-size:28px}
+    .meta{font-size:10px;color:#94a3b8;font-weight:600}
+  </style></head><body><div class="cert"><div class="inner">
+    <div class="org">Mental Math Journey</div><div class="emoji">${emoji}</div>
+    <div>
+      <div class="title">Chapter ${stageNum}: ${stageName}</div>
+      <div class="award">Awarded to</div>
+      <div class="name">${userName || "Math Explorer"}</div>
+      <div class="chapter">${starsCount} Stars Earned</div>
+      <div class="stars-row">${Array.from({length:STARS_PER_STRATEGY},(_,i)=>i<starsCount?"⭐":"☆").join("")}</div>
+    </div>
+    <div class="meta">${new Date().toLocaleDateString(undefined,{year:"numeric",month:"long",day:"numeric"})}</div>
+  </div></div></body></html>`);
+  w.document.close();
+  setTimeout(() => w.print(), 400);
 }
 
+// ─── App ────────────────────────────────────────────────
+
 export default function App() {
+  // Refs
   const inputRef = useRef<HTMLInputElement>(null);
   const factStatsRef = useRef<FactStatsMap>({});
   const currentQuestionRef = useRef<MathQuestion | null>(null);
@@ -410,7 +98,6 @@ export default function App() {
   const countdownTimersRef = useRef<ReturnType<typeof setTimeout>[]>([]);
   const roundAttemptsRef = useRef<number>(0);
   const roundCorrectAttemptsRef = useRef<number>(0);
-  const roundWrongAttemptsRef = useRef<number>(0);
   const attemptsSinceQuickReviewRef = useRef<number>(0);
   const recentReviewFactIdsRef = useRef<string[]>([]);
   const currentStrategyFactsRef = useRef<MathQuestion[]>([]);
@@ -418,1688 +105,623 @@ export default function App() {
   const confettiClearTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
   const correctFeedbackTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
   const incorrectFeedbackTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
-  // State elements
+
+  // State — progress
   const [currentStageId, setCurrentStageId] = useState<StageId>(StageId.StarterIsland);
-  const [activeStrategyRound, setActiveStrategyRound] = useState<Strategy | null>(null);
-  const [activeModalStrategy, setActiveModalStrategy] = useState<Strategy | null>(null);
-  const [activeModalReason, setActiveModalReason] = useState<string>("You unlocked a new lesson!");
-  
-  // Game progression
   const [viewedStrategyIds, setViewedStrategyIds] = useState<number[]>([1]);
   const [masteredStrategyIds, setMasteredStrategyIds] = useState<number[]>([]);
   const [stars, setStars] = useState<number>(0);
   const [strategyStars, setStrategyStars] = useState<StrategyStarAwards>({});
   const [lastRoundStarResult, setLastRoundStarResult] = useState<RoundStarResult | null>(null);
-  const [studentName, setStudentName] = useState<string>("Elite Math Explorer");
-  const [showSettingsModal, setShowSettingsModal] = useState<boolean>(false);
+  const [studentName, setStudentName] = useState<string>("");
 
-  // Settings
+  // State — settings
   const [speedTarget, setSpeedTarget] = useState<number>(20);
   const [bestStreaks, setBestStreaks] = useState<{ [key: number]: number }>({});
   const [bestSpeeds, setBestSpeeds] = useState<{ [key: number]: number }>({});
-  
-  // Math Round State
-  const [roundQuestions, setRoundQuestions] = useState<MathQuestion[]>([]);
-  const [currentStrategyFacts, setCurrentStrategyFacts] = useState<MathQuestion[]>([]);
+
+  // State — practice round
+  const [activeStrategyRound, setActiveStrategyRound] = useState<Strategy | null>(null);
   const [currentQuestion, setCurrentQuestion] = useState<MathQuestion | null>(null);
   const [currentQuestionIdx, setCurrentQuestionIdx] = useState<number>(0);
-  const [questionStartedAt, setQuestionStartedAt] = useState<number>(Date.now());
   const [userAnswer, setUserAnswer] = useState<string>("");
   const [roundCompleted, setRoundCompleted] = useState<boolean>(false);
   const [roundScore, setRoundScore] = useState<number>(0);
   const [roundAttempts, setRoundAttempts] = useState<number>(0);
   const [roundCorrectAttempts, setRoundCorrectAttempts] = useState<number>(0);
-  const [roundWrongAttempts, setRoundWrongAttempts] = useState<number>(0);
   const [showHint, setShowHint] = useState<boolean>(false);
   const [factStats, setFactStats] = useState<FactStatsMap>({});
-
-  // Stats in the round
   const [isRoundActive, setIsRoundActive] = useState<boolean>(false);
   const [countdownValue, setCountdownValue] = useState<string | null>(null);
-  const [countdownLabel, setCountdownLabel] = useState<string>("Get ready");
   const [currentStreak, setCurrentStreak] = useState<number>(0);
   const [bestStreakRound, setBestStreakRound] = useState<number>(0);
-  
-  // Visual feedbacks
+  const [timeLeft, setTimeLeft] = useState<number>(60);
+  const [consecutiveErrors, setConsecutiveErrors] = useState<number>(0);
+
+  // State — UI
   const [isAnimatingCorrect, setIsAnimatingCorrect] = useState<boolean>(false);
   const [isAnimatingIncorrect, setIsAnimatingIncorrect] = useState<boolean>(false);
   const [sparklesList, setSparklesList] = useState<{ id: number; x: number; y: number }[]>([]);
-  const [levelConfettiPieces, setLevelConfettiPieces] = useState<ConfettiPiece[]>([]);
-  const [avatar, setAvatar] = useState<string>("🦊");
+  const [confettiPieces, setConfettiPieces] = useState<ConfettiPiece[]>([]);
   const [encouragingText, setEncouragingText] = useState<string>("Let's go!");
-  const [lockTip, setLockTip] = useState<string | null>(null);
-  const [expandedStagePreviewIds, setExpandedStagePreviewIds] = useState<{ [key: number]: boolean }>({});
-  
-  // Timed quiz state variables
-  const [timeLeft, setTimeLeft] = useState<number>(60);
-  const [consecutiveErrors, setConsecutiveErrors] = useState<number>(0);
-  const [spamWarning, setSpamWarning] = useState<string | null>(null);
   const [isShaking, setIsShaking] = useState<boolean>(false);
-  
-  // Tab control: "map" or "encyclopedia"
-  const [activeTab, setActiveTab] = useState<"map" | "encyclopedia" | "practice">("map");
-  const isTimedQuizInProgress = activeTab === "practice" && !!activeStrategyRound && !roundCompleted && (isRoundActive || countdownValue !== null);
+  const [showLessonModal, setShowLessonModal] = useState<Strategy | null>(null);
+  const [showSettingsModal, setShowSettingsModal] = useState<boolean>(false);
+  const [showAllDone, setShowAllDone] = useState<boolean>(false);
 
-  // Load progress from localStorage
+  const isTimedQuizInProgress = !!activeStrategyRound && !roundCompleted && (isRoundActive || countdownValue !== null);
+
+  // ─── Derived ──────────────────────────────────────────
+
+  const activeStage = STAGES.find((s) => s.id === currentStageId) || STAGES[0];
+  const activeStrategies = STRATEGIES.filter((s) => s.stageId === currentStageId);
+  const chapterProgress = `${activeStrategies.filter((s) => masteredStrategyIds.includes(s.id)).length}/${activeStrategies.length}`;
+
+  const getStrategyStarCount = (id: number) => clampStars(strategyStars[id] || 0);
+  const isStageUnlocked = (stageId: StageId): boolean => {
+    if (stageId === StageId.StarterIsland) return true;
+    const prev = STAGES.find((s) => s.id === stageId - 1);
+    if (!prev) return true;
+    return STRATEGIES.filter((s) => s.stageId === prev.id).every((s) => masteredStrategyIds.includes(s.id));
+  };
+
+  // ─── LocalStorage ─────────────────────────────────────
+
   useEffect(() => {
     try {
-      const saved = localStorage.getItem("mental_math_journey_progress");
-      if (saved) {
-        const parsed: SavedProgress = JSON.parse(saved);
-        const savedViewedIds = Array.isArray(parsed.viewedStrategyIds) ? parsed.viewedStrategyIds : [1];
-        const savedMasteredIds = Array.isArray(parsed.masteredStrategyIds) ? parsed.masteredStrategyIds : [];
-        if (parsed.viewedStrategyIds) setViewedStrategyIds(savedViewedIds);
-        if (parsed.masteredStrategyIds) setMasteredStrategyIds(savedMasteredIds);
-        setCurrentStageId(getMostRecentStageId(savedViewedIds, savedMasteredIds));
-        if (parsed.strategyStars && typeof parsed.strategyStars === "object") {
-          const savedAwards = parsed.strategyStars as StrategyStarAwards;
-          setStrategyStars(savedAwards);
-          setStars(countStrategyStars(savedAwards));
-        } else if (typeof parsed.stars === "number") {
-          const migratedAwards = migrateLegacyStars(parsed.stars, savedMasteredIds, savedViewedIds);
-          setStrategyStars(migratedAwards);
-          setStars(countStrategyStars(migratedAwards));
-        }
-        if (typeof parsed.speedTarget === "number") setSpeedTarget(parsed.speedTarget);
-        if (parsed.bestStreaks) setBestStreaks(parsed.bestStreaks);
-        if (parsed.bestSpeeds) setBestSpeeds(parsed.bestSpeeds);
-        if (parsed.factStats) {
-          setFactStats(parsed.factStats);
-          factStatsRef.current = parsed.factStats;
-        }
-      }
-    } catch (e) {
-      console.warn("Failed to load local storage progress", e);
-    }
+      const raw = localStorage.getItem("mental_math_journey_v2");
+      if (!raw) return;
+      const p: SavedProgress = JSON.parse(raw);
+      if (p.viewedStrategyIds) setViewedStrategyIds(p.viewedStrategyIds);
+      if (p.masteredStrategyIds) setMasteredStrategyIds(p.masteredStrategyIds);
+      if (p.strategyStars) { setStrategyStars(p.strategyStars); setStars(countStars(p.strategyStars)); }
+      else if (typeof p.stars === "number") setStars(p.stars);
+      if (typeof p.speedTarget === "number") setSpeedTarget(p.speedTarget);
+      if (p.bestStreaks) setBestStreaks(p.bestStreaks);
+      if (p.bestSpeeds) setBestSpeeds(p.bestSpeeds);
+      if (p.factStats) { setFactStats(p.factStats); factStatsRef.current = p.factStats; }
+    } catch (e) { /* ignore */ }
   }, []);
 
-  useEffect(() => {
-    factStatsRef.current = factStats;
-  }, [factStats]);
+  useEffect(() => { factStatsRef.current = factStats; }, [factStats]);
 
-  useEffect(() => {
-    return () => {
-      countdownTimersRef.current.forEach((timerId) => clearTimeout(timerId));
-      if (confettiClearTimerRef.current) {
-        clearTimeout(confettiClearTimerRef.current);
-      }
-      if (correctFeedbackTimerRef.current) {
-        clearTimeout(correctFeedbackTimerRef.current);
-      }
-      if (incorrectFeedbackTimerRef.current) {
-        clearTimeout(incorrectFeedbackTimerRef.current);
-      }
-      document.body.classList.remove("timed-quiz-active");
-      document.documentElement.classList.remove("timed-quiz-active");
-    };
+  useEffect(() => () => {
+    countdownTimersRef.current.forEach(clearTimeout);
+    if (confettiClearTimerRef.current) clearTimeout(confettiClearTimerRef.current);
+    if (correctFeedbackTimerRef.current) clearTimeout(correctFeedbackTimerRef.current);
+    if (incorrectFeedbackTimerRef.current) clearTimeout(incorrectFeedbackTimerRef.current);
+    document.body.classList.remove("timed-quiz-active");
+    document.documentElement.classList.remove("timed-quiz-active");
   }, []);
 
-  // Save progress
   const saveProgress = (
-    viewed: number[], 
-    mastered: number[], 
-    newStars: number,
-    tgt: number = speedTarget,
+    viewed: number[], mastered: number[], tgt: number = speedTarget,
     streaks: { [key: number]: number } = bestStreaks,
     speeds: { [key: number]: number } = bestSpeeds,
     stats: FactStatsMap = factStatsRef.current,
-    nextStrategyStars: StrategyStarAwards = strategyStars
+    nextStars: StrategyStarAwards = strategyStars,
   ) => {
     try {
-      const savedStars = Object.keys(nextStrategyStars).length > 0
-        ? countStrategyStars(nextStrategyStars)
-        : Math.max(0, Math.min(newStars, TOTAL_POSSIBLE_STARS));
-      const data: SavedProgress = {
-        viewedStrategyIds: viewed,
-        masteredStrategyIds: mastered,
-        stars: savedStars,
-        strategyStars: nextStrategyStars,
-        speedTarget: tgt,
-        bestStreaks: streaks,
-        bestSpeeds: speeds,
-        factStats: stats,
-      };
-      localStorage.setItem("mental_math_journey_progress", JSON.stringify(data));
-    } catch (e) {
-      console.error("Failed to save progress", e);
-    }
+      localStorage.setItem("mental_math_journey_v2", JSON.stringify({
+        viewedStrategyIds: viewed, masteredStrategyIds: mastered,
+        stars: countStars(nextStars), strategyStars: nextStars,
+        speedTarget: tgt, bestStreaks: streaks, bestSpeeds: speeds, factStats: stats,
+      }));
+    } catch (e) { /* ignore */ }
   };
 
-  const launchLevelConfetti = (isStageCelebration: boolean = false) => {
-    const colors = [
-      "#22c55e",
-      "#3b82f6",
-      "#facc15",
-      "#fb7185",
-      "#a855f7",
-      "#f97316",
-    ];
-    const pieceCount = isStageCelebration ? 120 : 82;
-    const pieces = Array.from({ length: pieceCount }, (_, index) => ({
-      id: Date.now() + index + Math.random(),
-      left: Math.random() * 100,
-      delay: Math.random() * 360,
-      duration: 1500 + Math.random() * 950,
-      size: 7 + Math.random() * 8,
-      color: colors[Math.floor(Math.random() * colors.length)],
-      drift: (Math.random() - 0.5) * 220,
-      spin: (Math.random() - 0.5) * 720,
+  // ─── Confetti ─────────────────────────────────────────
+
+  const launchConfetti = () => {
+    const colors = ["#22c55e","#3b82f6","#facc15","#fb7185","#a855f7","#f97316"];
+    const pieces = Array.from({length: 80}, (_, i) => ({
+      id: Date.now() + i, left: Math.random() * 100, delay: Math.random() * 300,
+      duration: 1400 + Math.random() * 800,
+      size: 7 + Math.random() * 7, color: colors[Math.floor(Math.random() * colors.length)],
+      drift: (Math.random() - 0.5) * 200, spin: (Math.random() - 0.5) * 720,
     }));
-
-    if (confettiClearTimerRef.current) {
-      clearTimeout(confettiClearTimerRef.current);
-      confettiClearTimerRef.current = null;
-    }
-
-    setLevelConfettiPieces(pieces);
-    confettiClearTimerRef.current = setTimeout(() => {
-      setLevelConfettiPieces([]);
-      confettiClearTimerRef.current = null;
-    }, isStageCelebration ? 2800 : 2300);
+    if (confettiClearTimerRef.current) clearTimeout(confettiClearTimerRef.current);
+    setConfettiPieces(pieces);
+    confettiClearTimerRef.current = setTimeout(() => { setConfettiPieces([]); confettiClearTimerRef.current = null; }, 2500);
   };
 
-  // Trigger strategy break modal
-  const handleOpenStrategySlide = (strategy: Strategy, reasonOverride?: string) => {
-    const reasons = [
-      "You unlocked a new strategy!",
-      "You unlocked a new lesson!",
-      "Helpful guide discovered!",
-      "Sparkling math power unlocked!",
-      "You earned a new star!",
-      "You unlocked a new lesson!"
-    ];
-    // Use the predefined reason if specific, otherwise random child-friendly celebration
-    const reasonValue = reasonOverride || strategy.reason || reasons[Math.floor(Math.random() * reasons.length)];
-    setActiveModalReason(reasonValue);
-    setActiveModalStrategy(strategy);
-    
-    // Unlock this strategy in progress
-    if (!viewedStrategyIds.includes(strategy.id)) {
-      const nextViewed = [...viewedStrategyIds, strategy.id];
-      setViewedStrategyIds(nextViewed);
-      saveProgress(nextViewed, masteredStrategyIds, stars);
-    }
-  };
+  // ─── Practice Engine ──────────────────────────────────
 
-  const buildAdaptivePracticePool = (strategy: Strategy) => {
+  const buildPool = (strategy: Strategy) => {
     const currentFacts = generateQuestionPoolForStrategy(strategy.code);
-    const earlierStrategies = STRATEGIES.filter((item) =>
-      item.id < strategy.id && (viewedStrategyIds.includes(item.id) || masteredStrategyIds.includes(item.id))
-    );
-    const previousFacts = mergeUniqueQuestions(
-      ...earlierStrategies.map((item) => generateQuestionPoolForStrategy(item.code))
-    );
+    const earlier = STRATEGIES.filter((s) =>
+      s.id < strategy.id && (viewedStrategyIds.includes(s.id) || masteredStrategyIds.includes(s.id)));
+    const prevFacts = mergeUniqueQuestions(...earlier.map((s) => generateQuestionPoolForStrategy(s.code)));
     const reviewLimit = Math.max(3, Math.min(10, Math.round(currentFacts.length * 0.16)));
-    const priorityReview = getPriorityReviewQuestions(previousFacts, factStatsRef.current, speedTarget, reviewLimit);
-    return {
-      currentFacts,
-      practicePool: mergeUniqueQuestions(currentFacts, priorityReview),
-    };
+    const priorityReview = getPriorityReviewQuestions(prevFacts, factStatsRef.current, speedTarget, reviewLimit);
+    return { currentFacts, practicePool: mergeUniqueQuestions(currentFacts, priorityReview) };
   };
 
-  const getReviewFactsForActiveRound = () => {
-    const currentFactIds = new Set(currentStrategyFactsRef.current.map((fact) => fact.id));
-    return questionPoolRef.current.filter((fact) => !currentFactIds.has(fact.id));
+  const getReviewFacts = () => {
+    const ids = new Set(currentStrategyFactsRef.current.map((f) => f.id));
+    return questionPoolRef.current.filter((f) => !ids.has(f.id));
   };
 
-  const shouldChooseQuickReview = (reviewPoolLength: number): boolean => {
-    if (reviewPoolLength === 0 || roundAttemptsRef.current < 2) return false;
-
-    const attemptsSinceQuickReview = attemptsSinceQuickReviewRef.current;
-    if (attemptsSinceQuickReview < 3) return false;
-    if (attemptsSinceQuickReview >= 7) return true;
-
-    // Roughly one quick-review question every 4-6 answered questions, but not
-    // on a predictable schedule. Larger review pools can appear a little more.
-    const reviewChance = Math.min(0.28, 0.16 + reviewPoolLength * 0.02);
-    return Math.random() < reviewChance;
+  const shouldQuickReview = (poolLen: number): boolean => {
+    if (poolLen === 0 || roundAttemptsRef.current < 2) return false;
+    const since = attemptsSinceQuickReviewRef.current;
+    if (since < 3) return false;
+    if (since >= 7) return true;
+    return Math.random() < Math.min(0.28, 0.16 + poolLen * 0.02);
   };
 
-  const getSpacedReviewPool = (reviewPool: MathQuestion[], previousId?: string): MathQuestion[] => {
-    if (reviewPool.length <= 1) return reviewPool;
-
-    const recentReviewIds = new Set(recentReviewFactIdsRef.current);
-    const notRecentlyUsed = reviewPool.filter((fact) => fact.id !== previousId && !recentReviewIds.has(fact.id));
-    if (notRecentlyUsed.length > 0) return notRecentlyUsed;
-
-    const notPrevious = reviewPool.filter((fact) => fact.id !== previousId);
-    return notPrevious.length > 0 ? notPrevious : reviewPool;
-  };
-
-  const rememberReviewFact = (factId: string, reviewPoolLength: number) => {
-    const maxRecent = Math.max(1, Math.min(4, reviewPoolLength - 1));
-    recentReviewFactIdsRef.current = [
-      factId,
-      ...recentReviewFactIdsRef.current.filter((id) => id !== factId),
-    ].slice(0, maxRecent);
-  };
-
-  const chooseNextRoundFact = (statsSnapshot: FactStatsMap, previousId?: string): MathQuestion | null => {
-    const currentPool = currentStrategyFactsRef.current.length > 0
-      ? currentStrategyFactsRef.current
-      : questionPoolRef.current;
-    const reviewPool = getReviewFactsForActiveRound();
-    const reviewFactIds = new Set(reviewPool.map((fact) => fact.id));
-    const shouldUseQuickReview = shouldChooseQuickReview(reviewPool.length);
-    const preferredPool = shouldUseQuickReview ? getSpacedReviewPool(reviewPool, previousId) : currentPool;
-
-    const selectedFact = (
-      chooseNextFact(preferredPool, statsSnapshot, speedTarget, previousId) ||
-      chooseNextFact(questionPoolRef.current, statsSnapshot, speedTarget, previousId)
-    );
-
-    if (selectedFact && reviewFactIds.has(selectedFact.id)) {
+  const chooseNextRoundFact = (stats: FactStatsMap, prevId?: string): MathQuestion | null => {
+    const current = currentStrategyFactsRef.current.length > 0 ? currentStrategyFactsRef.current : questionPoolRef.current;
+    const review = getReviewFacts();
+    const useReview = shouldQuickReview(review.length);
+    const pref = useReview ? review.filter((f) => f.id !== prevId && !recentReviewFactIdsRef.current.includes(f.id)) : current;
+    const sel = chooseNextFact(pref.length > 0 ? pref : current, stats, speedTarget, prevId)
+      || chooseNextFact(questionPoolRef.current, stats, speedTarget, prevId);
+    if (sel && new Set(review.map((f) => f.id)).has(sel.id)) {
       attemptsSinceQuickReviewRef.current = 0;
-      rememberReviewFact(selectedFact.id, reviewPool.length);
+      recentReviewFactIdsRef.current = [sel.id, ...recentReviewFactIdsRef.current.filter((id) => id !== sel.id)].slice(0, 4);
     } else {
       attemptsSinceQuickReviewRef.current += 1;
     }
-
-    return selectedFact;
+    return sel;
   };
 
-  const activateQuestion = (question: MathQuestion | null) => {
-    currentQuestionRef.current = question;
-    setCurrentQuestion(question);
-    const now = Date.now();
-    questionStartedAtRef.current = now;
-    setQuestionStartedAt(now);
+  const activateQ = (q: MathQuestion | null) => {
+    currentQuestionRef.current = q; setCurrentQuestion(q);
+    const now = Date.now(); questionStartedAtRef.current = now;
   };
 
-  const recordFactAttempt = (isCorrect: boolean, timeout: boolean = false): FactStatsMap => {
-    const fact = currentQuestionRef.current;
-    if (!fact) return factStatsRef.current;
-
-    const responseMs = Date.now() - questionStartedAtRef.current;
-    const updatedStats = updateFactStats(
-      factStatsRef.current,
-      fact,
-      isCorrect,
-      Math.max(1, responseMs),
-      timeout,
-      speedTarget
-    );
-
-    factStatsRef.current = updatedStats;
-    setFactStats(updatedStats);
-    saveProgress(viewedStrategyIds, masteredStrategyIds, stars, speedTarget, bestStreaks, bestSpeeds, updatedStats);
-
-    roundAttemptsRef.current += 1;
-    setRoundAttempts(roundAttemptsRef.current);
-    if (isCorrect) {
-      roundCorrectAttemptsRef.current += 1;
-      setRoundCorrectAttempts(roundCorrectAttemptsRef.current);
-    } else {
-      roundWrongAttemptsRef.current += 1;
-      setRoundWrongAttempts(roundWrongAttemptsRef.current);
-    }
-
-    return updatedStats;
+  const recordAttempt = (correct: boolean, timeout = false): FactStatsMap => {
+    const f = currentQuestionRef.current; if (!f) return factStatsRef.current;
+    const ms = Date.now() - questionStartedAtRef.current;
+    const updated = updateFactStats(factStatsRef.current, f, correct, Math.max(1, ms), timeout, speedTarget);
+    factStatsRef.current = updated; setFactStats(updated);
+    saveProgress(viewedStrategyIds, masteredStrategyIds, speedTarget, bestStreaks, bestSpeeds, updated);
+    roundAttemptsRef.current++; setRoundAttempts(roundAttemptsRef.current);
+    if (correct) { roundCorrectAttemptsRef.current++; setRoundCorrectAttempts(roundCorrectAttemptsRef.current); }
+    return updated;
   };
 
-  const advanceToNextQuestion = (statsSnapshot: FactStatsMap = factStatsRef.current) => {
-    const previousId = currentQuestionRef.current?.id;
-    const nextQuestion = chooseNextRoundFact(statsSnapshot, previousId);
-    activateQuestion(nextQuestion);
-    setCurrentQuestionIdx((prev) => prev + 1);
+  const advanceQ = (stats: FactStatsMap = factStatsRef.current) => {
+    activateQ(chooseNextRoundFact(stats, currentQuestionRef.current?.id));
+    setCurrentQuestionIdx((p) => p + 1);
   };
 
   const finishRound = () => {
     if (roundCompletedRef.current) return;
     roundCompletedRef.current = true;
-    // Do not record the final visible question as a timeout. The student may
-    // have seen it for only a moment when the 60-second round ended.
     setRoundCompleted(true);
   };
 
-  const clearRoundCountdown = () => {
-    countdownTimersRef.current.forEach((timerId) => clearTimeout(timerId));
+  const clearCountdown = () => {
+    countdownTimersRef.current.forEach(clearTimeout);
     countdownTimersRef.current = [];
     setCountdownValue(null);
-    setCountdownLabel("Get ready");
   };
 
-  const resetTimedRoundCounters = () => {
-    clearAnswerFeedbackTimers();
+  const resetRoundCounters = () => {
+    if (correctFeedbackTimerRef.current) clearTimeout(correctFeedbackTimerRef.current);
+    if (incorrectFeedbackTimerRef.current) clearTimeout(incorrectFeedbackTimerRef.current);
     roundCompletedRef.current = false;
     answerLockedRef.current = false;
-    const now = Date.now();
-    questionStartedAtRef.current = now;
-    setQuestionStartedAt(now);
-    setTimeLeft(60);
-    setRoundScore(0);
-    setRoundAttempts(0);
-    setRoundCorrectAttempts(0);
-    setRoundWrongAttempts(0);
-    roundAttemptsRef.current = 0;
-    roundCorrectAttemptsRef.current = 0;
-    roundWrongAttemptsRef.current = 0;
-    attemptsSinceQuickReviewRef.current = 0;
-    recentReviewFactIdsRef.current = [];
-    setCurrentQuestionIdx(0);
-    setUserAnswer("");
-    setRoundCompleted(false);
-    setCurrentStreak(0);
-    setBestStreakRound(0);
-    setConsecutiveErrors(0);
-    setSpamWarning(null);
-    setIsAnimatingCorrect(false);
-    setIsAnimatingIncorrect(false);
-    setIsShaking(false);
-    setSparklesList([]);
-    setShowHint(false);
+    const now = Date.now(); questionStartedAtRef.current = now;
+    setTimeLeft(60); setRoundScore(0); setRoundAttempts(0); setRoundCorrectAttempts(0);
+    roundAttemptsRef.current = 0; roundCorrectAttemptsRef.current = 0;
+    attemptsSinceQuickReviewRef.current = 0; recentReviewFactIdsRef.current = [];
+    setCurrentQuestionIdx(0); setUserAnswer(""); setRoundCompleted(false);
+    setCurrentStreak(0); setBestStreakRound(0); setConsecutiveErrors(0);
+    setIsAnimatingCorrect(false); setIsAnimatingIncorrect(false); setIsShaking(false);
+    setSparklesList([]); setShowHint(false);
   };
 
-  const beginTimedRoundNow = () => {
-    clearRoundCountdown();
-    resetTimedRoundCounters();
-    setIsRoundActive(true);
-    window.setTimeout(() => {
-      const activeElement = document.activeElement as HTMLElement | null;
-      if (activeElement && typeof activeElement.blur === "function") {
-        activeElement.blur();
-      }
-    }, 0);
+  const beginRoundNow = () => {
+    clearCountdown(); resetRoundCounters(); setIsRoundActive(true);
+    setTimeout(() => { const el = document.activeElement as HTMLElement | null; if (el) el.blur(); }, 0);
   };
 
-  const startTimedRoundCountdown = () => {
+  const startCountdown = () => {
     if (isRoundActive || countdownValue !== null) return;
-    resetTimedRoundCounters();
-    setIsRoundActive(false);
-    setCountdownLabel("Get ready");
-    setCountdownValue("3");
-    setEncouragingText("Get ready... 🚀");
-
-    const steps: Array<{ delay: number; value: string | null; label: string; done?: boolean }> = [
-      { delay: 1000, value: "2", label: "Get ready" },
-      { delay: 2000, value: "1", label: "Get ready" },
-      { delay: 3000, value: "Go!", label: "Start" },
-      { delay: 3700, value: null, label: "Start", done: true },
-    ];
-
-    countdownTimersRef.current = steps.map((step) => window.setTimeout(() => {
-      if (step.done) {
-        beginTimedRoundNow();
-        return;
-      }
-      setCountdownLabel(step.label);
-      setCountdownValue(step.value);
-    }, step.delay));
-  };
-
-  // Launch practice session
-  const handleStartPracticeRound = (strategy: Strategy) => {
-    clearRoundCountdown();
-    setActiveModalStrategy(null); // Close modal
-    setActiveStrategyRound(strategy);
-    setLastRoundStarResult(null);
-
-    const { currentFacts, practicePool } = buildAdaptivePracticePool(strategy);
-    currentStrategyFactsRef.current = currentFacts;
-    questionPoolRef.current = practicePool;
-    setCurrentStrategyFacts(currentFacts);
-    setRoundQuestions(practicePool);
-
-    const firstQuestion = chooseNextFact(currentFacts, factStatsRef.current, speedTarget);
-    activateQuestion(firstQuestion);
-
-    setCurrentQuestionIdx(0);
-    setUserAnswer("");
-    setShowHint(false);
-    setRoundCompleted(false);
-    roundCompletedRef.current = false;
-    answerLockedRef.current = false;
-    setRoundScore(0);
-    setRoundAttempts(0);
-    setRoundCorrectAttempts(0);
-    setRoundWrongAttempts(0);
-    roundAttemptsRef.current = 0;
-    roundCorrectAttemptsRef.current = 0;
-    roundWrongAttemptsRef.current = 0;
-    attemptsSinceQuickReviewRef.current = 0;
-    recentReviewFactIdsRef.current = [];
-    setTimeLeft(60); // Reset timer to 1 minute (60 seconds)
-    clearAnswerFeedbackTimers();
-    setConsecutiveErrors(0);
-    setSpamWarning(null);
-    setIsAnimatingCorrect(false);
-    setIsAnimatingIncorrect(false);
-    setIsShaking(false);
-    setSparklesList([]);
-    setEncouragingText("Type fast and stay focused! Let's go! 🚀");
-    
-    // Reset round states
-    setCurrentStreak(0);
-    setBestStreakRound(0);
-    setIsRoundActive(false);
-
-    setActiveTab("practice");
-  };
-
-  // Timer countdown mechanism
-  useEffect(() => {
-    let intervalId: ReturnType<typeof setInterval> | null = null;
-    if (activeTab === "practice" && activeStrategyRound && isRoundActive && !roundCompleted) {
-      intervalId = setInterval(() => {
-        setTimeLeft((prev) => {
-          if (prev <= 1) {
-            if (intervalId) clearInterval(intervalId);
-            finishRound();
-            return 0;
-          }
-          return prev - 1;
-        });
-      }, 1000);
-    }
-    return () => {
-      if (intervalId) clearInterval(intervalId);
-    };
-  }, [activeTab, activeStrategyRound, isRoundActive, roundCompleted]);
-
-  // Core save progression and rewards calculation once round ends
-  useEffect(() => {
-    if (roundCompleted && activeStrategyRound) {
-      const finalScore = roundScore;
-      
-      const goldMilestone = speedTarget;
-      const silverMilestone = Math.max(6, Math.round(speedTarget * 0.6));
-      const bronzeMilestone = Math.max(3, Math.round(speedTarget * 0.3));
-
-      const starsGained = getStarsForScore(finalScore, speedTarget);
-
-      const id = activeStrategyRound.id;
-      const previousBestStars = clampStrategyStars(strategyStars[id] || 0);
-      const bestStars = Math.max(previousBestStars, starsGained);
-      const updatedStrategyStars = {
-        ...strategyStars,
-        [id]: bestStars,
-      };
-      setLastRoundStarResult({
-        strategyId: id,
-        earnedStars: starsGained,
-        previousBestStars,
-        bestStars,
-        improved: bestStars > previousBestStars,
-        reachedThreeStars: bestStars >= STARS_PER_STRATEGY,
-      });
-      const newTotalStars = countStrategyStars(updatedStrategyStars);
-      setStrategyStars(updatedStrategyStars);
-      setStars(newTotalStars);
-      const masterySummary = getStrategyAdaptiveMastery(
-        currentStrategyFactsRef.current,
-        factStatsRef.current,
-        speedTarget,
-        roundCorrectAttemptsRef.current,
-        roundAttemptsRef.current,
-        bronzeMilestone
-      );
-      const isPassed = masterySummary.isMastered;
-      
-      let currentMastered = [...masteredStrategyIds];
-      let currentViewed = [...viewedStrategyIds];
-      
-      if (isPassed) {
-        const isNewMastery = !currentMastered.includes(id);
-        if (isNewMastery) {
-          currentMastered.push(id);
-        }
-        const nextSlideId = id + 1;
-        if (nextSlideId <= STRATEGIES.length && !currentViewed.includes(nextSlideId)) {
-          currentViewed.push(nextSlideId);
-        }
-
-        if (isNewMastery) {
-          const stageStrategiesForRound = STRATEGIES.filter((strategy) => strategy.stageId === activeStrategyRound.stageId);
-          const stageCompleted = stageStrategiesForRound.every((strategy) => strategy.id === id || currentMastered.includes(strategy.id));
-          launchLevelConfetti(stageCompleted);
-          setEncouragingText(stageCompleted ? "Chapter complete!" : "New lesson unlocked!");
-        }
-      }
-
-      setMasteredStrategyIds(currentMastered);
-      setViewedStrategyIds(currentViewed);
-
-      // Save best speeds and streaks
-      const activeId = activeStrategyRound.id;
-      const currentSpeed = finalScore; // 60 seconds round score is the items/min
-      
-      const bestStrEver = Math.max(bestStreaks[activeId] || 0, bestStreakRound);
-      const bestSpdEver = Math.max(bestSpeeds[activeId] || 0, currentSpeed);
-
-      const updatedStreaks = { ...bestStreaks, [activeId]: bestStrEver };
-      const updatedSpeeds = { ...bestSpeeds, [activeId]: bestSpdEver };
-
-      setBestStreaks(updatedStreaks);
-      setBestSpeeds(updatedSpeeds);
-
-      saveProgress(currentViewed, currentMastered, newTotalStars, speedTarget, updatedStreaks, updatedSpeeds, factStatsRef.current, updatedStrategyStars);
-    }
-  }, [roundCompleted]);
-
-  const clearAnswerFeedbackTimers = () => {
-    if (correctFeedbackTimerRef.current) {
-      clearTimeout(correctFeedbackTimerRef.current);
-      correctFeedbackTimerRef.current = null;
-    }
-    if (incorrectFeedbackTimerRef.current) {
-      clearTimeout(incorrectFeedbackTimerRef.current);
-      incorrectFeedbackTimerRef.current = null;
-    }
-  };
-
-  // Number Pad Click support
-  const handleNumClick = (val: string) => {
-    if (!isRoundActive || answerLockedRef.current || roundCompletedRef.current) return; // Do not allow typing before round starts or during feedback
-    if (val === "DELETE") {
-      setUserAnswer((prev) => prev.slice(0, -1));
-    } else if (val === "CLEAR") {
-      setUserAnswer("");
-    } else {
-      if (userAnswer.length < 8) {
-        setUserAnswer((prev) => prev + val);
-      }
-    }
-  };
-
-  const handleCorrectAnswer = () => {
-    if (answerLockedRef.current || roundCompletedRef.current) return;
-    answerLockedRef.current = true;
-    const updatedStats = recordFactAttempt(true);
-
-    clearAnswerFeedbackTimers();
-    setIsAnimatingIncorrect(false);
-    setIsShaking(false);
-    setIsAnimatingCorrect(true);
-    setSparklesList([]);
-    setRoundScore((prev) => prev + 1);
-
-    // Update streaks
-    const nextStreak = currentStreak + 1;
-    setCurrentStreak(nextStreak);
-    if (nextStreak > bestStreakRound) {
-      setBestStreakRound(nextStreak);
-    }
-
-    setConsecutiveErrors(0);
-    setSpamWarning(null);
-
-    const praises = ["Nice!", "Correct!", "Yes!", "Great!", "Fast!", "Got it!", "Super!"];
-    const randomPraise = praises[Math.floor(Math.random() * praises.length)];
-    setEncouragingText(`${randomPraise} 🦊`);
-
-    // Advance first. The quick green flash stays non-blocking so students can
-    // start processing the next fact immediately.
-    setUserAnswer("");
-    setShowHint(false);
-    advanceToNextQuestion(updatedStats);
-    answerLockedRef.current = false;
-
-    correctFeedbackTimerRef.current = setTimeout(() => {
-      setIsAnimatingCorrect(false);
-      setSparklesList([]);
-      correctFeedbackTimerRef.current = null;
-    }, 120);
-  };
-
-  const handleIncorrectAnswer = () => {
-    if (answerLockedRef.current || roundCompletedRef.current) return;
-    answerLockedRef.current = true;
-    recordFactAttempt(false);
-
-    clearAnswerFeedbackTimers();
-    setIsAnimatingCorrect(false);
-    setIsAnimatingIncorrect(true);
-    setIsShaking(true);
-
-    // Reset streak on error
-    setCurrentStreak(0);
-
-    setConsecutiveErrors((prev) => {
-      const nextVal = prev + 1;
-      if (nextVal >= 3) {
-        setSpamWarning("🐢 Slow down and think! Look closely at the numbers. This fact will come back for extra practice.");
-      }
-      return nextVal;
+    resetRoundCounters(); setIsRoundActive(false); setCountdownValue("3");
+    setEncouragingText("Get ready...");
+    [
+      [1000, "2"], [2000, "1"], [3000, "Go!"], [3700, null, true],
+    ].forEach(([delay, val, done]) => {
+      countdownTimersRef.current.push(setTimeout(() => {
+        if (done) { beginRoundNow(); return; }
+        setCountdownValue(val as string);
+      }, delay as number));
     });
-
-    incorrectFeedbackTimerRef.current = setTimeout(() => {
-      setIsAnimatingIncorrect(false);
-      setIsShaking(false);
-      setUserAnswer("");
-      questionStartedAtRef.current = Date.now();
-      setQuestionStartedAt(questionStartedAtRef.current);
-      answerLockedRef.current = false;
-      incorrectFeedbackTimerRef.current = null;
-    }, 160);
   };
 
-  // Keep mobile keyboards hidden during timed quizzes. Hardware keyboard input is handled below.
-  useEffect(() => {
-    if (!isTimedQuizInProgress) {
-      document.body.classList.remove("timed-quiz-active");
-      document.documentElement.classList.remove("timed-quiz-active");
-      return;
-    }
-
+  const handleStartPractice = (strategy: Strategy) => {
+    clearCountdown(); setShowLessonModal(null); setActiveStrategyRound(strategy);
+    setLastRoundStarResult(null);
+    const { currentFacts, practicePool } = buildPool(strategy);
+    currentStrategyFactsRef.current = currentFacts; questionPoolRef.current = practicePool;
+    activateQ(chooseNextFact(currentFacts, factStatsRef.current, speedTarget));
+    setCurrentQuestionIdx(0); setUserAnswer(""); setShowHint(false); setRoundCompleted(false);
+    roundCompletedRef.current = false; answerLockedRef.current = false;
+    setRoundScore(0); setRoundAttempts(0); setRoundCorrectAttempts(0);
+    roundAttemptsRef.current = 0; roundCorrectAttemptsRef.current = 0;
+    attemptsSinceQuickReviewRef.current = 0; recentReviewFactIdsRef.current = [];
+    setTimeLeft(60); setConsecutiveErrors(0);
+    setIsAnimatingCorrect(false); setIsAnimatingIncorrect(false); setIsShaking(false);
+    setSparklesList([]); setEncouragingText("Let's go!");
+    setCurrentStreak(0); setBestStreakRound(0); setIsRoundActive(false);
     document.body.classList.add("timed-quiz-active");
     document.documentElement.classList.add("timed-quiz-active");
+  };
 
-    const blurFocusedInput = () => {
-      const activeElement = document.activeElement as HTMLElement | null;
-      if (activeElement && typeof activeElement.blur === "function") {
-        activeElement.blur();
-      }
-      inputRef.current?.blur();
-    };
+  const exitPractice = () => {
+    clearCountdown(); setIsRoundActive(false); setActiveStrategyRound(null);
+    document.body.classList.remove("timed-quiz-active");
+    document.documentElement.classList.remove("timed-quiz-active");
+  };
 
-    window.scrollTo({ top: 0, left: 0, behavior: "auto" });
-    blurFocusedInput();
-    const blurTimer = window.setTimeout(blurFocusedInput, 75);
+  // ─── Timer ────────────────────────────────────────────
 
-    return () => {
-      window.clearTimeout(blurTimer);
-      document.body.classList.remove("timed-quiz-active");
-      document.documentElement.classList.remove("timed-quiz-active");
-    };
-  }, [isTimedQuizInProgress, currentQuestionIdx]);
-
-  // Hardware keyboard support without focusing a mobile text input
   useEffect(() => {
-    if (!isTimedQuizInProgress || !isRoundActive) return;
+    let iv: ReturnType<typeof setInterval> | null = null;
+    if (activeStrategyRound && isRoundActive && !roundCompleted) {
+      iv = setInterval(() => {
+        setTimeLeft((p) => { if (p <= 1) { if (iv) clearInterval(iv); finishRound(); return 0; } return p - 1; });
+      }, 1000);
+    }
+    return () => { if (iv) clearInterval(iv); };
+  }, [activeStrategyRound, isRoundActive, roundCompleted]);
 
-    const handleHardwareKey = (event: KeyboardEvent) => {
-      if (/^[0-9]$/.test(event.key)) {
-        event.preventDefault();
-        handleNumClick(event.key);
-        return;
-      }
-      if (event.key === "Backspace" || event.key === "Delete") {
-        event.preventDefault();
-        handleNumClick("DELETE");
-        return;
-      }
-      if (event.key === "Enter") {
-        event.preventDefault();
-        handleSubmitAnswer();
-      }
-    };
+  // ─── Round Completion ─────────────────────────────────
 
-    window.addEventListener("keydown", handleHardwareKey);
-    return () => window.removeEventListener("keydown", handleHardwareKey);
-  }, [isTimedQuizInProgress, isRoundActive, userAnswer, currentQuestion]);
-
-  // Typing listener for correct answer matching
   useEffect(() => {
-    if (activeTab === "practice" && activeStrategyRound && isRoundActive && !roundCompleted) {
-      const currentQ = currentQuestion;
-      if (currentQ) {
-        const cleaned = userAnswer.trim();
-        if (cleaned !== "") {
-          const parsed = parseInt(cleaned, 10);
-          const correctAns = currentQ.answer;
-          
-          if (parsed === correctAns) {
-            handleCorrectAnswer();
-          } else {
-            const correctLen = String(correctAns).length;
-            if (cleaned.length >= correctLen) {
-              handleIncorrectAnswer();
-            }
-          }
-        }
-      }
+    if (!roundCompleted || !activeStrategyRound) return;
+    const id = activeStrategyRound.id;
+    const goldMilestone = speedTarget;
+    const bronzeMilestone = Math.max(3, Math.round(speedTarget * 0.3));
+    const starsGained = getStarsForScore(roundScore, speedTarget);
+    const prevBest = clampStars(strategyStars[id] || 0);
+    const bestStars = Math.max(prevBest, starsGained);
+    const updatedStars = { ...strategyStars, [id]: bestStars };
+    setLastRoundStarResult({
+      strategyId: id, earnedStars: starsGained, previousBestStars: prevBest,
+      bestStars, improved: bestStars > prevBest, reachedThreeStars: bestStars >= STARS_PER_STRATEGY,
+    });
+    setStrategyStars(updatedStars); setStars(countStars(updatedStars));
+
+    const mastery = getStrategyAdaptiveMastery(
+      currentStrategyFactsRef.current, factStatsRef.current, speedTarget,
+      roundCorrectAttemptsRef.current, roundAttemptsRef.current, bronzeMilestone,
+    );
+
+    let curMastered = [...masteredStrategyIds];
+    let curViewed = [...viewedStrategyIds];
+
+    if (mastery.isMastered) {
+      if (!curMastered.includes(id)) curMastered.push(id);
+      const nextId = id + 1;
+      if (nextId <= STRATEGIES.length && !curViewed.includes(nextId)) curViewed.push(nextId);
+      const stageComplete = STRATEGIES.filter((s) => s.stageId === activeStrategyRound.stageId)
+        .every((s) => s.id === id || curMastered.includes(s.id));
+      if (stageComplete) launchConfetti();
     }
-  }, [userAnswer, currentQuestion, activeTab, activeStrategyRound, isRoundActive, roundCompleted]);
 
-  // Check manual entry
-  const handleSubmitAnswer = () => {
-    if (answerLockedRef.current || roundCompletedRef.current || !userAnswer.trim()) return;
-    
-    const parsedAns = parseInt(userAnswer, 10);
-    const currentQ = currentQuestion;
-    
-    if (currentQ) {
-      if (parsedAns === currentQ.answer) {
-        handleCorrectAnswer();
-      } else {
-        handleIncorrectAnswer();
-      }
+    setMasteredStrategyIds(curMastered); setViewedStrategyIds(curViewed);
+
+    if (curMastered.length >= STRATEGIES.length && !showAllDone) setShowAllDone(true);
+
+    const activeId = activeStrategyRound.id;
+    const currentSpeed = roundScore;
+    const updatedStreaks = { ...bestStreaks, [activeId]: Math.max(bestStreaks[activeId] || 0, bestStreakRound) };
+    const updatedSpeeds = { ...bestSpeeds, [activeId]: Math.max(bestSpeeds[activeId] || 0, currentSpeed) };
+    setBestStreaks(updatedStreaks); setBestSpeeds(updatedSpeeds);
+    setEncouragingText(mastery.isMastered ? "Great job!" : "Keep practicing!");
+
+    saveProgress(curViewed, curMastered, speedTarget, updatedStreaks, updatedSpeeds, factStatsRef.current, updatedStars);
+  }, [roundCompleted]);
+
+  // ─── Input Handling ───────────────────────────────────
+
+  const handleNumClick = (val: string) => {
+    if (!isRoundActive || answerLockedRef.current || roundCompletedRef.current) return;
+    if (val === "DEL") setUserAnswer((p) => p.slice(0, -1));
+    else if (val === "CLR") setUserAnswer("");
+    else if (userAnswer.length < 8) setUserAnswer((p) => p + val);
+    if (inputRef.current) inputRef.current.focus();
+  };
+
+  const handleSubmit = () => {
+    if (!isRoundActive || answerLockedRef.current || roundCompletedRef.current || !currentQuestion) return;
+    if (userAnswer === "") return;
+    const parsed = parseInt(userAnswer, 10);
+    if (isNaN(parsed)) { setUserAnswer(""); return; }
+    answerLockedRef.current = true;
+    const correct = parsed === currentQuestion.answer;
+
+    if (correct) {
+      recordAttempt(true);
+      setRoundScore((p) => p + 1);
+      setCurrentStreak((p) => {
+        const next = p + 1;
+        setBestStreakRound((b) => Math.max(b, next));
+        return next;
+      });
+      setConsecutiveErrors(0);
+      setIsAnimatingCorrect(true);
+      correctFeedbackTimerRef.current = setTimeout(() => {
+        answerLockedRef.current = false; setIsAnimatingCorrect(false);
+        setUserAnswer(""); setShowHint(false); advanceQ();
+      }, 450);
+    } else {
+      recordAttempt(false);
+      setCurrentStreak(0);
+      setConsecutiveErrors((p) => p + 1);
+      setIsAnimatingIncorrect(true); setIsShaking(true);
+      incorrectFeedbackTimerRef.current = setTimeout(() => {
+        answerLockedRef.current = false; setIsAnimatingIncorrect(false); setIsShaking(false);
+        setUserAnswer(""); advanceQ();
+      }, 900);
     }
   };
 
-  const currentLevelProgressPercent = Math.round((masteredStrategyIds.length / STRATEGIES.length) * 100);
-  const starProgressText = `${stars}/${TOTAL_POSSIBLE_STARS}`;
-  const getStrategyStarCount = (strategyId: number) => clampStrategyStars(strategyStars[strategyId] || 0);
-  const renderLessonStars = (earnedStars: number, sizeClass: string = "w-3.5 h-3.5") => (
-    <div className="flex items-center gap-0.5" aria-label={`${earnedStars} out of ${STARS_PER_STRATEGY} stars`}>
-      {Array.from({ length: STARS_PER_STRATEGY }, (_, index) => (
-        <Star
-          key={index}
-          className={`${sizeClass} stroke-[2.5] ${
-            index < earnedStars ? "text-yellow-500 fill-yellow-400" : "text-slate-300 fill-slate-100"
-          }`}
-        />
-      ))}
-    </div>
-  );
-  const starUpgradeTargets = STRATEGIES.filter((strategy) => {
-    const earnedStars = getStrategyStarCount(strategy.id);
-    return masteredStrategyIds.includes(strategy.id) && earnedStars > 0 && earnedStars < STARS_PER_STRATEGY;
-  });
+  useEffect(() => {
+    const onKey = (e: KeyboardEvent) => {
+      if (!isRoundActive || answerLockedRef.current || roundCompletedRef.current) return;
+      if (e.key === "Enter") { e.preventDefault(); handleSubmit(); return; }
+      if (e.key === "Backspace") { e.preventDefault(); handleNumClick("DEL"); return; }
+      if (/^[0-9]$/.test(e.key)) { e.preventDefault(); handleNumClick(e.key); return; }
+      if (e.key === "-") { e.preventDefault(); if (userAnswer === "" || userAnswer === "-") setUserAnswer((p) => p === "-" ? "" : "-"); }
+    };
+    window.addEventListener("keydown", onKey);
+    return () => window.removeEventListener("keydown", onKey);
+  }, [isRoundActive, answerLockedRef, roundCompleted, userAnswer]);
 
-  // Dynamic chapter unlocking logic
-  const isStageUnlocked = (stageId: number) => {
-    if (stageId === 1) return true;
-    const prevStageId = stageId - 1;
-    const prevStageStrategies = STRATEGIES.filter(s => s.stageId === prevStageId);
-    const prevStageMasteredCount = prevStageStrategies.filter(s => masteredStrategyIds.includes(s.id)).length;
-    return prevStageMasteredCount === prevStageStrategies.length;
-  };
+  // ─── Helpers ──────────────────────────────────────────
 
-  // Helper arrays for Chapters filter
-  const activeStage = STAGES.find(s => s.id === currentStageId) || STAGES[0];
-  const activeStrategies = STRATEGIES.filter(s => s.stageId === currentStageId);
-  const isActiveStagePreviewOpen = !!expandedStagePreviewIds[activeStage.id];
-  const toggleActiveStagePreview = () => {
-    setExpandedStagePreviewIds((previous) => ({
-      ...previous,
-      [activeStage.id]: !previous[activeStage.id],
-    }));
-  };
-  const currentQuestionStatus = currentQuestion ? getFactStatus(factStats[currentQuestion.id]) : "empty";
-  const currentLessonFactIds = new Set(currentStrategyFacts.map((fact) => fact.id));
-  const isQuickReviewFact = !!currentQuestion && currentLessonFactIds.size > 0 && !currentLessonFactIds.has(currentQuestion.id);
-  const roundAccuracyPercent = roundAttempts > 0 ? Math.round((roundCorrectAttempts / roundAttempts) * 100) : 100;
-  const bronzeMilestoneForMastery = Math.max(3, Math.round(speedTarget * 0.3));
-  const currentMasterySummary = getStrategyAdaptiveMastery(
-    currentStrategyFacts,
-    factStats,
-    speedTarget,
-    roundCorrectAttempts,
-    roundAttempts,
-    bronzeMilestoneForMastery
-  );
-  const activeStrategyPassed = !!activeStrategyRound && (
-    currentMasterySummary.isMastered || masteredStrategyIds.includes(activeStrategyRound.id)
-  );
-  const nextStrategyAfterRound = activeStrategyRound
-    ? STRATEGIES.find((strategy) => strategy.id === activeStrategyRound.id + 1)
-    : undefined;
-  const roundPassTarget = Math.max(bronzeMilestoneForMastery, Math.max(6, Math.round(speedTarget * 0.6)));
-  const roundStarsEarned = getStarsForScore(roundScore, speedTarget);
-  const displayedLastRoundStarResult = lastRoundStarResult && activeStrategyRound && lastRoundStarResult.strategyId === activeStrategyRound.id
-    ? lastRoundStarResult
-    : null;
+  const starProgressText = `${stars}/${STRATEGIES.length * STARS_PER_STRATEGY}`;
+  const roundPassTarget = Math.max(6, Math.round(speedTarget * 0.6));
   const activeRoundBestStars = activeStrategyRound ? getStrategyStarCount(activeStrategyRound.id) : 0;
-  const questionCapsule = (() => {
-    if (isQuickReviewFact) {
-      return {
-        label: "Quick Review",
-        className: "bg-amber-50 border-amber-300 text-amber-800",
-      };
-    }
-    if (currentQuestionStatus === "empty") {
-      return {
-        label: activeStrategyRound?.name || "Practice Fact",
-        className: "bg-blue-50 border-blue-300 text-blue-800",
-      };
-    }
-    if (currentQuestionStatus === "fluent") {
-      return {
-        label: "Ready Fact",
-        className: "bg-green-50 border-green-300 text-green-800",
-      };
-    }
-    if (currentQuestionStatus === "review") {
-      return {
-        label: "Review Fact",
-        className: "bg-yellow-50 border-yellow-300 text-yellow-800",
-      };
-    }
-    if (currentQuestionStatus === "near-ready") {
-      return {
-        label: "Almost Ready",
-        className: "bg-sky-50 border-sky-300 text-sky-800",
-      };
-    }
-    return {
-      label: activeStrategyRound?.name || "Practice Fact",
-      className: "bg-blue-50 border-blue-300 text-blue-800",
-    };
-  })();
 
-  // Quick reset progress helper (for teachers/testing)
-  const handleResetProgress = () => {
-    if (window.confirm("Do you want to reset your stars and math journey path?")) {
-      clearRoundCountdown();
-      setViewedStrategyIds([1]);
-      setMasteredStrategyIds([]);
-      setStars(0);
-      setStrategyStars({});
-      setBestSpeeds({});
-      setBestStreaks({});
-      setFactStats({});
-      factStatsRef.current = {};
-      setSpeedTarget(20);
-      try {
-        localStorage.removeItem("mental_math_journey_progress");
-      } catch (e) {
-        console.warn("Could not clear saved progress:", e);
-      }
-      setCurrentStageId(StageId.StarterIsland);
-      setActiveTab("map");
-    }
-  };
+  const renderStars = (count: number, cls = "w-4 h-4") =>
+    Array.from({ length: STARS_PER_STRATEGY }, (_, i) => (
+      <Star key={i} className={`${cls} ${i < count ? "text-yellow-500 fill-yellow-400" : "text-slate-300"}`} />
+    ));
+
+  // ─── Render ───────────────────────────────────────────
 
   return (
-    <div className="min-h-screen bg-[#E0F2FE] text-slate-900 font-sans flex flex-col selection:bg-yellow-400 selection:text-blue-900 relative">
-      
-      {/* Dynamic friendly glowing background circles */}
-      <div className="absolute top-0 left-0 w-full h-full opacity-35 pointer-events-none overflow-hidden -z-10">
-        <div className="absolute top-10 left-[8%] w-48 h-48 bg-yellow-300 rounded-full blur-3xl animate-pulse"></div>
-        <div className="absolute bottom-24 right-[5%] w-72 h-72 bg-emerald-300 rounded-full blur-3xl"></div>
-        <div className="absolute top-[40%] left-[15%] w-56 h-56 bg-pink-300 rounded-full blur-3xl"></div>
-      </div>
-
-      {levelConfettiPieces.length > 0 && (
-        <div className="level-confetti-layer" aria-hidden="true">
-          {levelConfettiPieces.map((piece) => (
-            <span
-              key={piece.id}
-              className="level-confetti-piece"
-              style={{
-                left: `${piece.left}%`,
-                backgroundColor: piece.color,
-                width: piece.size,
-                height: piece.size,
-                animationDelay: `${piece.delay}ms`,
-                animationDuration: `${piece.duration}ms`,
-                "--confetti-drift": `${piece.drift}px`,
-                "--confetti-spin": `${piece.spin}deg`,
-              } as CSSProperties}
-            />
+    <div className="min-h-screen bg-[#E0F2FE] text-slate-900 font-sans flex flex-col">
+      {/* Confetti */}
+      {confettiPieces.length > 0 && (
+        <div className="confetti-layer" aria-hidden="true">
+          {confettiPieces.map((p) => (
+            <span key={p.id} className="confetti-piece" style={{
+              left: `${p.left}%`, backgroundColor: p.color, width: p.size, height: p.size,
+              animationDelay: `${p.delay}ms`, animationDuration: `${p.duration}ms`,
+              "--drift": `${p.drift}px`, "--spin": `${p.spin}deg`,
+            } as CSSProperties} />
           ))}
         </div>
       )}
 
-      {/* HEADER HUD */}
+      {/* Header */}
       {!isTimedQuizInProgress && (
-      <header className="border-b-[4px] border-blue-200 bg-white/90 backdrop-blur-md px-4 py-3 shadow-md">
-        <div className="max-w-6xl mx-auto flex flex-col sm:flex-row items-center justify-between gap-3">
-          
-          <div className="flex items-center justify-center sm:justify-start gap-2.5 w-full sm:w-auto text-center sm:text-left">
-            <span className="text-4xl animate-bounce-slow">🎒</span>
-            <div>
-              <h1 className="text-2xl md:text-3xl font-display font-black text-blue-950 tracking-tight flex items-center gap-1.5 leading-none justify-center sm:justify-start">
+        <header className="border-b-4 border-blue-200 bg-white/90 backdrop-blur-md px-4 py-3">
+          <div className="max-w-4xl mx-auto flex items-center justify-between">
+            <div className="flex items-center gap-2">
+              <span className="text-3xl">🎒</span>
+              <h1 className="text-xl md:text-2xl font-display font-black text-blue-950 tracking-tight">
                 Mental Math Journey
               </h1>
             </div>
+            <div className="flex items-center gap-2 bg-[#fdfbe7] px-3 py-1.5 rounded-full border-2 border-[#fbcf22]">
+              <Star className="w-5 h-5 text-yellow-500 fill-yellow-400" />
+              <span className="font-mono text-lg font-black text-blue-950">{starProgressText}</span>
+              <span className="text-xs font-bold text-blue-700 hidden sm:inline">Stars</span>
+            </div>
           </div>
+        </header>
+      )}
 
-          <div className="flex items-center justify-between sm:justify-end gap-2.5 sm:gap-6 w-full sm:w-auto">
-            {/* Stars Meter */}
-            <div className="flex shrink-0 items-center gap-2.5 sm:gap-3.5 bg-[#fdfbe7] px-4 sm:px-5 py-1.5 rounded-full border-[3px] border-[#fbcf22] shadow-xs select-none">
-              <Star className="w-5 h-5 sm:w-6 sm:h-6 text-yellow-500 fill-yellow-400 stroke-[2.5]" />
-              <div className="flex flex-col text-right leading-none">
-                <span className="font-mono text-lg sm:text-xl font-black text-blue-950">{starProgressText}</span>
-                <span className="text-[8px] sm:text-[9px] font-black tracking-wider text-blue-700 uppercase mt-0.5 whitespace-nowrap">Stars Earned</span>
-              </div>
-            </div>
+      {/* Main Content */}
+      {!activeStrategyRound ? (
+        <main className="flex-1 max-w-4xl w-full mx-auto p-4 md:p-6 space-y-6">
 
-            {/* Overall Journey Tracker */}
-            <div className="flex min-w-0 flex-1 sm:flex-none flex-col max-w-[10rem] sm:w-36">
-              <div className="flex justify-between items-end gap-2 text-[8px] sm:text-[10px] uppercase tracking-wider text-blue-800 font-black mb-1">
-                <span className="truncate">Journey Path</span>
-                <span className="font-mono font-black text-blue-900 whitespace-nowrap">{currentLevelProgressPercent}%<span className="hidden sm:inline"> Done</span></span>
-              </div>
-              <div className="w-full bg-blue-100 rounded-full h-2.5 sm:h-3 overflow-hidden border-2 border-blue-200 shadow-inner">
-                <div 
-                  className="bg-yellow-400 h-full rounded-full transition-all duration-700"
-                  style={{ width: `${currentLevelProgressPercent}%` }}
-                />
-              </div>
-            </div>
-
-            {/* Settings Gear Button */}
-            <button
-              id="settings-gear-btn"
-              onClick={() => setShowSettingsModal(true)}
-              className="shrink-0 bg-white hover:bg-slate-50 text-slate-700 p-2.5 rounded-full border-2 border-blue-200 hover:border-blue-300 transition-all cursor-pointer active:translate-y-0.5"
-              title="Adventure Settings"
+          {/* All Done Banner */}
+          {showAllDone && (
+            <motion.div
+              initial={{ scale: 0.95, opacity: 0 }} animate={{ scale: 1, opacity: 1 }}
+              className="bg-gradient-to-br from-yellow-50 to-amber-100 border-4 border-yellow-400 p-6 rounded-3xl text-center space-y-3"
             >
-              <Settings className="w-5 h-5 text-blue-900 animate-hover-spin" />
-            </button>
-          </div>
-
-        </div>
-      </header>
-      )}
-
-      {/* SUB MENU NAVIGATION */}
-      {!isTimedQuizInProgress && (
-      <div className="bg-blue-900/10 border-b-[4px] border-blue-200/80 py-3 px-4">
-        <div className="max-w-6xl mx-auto flex flex-wrap gap-2">
-          <button
-            id="tab-map"
-            onClick={() => setActiveTab("map")}
-            className={`px-4 py-2.5 rounded-2xl text-xs md:text-sm font-black transition-all flex items-center gap-2 cursor-pointer ${
-              activeTab === "map" 
-                ? "bg-blue-600 text-white shadow-[0_4px_0px_0px_#1E40AF] border-2 border-blue-700"
-                : "bg-white hover:bg-blue-50 text-blue-950 border-2 border-blue-200 hover:border-blue-300"
-            }`}
-          >
-            <Compass className="w-4 h-4" />
-            Journey Map
-          </button>
-          
-          <button
-            id="tab-encyclopedia"
-            onClick={() => setActiveTab("encyclopedia")}
-            className={`px-4 py-2.5 rounded-2xl text-xs md:text-sm font-black transition-all flex items-center gap-2 cursor-pointer ${
-              activeTab === "encyclopedia" 
-                ? "bg-blue-600 text-white shadow-[0_4px_0px_0px_#1E40AF] border-2 border-blue-700"
-                : "bg-white hover:bg-blue-50 text-blue-950 border-2 border-blue-200 hover:border-blue-300"
-            }`}
-          >
-            <BookOpen className="w-4 h-4" />
-            Lesson Guide ({viewedStrategyIds.length}/{STRATEGIES.length})
-          </button>
-
-        </div>
-      </div>
-      )}
-
-      {/* CORE DISPLAY WINDOW */}
-      <main className={`flex-1 max-w-6xl w-full mx-auto ${isTimedQuizInProgress ? "timed-quiz-main p-0 sm:p-4 md:p-6" : "p-4 md:p-6"}`}>
-        
-        {/* TAB 1: ADVENTURE MAP STAGES */}
-        {activeTab === "map" && (
-          <div className="space-y-8">
-            
-            {/* GRAND EXPLORATION CELEBRATION HEADER CARD */}
-            {masteredStrategyIds.length >= STRATEGIES.length && (
-              <motion.div 
-                initial={{ scale: 0.95, opacity: 0 }}
-                animate={{ scale: 1, opacity: 1 }}
-                transition={{ type: "spring", stiffness: 100, damping: 15 }}
-                className="bg-gradient-to-br from-yellow-50 via-amber-50 to-orange-100 border-[8px] border-yellow-400 p-8 md:p-12 rounded-[48px] shadow-[0_24px_0px_0px_#EAB308] text-center space-y-6 relative overflow-hidden text-slate-900 mb-8"
-              >
-                {/* Visual sparkles confetti background deco */}
-                <div className="absolute top-0 left-0 w-full h-[8px] bg-gradient-to-r from-yellow-400 via-red-400 to-emerald-400" />
-                <div className="absolute -top-10 -right-10 w-44 h-44 bg-yellow-300/20 rounded-full blur-2xl animate-pulse" />
-                <div className="absolute -bottom-10 -left-10 w-44 h-44 bg-green-300/20 rounded-full blur-2xl animate-pulse" />
-
-                <div className="relative z-10 space-y-4">
-                  <div className="inline-block relative">
-                    <span className="text-8xl md:text-9xl animate-bounce-slow block drop-shadow-md">👑</span>
-                    <span className="text-4xl absolute -top-2 -right-2 animate-spin-slow">✨</span>
-                    <span className="text-4xl absolute -bottom-2 -left-2 animate-pulse">🌟</span>
-                  </div>
-
-                  <div className="space-y-2">
-                    <span className="text-xs font-mono uppercase bg-yellow-400 text-amber-950 font-black px-4 py-1.5 rounded-full border-2 border-amber-500 tracking-widest inline-block animate-pulse">
-                      Journey Completed! 🏆
-                    </span>
-                    <h2 className="text-3xl md:text-5xl font-display font-black text-amber-950 tracking-tight leading-tight">
-                      Mental Math Champion!
-                    </h2>
-                    <p className="text-sm md:text-lg text-amber-900 font-extrabold max-w-2xl mx-auto leading-relaxed">
-                      Amazing job, Explorer! You have conquered all <strong>{STRATEGIES.length} lessons</strong> with rapid speed and automaticity.
-                    </p>
-                  </div>
-
-                  {/* GRAND CHAMPION DIPLOMA FRAME */}
-                  <div className="max-w-xl mx-auto bg-white/95 border-4 border-dashed border-amber-400 p-6 md:p-8 rounded-[32px] shadow-inner space-y-4 relative">
-                    <div className="absolute top-3 right-3 text-3xl">🏅</div>
-                    <div className="absolute bottom-3 left-3 text-3xl">🌱</div>
-                    
-                    <span className="text-[10px] font-mono tracking-widest font-black uppercase text-slate-400 block">Mental Arithmetic Guild</span>
-                    <h3 className="text-2xl font-black text-blue-950 tracking-tight">EXPLORER GRANDMASTER CERTIFICATE</h3>
-                    <p className="text-xs font-bold text-slate-600 max-w-md mx-auto">
-                      Passed with high achievements in Anchor Facts, Number Line Jumps, Twin Power Doubles, Make-Ten Bridge structures, and Double-Digit Partitioning.
-                    </p>
-
-                    <div className="flex flex-wrap justify-center items-center gap-4 pt-4">
-                      {/* Custom styled Stars Earned badge matching attached image guidelines */}
-                      <div className="flex items-center gap-3.5 bg-amber-50 border-[3px] border-amber-400 px-5 py-2 rounded-full shadow-xs select-none">
-                        <Star className="w-6 h-6 text-yellow-500 fill-yellow-400 stroke-[2]" />
-                        <div className="flex flex-col text-left leading-none">
-                          <span className="font-mono text-xl font-black text-blue-950">{starProgressText}</span>
-                          <span className="text-[8px] font-black tracking-wider text-blue-700 uppercase mt-0.5 whitespace-nowrap">Stars Earned</span>
-                        </div>
-                      </div>
-
-                      {/* Custom styled Lessons Mastered badge */}
-                      <div className="flex items-center gap-3.5 bg-emerald-50 border-[3px] border-emerald-400 px-5 py-2 rounded-full shadow-xs select-none">
-                        <Award className="w-6 h-6 text-emerald-500 fill-emerald-300/[0.15] stroke-[2]" />
-                        <div className="flex flex-col text-left leading-none">
-                          <span className="font-mono text-xl font-black text-blue-950">{masteredStrategyIds.length} / {STRATEGIES.length}</span>
-                          <span className="text-[8px] font-black tracking-wider text-emerald-800 uppercase mt-0.5 whitespace-nowrap">Lessons Mastered</span>
-                        </div>
-                      </div>
-                    </div>
-
-                    <div className="pt-2">
-                      <p className="text-[11px] font-mono text-slate-400 font-black">
-                        Date: {new Date().toLocaleDateString(undefined, { year: 'numeric', month: 'long', day: 'numeric' })} • Verified Grandmaster status
-                      </p>
-                    </div>
-
-                    {/* Student Name Input for grandmaster */}
-                    <div className="border-t-[3px] border-amber-300 pt-4 mt-4 space-y-2">
-                      <label className="text-[10px] font-mono tracking-wider font-black uppercase text-amber-800 block text-center">
-                        Customize Student Name for Graduation Diploma:
-                      </label>
-                      <div className="flex flex-col sm:flex-row gap-2 max-w-sm mx-auto">
-                        <input
-                          type="text"
-                          placeholder="Your Explorer Name"
-                          value={studentName}
-                          onChange={(e) => setStudentName(e.target.value)}
-                          className="flex-1 px-4 py-2 bg-yellow-50 border-2 border-yellow-300 rounded-xl font-bold text-xs focus:ring-2 focus:ring-yellow-400 focus:outline-hidden text-center text-slate-900"
-                        />
-                        <button
-                          onClick={() => printCertificate(6, "Ultimate Mental Math Journey", "👑", "Explorer Grandmaster Course Completed", stars, studentName)}
-                          className="bg-amber-500 hover:bg-amber-600 border-2 border-amber-600 text-white font-black px-4 py-2 rounded-xl text-xs transition shadow-xs active:translate-y-0.5 whitespace-nowrap cursor-pointer flex items-center justify-center gap-1"
-                        >
-                          🖨️ Save/Print Diploma
-                        </button>
-                      </div>
-                    </div>
-                  </div>
-
-                  {/* Action row */}
-                  <div className="flex flex-col sm:flex-row gap-3 justify-center pt-2">
-                    <button
-                      onClick={() => {
-                        if (confirm("Would you like to restart your journey from Lesson 1? (This keeps your Lessons visible!)")) {
-                          setMasteredStrategyIds([]);
-                          setStars(0);
-                          setStrategyStars({});
-                          // Back to initial Lesson 1
-                          setViewedStrategyIds([1]);
-                          saveProgress([1], [], 0, speedTarget, bestStreaks, bestSpeeds, factStatsRef.current, {});
-                        }
-                      }}
-                      className="bg-[#FF4757] hover:bg-[#FF6B81] text-white font-black py-4 px-8 rounded-2xl text-sm transition border-2 border-[#D63031] shadow-[0_4px_0px_0px_#D63031] active:translate-y-0.5 active:shadow-none cursor-pointer flex items-center justify-center gap-2"
-                    >
-                      <RefreshCw className="w-4 h-4 text-white" />
-                      Restart journey
-                    </button>
-
-                    <button
-                      onClick={() => setActiveTab("encyclopedia")}
-                      className="bg-white hover:bg-slate-50 text-slate-700 font-black py-4 px-8 rounded-2xl text-xs transition border-2 border-slate-200 cursor-pointer active:translate-y-0.5"
-                    >
-                      Browse lesson guide
-                    </button>
-                  </div>
-                </div>
-              </motion.div>
-            )}
-            
-            {/* World Selector Nodes - The Journey Path */}
-            <div>
-              <div className="text-center max-w-xl mx-auto mb-6">
-                <span className="text-4xl">🧭</span>
-                <h2 className="text-2xl md:text-3xl font-display font-black text-blue-950 mt-2">Choose a Chapter</h2>
-                <p className="text-sm text-blue-900 font-extrabold mt-1">
-                  Choose a chapter, then complete each lesson with a 1-minute practice.
-                </p>
-              </div>
-
-              {lockTip && (
-                <motion.div 
-                  initial={{ opacity: 0, y: -10 }}
-                  animate={{ opacity: 1, y: 0 }}
-                  className="max-w-xl mx-auto mb-6 bg-red-50 border-2 border-red-300 rounded-2xl p-4 text-center text-sm font-extrabold text-red-600 flex items-center justify-center gap-2 shadow-sm"
-                >
-                  <span className="text-xl">⚠️</span> {lockTip}
-                </motion.div>
-              )}
-
-              {/* Path Grid representation */}
-              <div className="grid grid-cols-2 lg:grid-cols-6 gap-4">
-                {STAGES.map((world, idx) => {
-                  const isCurrent = currentStageId === world.id;
-                  const isUnlockedChapter = isStageUnlocked(world.id);
-                  
-                  // Count total and mastered strategies in this stage
-                  const stageStrategies = STRATEGIES.filter(s => s.stageId === world.id);
-                  const stageMastered = stageStrategies.filter(s => masteredStrategyIds.includes(s.id)).length;
-                  const stageTotal = stageStrategies.length;
-
-                  return (
-                    <button
-                      key={world.id}
-                      onClick={() => {
-                        if (isUnlockedChapter) {
-                          setCurrentStageId(world.id);
-                          setLockTip(null);
-                        } else {
-                          const prevChapter = STAGES.find(s => s.id === world.id - 1);
-                          setLockTip(`🔒 To travel to ${world.name}, first master all lessons in Chapter ${world.id - 1} (${prevChapter?.name || ""})! 🚀`);
-                        }
-                      }}
-                      className={`relative text-left p-4 rounded-2xl border-4 transition-all cursor-pointer flex flex-col justify-between overflow-hidden group ${
-                        isCurrent 
-                          ? "bg-white border-yellow-400 shadow-[0_6px_0px_0px_#F59E0B] scale-102"
-                          : isUnlockedChapter
-                          ? "bg-white border-blue-200 hover:border-blue-300 shadow-[0_6px_0px_0px_#DBEAFE]"
-                          : "bg-slate-100/70 border-slate-200 shadow-none opacity-75 cursor-not-allowed"
-                      }`}
-                    >
-                      {/* background color indicator */}
-                      <div className={`absolute top-0 right-0 w-24 h-24 rounded-full -mr-8 -mt-8 opacity-15 bg-gradient-to-br ${world.color}`} />
-                      
-                      <div>
-                        {/* Chapter Number badge */}
-                        <div className="flex items-center justify-between mb-2">
-                          <span className="text-[10px] font-mono tracking-wider text-blue-500 uppercase font-black">
-                            Chapter {world.id}
-                          </span>
-                          {!isUnlockedChapter ? (
-                            <span className="text-[10px] bg-slate-200 text-slate-600 border border-slate-300 px-1.5 py-0.5 rounded-full font-black uppercase flex items-center gap-1">
-                              🔒 Locked
-                            </span>
-                          ) : stageMastered === stageTotal && stageTotal > 0 ? (
-                            <span className="text-[10px] bg-green-100 text-green-700 border border-green-300 px-1.5 py-0.5 rounded-full font-black uppercase">
-                              Complete
-                            </span>
-                          ) : null}
-                        </div>
-
-                        {/* Large Emoji & Name */}
-                        <div className="flex items-center gap-2 mb-1.5">
-                          <span className="text-3xl">{isUnlockedChapter ? world.emoji : "🔒"}</span>
-                          <h3 className="font-display font-black text-xs md:text-sm text-blue-950 group-hover:text-blue-600 transition-colors leading-tight">
-                            {world.name}
-                          </h3>
-                        </div>
-
-                        <p className="text-[11px] text-gray-500 font-bold leading-tight line-clamp-2 mt-1">
-                          {isUnlockedChapter ? world.description : `Complete Chapter ${world.id - 1} first!`}
-                        </p>
-                      </div>
-
-                      {/* Score Indicator */}
-                      <div className="mt-4 pt-2.5 border-t-2 border-slate-100 flex items-center justify-between w-full">
-                        <div className="flex items-center gap-1 text-[11px] font-black text-blue-900">
-                          <Trophy className="w-3.5 h-3.5 text-yellow-500" />
-                          <span className="font-mono">{stageMastered}/{stageTotal}</span>
-                          <span className="text-[10px] text-gray-400">Lessons</span>
-                        </div>
-                        <div className="w-10 bg-blue-100 rounded-full h-1.5 overflow-hidden">
-                          <div 
-                            className={`h-full rounded-full bg-gradient-to-r ${world.color}`}
-                            style={{ width: `${(stageMastered / stageTotal) * 100}%` }}
-                          />
-                        </div>
-                      </div>
-
-                      {/* Active glowing indicator */}
-                      {isCurrent && (
-                        <div className="absolute top-0 left-0 w-full h-[4px] bg-yellow-400" />
-                      )}
-                    </button>
-                  );
-                })}
-              </div>
-            </div>
-
-            {/* Divider */}
-            <div className="border-t-2 border-slate-200/50 my-6" />
-
-            {/* Current Selected Chapter lessons */}
-            <div className="space-y-4">
-              <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 bg-yellow-50 p-6 rounded-[32px] border-4 border-yellow-300 shadow-[0_4px_0px_0px_#FDE047]">
-                <div className="flex items-center gap-3">
-                  <span className="text-4xl">{activeStage.emoji}</span>
-                  <div>
-                    <h3 className="text-lg md:text-xl font-display font-black text-blue-950 flex items-center gap-2">
-                      Chapter {activeStage.id}: {activeStage.name}
-                    </h3>
-                    <p className="text-xs md:text-sm text-blue-800 font-bold">{activeStage.description}</p>
-                  </div>
-                </div>
-                <button
-                  type="button"
-                  onClick={toggleActiveStagePreview}
-                  aria-expanded={isActiveStagePreviewOpen}
-                  className="text-xs text-blue-900 bg-white hover:bg-yellow-50 border-2 border-yellow-300 px-3.5 py-2 rounded-2xl font-black transition cursor-pointer flex items-center justify-center sm:justify-end gap-1.5 w-full sm:w-auto"
-                >
-                  <span>Contains</span>
-                  <strong className="text-blue-600 font-black">{activeStrategies.length}</strong>
-                  <span>lessons</span>
-                  <ChevronRight className={`w-3.5 h-3.5 transition-transform ${isActiveStagePreviewOpen ? "rotate-90" : ""}`} />
-                </button>
-              </div>
-
-              <AnimatePresence initial={false}>
-                {isActiveStagePreviewOpen && (
-                  <motion.div
-                    initial={{ height: 0, opacity: 0, y: -6 }}
-                    animate={{ height: "auto", opacity: 1, y: 0 }}
-                    exit={{ height: 0, opacity: 0, y: -6 }}
-                    transition={{ duration: 0.2 }}
-                    className="overflow-hidden"
-                  >
-                    <div className="bg-white border-2 border-yellow-200 rounded-3xl p-4 shadow-sm">
-                      <div className="text-[10px] font-black tracking-widest uppercase text-amber-700 mb-3">
-                        Chapter {activeStage.id} lessons
-                      </div>
-                      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-2">
-                        {activeStrategies.map((strategy, index) => (
-                          <div
-                            key={strategy.id}
-                            className="text-left px-3 py-2 rounded-xl border-2 border-slate-100 bg-slate-50"
-                          >
-                            <span className="block text-[10px] font-mono font-black text-blue-500">Lesson {index + 1}</span>
-                            <span className="block text-xs font-black text-blue-950 leading-snug">{strategy.name}</span>
-                          </div>
-                        ))}
-                      </div>
-                    </div>
-                  </motion.div>
-                )}
-              </AnimatePresence>
-
-              {/* CHAPTER COMPLETED CERTIFICATE BANNER */}
-              {(() => {
-                const activeStageMasteredCount = activeStrategies.filter(s => masteredStrategyIds.includes(s.id)).length;
-                const isStageFullyMastered = activeStageMasteredCount === activeStrategies.length && activeStrategies.length > 0;
-                
-                if (!isStageFullyMastered) return null;
-
-                return (
-                  <motion.div 
-                    initial={{ scale: 0.98, opacity: 0 }}
-                    animate={{ scale: 1, opacity: 1 }}
-                    className="bg-gradient-to-r from-blue-50 to-indigo-50 border-4 border-indigo-300 p-6 rounded-[32px] shadow-[0_6px_0px_0px_#C7D2FE] flex flex-col md:flex-row items-center justify-between gap-4 mt-2"
-                  >
-                    <div className="flex items-center gap-3.5 text-center md:text-left flex-wrap md:flex-nowrap justify-center md:justify-start">
-                      <span className="text-4xl animate-pulse">📜</span>
-                      <div>
-                        <h4 className="font-display font-black text-indigo-950 text-base md:text-lg">
-                          🎉 Chapter Complete! You have unlocked your custom diploma!
-                        </h4>
-                        <p className="text-xs text-indigo-800 font-bold">
-                          Type your name below to print your custom <strong>Chapter {activeStage.id} Diploma</strong>:
-                        </p>
-                      </div>
-                    </div>
-                    
-                    <div className="flex flex-col sm:flex-row items-center gap-3 w-full md:w-auto">
-                      <input
-                        type="text"
-                        placeholder="Your Explorer Name"
-                        value={studentName}
-                        onChange={(e) => setStudentName(e.target.value)}
-                        className="px-4 py-2.5 bg-white border-2 border-indigo-200 rounded-xl font-bold text-xs focus:ring-2 focus:ring-indigo-400 focus:outline-hidden w-full sm:w-48 text-center text-slate-900"
-                      />
-                      <button
-                        onClick={() => printCertificate(activeStage.id, activeStage.name, activeStage.emoji, activeStage.description, stars, studentName)}
-                        className="bg-indigo-600 hover:bg-indigo-700 text-white font-black py-2.5 px-5 rounded-xl text-xs transition border-2 border-indigo-800 shadow-[0_3px_0px_0px_#4338CA] whitespace-nowrap active:translate-y-0.5 active:shadow-none w-full sm:w-auto cursor-pointer flex items-center justify-center gap-1.5"
-                      >
-                        🖨️ Save/Print Diploma
-                      </button>
-                    </div>
-                  </motion.div>
-                );
-              })()}
-
-              {/* Star upgrade shortcut for passed lessons below 3 stars */}
-              {starUpgradeTargets.length > 0 && (
-                <div className="bg-amber-50/90 border-4 border-amber-300 rounded-[28px] p-5 shadow-[0_5px_0px_0px_#FDE68A] space-y-4">
-                  <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-2">
-                    <div>
-                      <h3 className="text-lg font-display font-black text-amber-900 flex items-center gap-2">
-                        <Star className="w-5 h-5 text-yellow-500 fill-yellow-400" />
-                        Try for 3 Stars
-                      </h3>
-                      <p className="text-xs text-amber-800 font-bold">
-                        These passed lessons can be replayed to improve your best star score.
-                      </p>
-                    </div>
-                    <span className="text-[10px] font-mono font-black uppercase tracking-wider text-amber-700 bg-white/80 border border-amber-200 px-3 py-1 rounded-full w-fit">
-                      {starUpgradeTargets.length} lesson{starUpgradeTargets.length === 1 ? "" : "s"} to upgrade
-                    </span>
-                  </div>
-
-                  <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-3">
-                    {starUpgradeTargets.slice(0, 6).map((strategy) => {
-                      const earnedStars = getStrategyStarCount(strategy.id);
-                      return (
-                        <button
-                          key={strategy.id}
-                          onClick={() => {
-                            setCurrentStageId(strategy.stageId);
-                            handleStartPracticeRound(strategy);
-                          }}
-                          className="text-left bg-white hover:bg-yellow-50 border-2 border-amber-200 rounded-2xl p-3 transition cursor-pointer active:translate-y-0.5 shadow-xs"
-                        >
-                          <span className="block text-[10px] font-mono font-black text-amber-700 uppercase">Lesson {strategy.id}</span>
-                          <span className="block text-sm font-black text-blue-950 leading-tight mt-0.5">{strategy.name}</span>
-                          <span className="mt-2 flex items-center justify-between text-xs font-black text-amber-800">
-                            <span className="flex items-center gap-1">
-                              {renderLessonStars(earnedStars, "w-3 h-3")}
-                              {earnedStars}/3
-                            </span>
-                            <span>Replay</span>
-                          </span>
-                        </button>
-                      );
-                    })}
-                  </div>
-                </div>
-              )}
-
-              {/* Lesson grid list for active chapter */}
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                {activeStrategies.map((strategy, sIdx) => {
-                  const isViewed = viewedStrategyIds.includes(strategy.id);
-                  const isMastered = masteredStrategyIds.includes(strategy.id);
-                  const isUnlocked = strategy.id === 1 || isViewed || isMastered;
-                  const earnedStars = getStrategyStarCount(strategy.id);
-
-                  return (
-                    <div 
-                      key={strategy.id}
-                      className={`p-6 rounded-[28px] border-4 transition-all relative overflow-hidden flex flex-col justify-between ${
-                        isMastered
-                          ? "bg-emerald-50/90 border-emerald-400 shadow-[0_6px_0px_0px_#A7F3D0]"
-                          : isUnlocked
-                          ? "bg-white border-blue-200 hover:border-blue-300 shadow-[0_6px_0px_0px_#DBEAFE] hover:shadow-[0_6px_0px_0px_#93C5FD]"
-                          : "bg-slate-50/60 border-slate-200 opacity-80"
-                      }`}
-                    >
-                      <div className="space-y-2">
-                        {/* Top Line badge */}
-                        <div className="flex items-center justify-between">
-                          <span className="font-mono text-[11px] text-blue-700 font-black bg-blue-50 px-2.5 py-0.5 rounded-lg border border-blue-100">
-                            Lesson {strategy.id}/{STRATEGIES.length}
-                          </span>
-                          
-                          <div className="flex flex-wrap justify-end gap-1.5">
-                            <span className={`text-[10px] px-2.5 py-1 rounded-full border flex items-center gap-1 font-black uppercase ${
-                              isUnlocked
-                                ? "bg-white text-amber-700 border-amber-200"
-                                : "bg-slate-100 text-slate-400 border-slate-200"
-                            }`}>
-                              {renderLessonStars(earnedStars, "w-3 h-3")}
-                              {earnedStars}/3
-                            </span>
-                            {isMastered ? (
-                              <span className="bg-emerald-100 text-emerald-700 text-[10px] px-2.5 py-1 rounded-full border border-emerald-200 flex items-center gap-1 font-black uppercase">
-                                <Check className="w-3.5 h-3.5 text-emerald-600 stroke-[3]" /> Complete
-                              </span>
-                            ) : isUnlocked ? (
-                              <span className="bg-yellow-100 text-yellow-700 text-[10px] px-2.5 py-1 rounded-full border border-yellow-300 flex items-center gap-1 font-black uppercase">
-                                <span className="w-1.5 h-1.5 rounded-full bg-yellow-500" /> Lesson Unlocked
-                              </span>
-                            ) : (
-                              <span className="bg-slate-100 text-slate-400 text-[10px] px-2.5 py-1 rounded-full border border-slate-200 flex items-center gap-1 font-bold uppercase">
-                                🔒 Locked Lesson
-                              </span>
-                            )}
-                          </div>
-                        </div>
-
-                        {/* Title */}
-                        <h4 className={`text-lg font-display font-black tracking-tight ${isUnlocked ? "text-blue-950" : "text-slate-500"}`}>
-                          {!isUnlocked ? "🔒 " : ""}{strategy.name}
-                        </h4>
-
-                        <p className={`text-xs md:text-sm font-bold leading-relaxed ${isUnlocked ? "text-gray-600" : "text-slate-400"}`}>
-                          {isUnlocked ? strategy.explanation : "Complete the previous lesson to unlock this one."}
-                        </p>
-
-                        {/* Example Box */}
-                        <div className="bg-blue-50/30 p-2.5 rounded-xl border-2 border-slate-100 mt-2.5 flex items-center justify-between text-xs font-mono font-bold">
-                          <span className={`uppercase tracking-widest text-[9px] font-black ${isUnlocked ? "text-blue-500" : "text-slate-400"}`}>Try This:</span>
-                          <span className={`${isUnlocked ? "text-amber-600 font-extrabold" : "text-slate-400"}`}>{isUnlocked ? strategy.example : "???"}</span>
-                        </div>
-                      </div>
-
-                      {/* Actions */}
-                      <div className="mt-5 pt-3.5 border-t-2 border-slate-100 flex items-center gap-2">
-                        {/* Lesson viewer */}
-                        <button
-                          disabled={!isUnlocked}
-                          onClick={() => handleOpenStrategySlide(strategy)}
-                          className={`flex-1 py-2.5 px-3 rounded-xl text-xs font-black transition flex items-center justify-center gap-1.5 border-2 ${
-                            isUnlocked
-                              ? "bg-white hover:bg-slate-50 border-slate-200 text-slate-700 cursor-pointer active:translate-y-0.5"
-                              : "bg-slate-50 border-slate-200 text-slate-300 cursor-not-allowed"
-                          }`}
-                        >
-                          <BookOpen className={`w-3.5 h-3.5 ${isUnlocked ? "text-[#FF4757]" : "text-slate-300"}`} />
-                          View Lesson
-                        </button>
-
-                        {/* Practice Arena opener */}
-                        <button
-                          disabled={!isUnlocked}
-                          onClick={() => handleStartPracticeRound(strategy)}
-                          className={`flex-1 py-2.5 px-3 rounded-xl text-xs font-black transition flex items-center justify-center gap-1.5 border-2 ${
-                            !isUnlocked
-                              ? "bg-slate-50 border-slate-200 text-slate-300 cursor-not-allowed"
-                              : isMastered
-                              ? "bg-emerald-100 border-emerald-300 text-emerald-700 hover:bg-emerald-200 cursor-pointer active:translate-y-0.5"
-                              : "bg-emerald-500 hover:bg-emerald-600 border-emerald-700 text-white shadow-[0_3px_0px_0px_#047857] cursor-pointer active:translate-y-0.5"
-                          }`}
-                        >
-                          <Play className="w-3.5 h-3.5 fill-current" />
-                          {isMastered ? (earnedStars >= STARS_PER_STRATEGY ? "Replay Practice" : "Try for 3 Stars") : "Start Practice"}
-                        </button>
-                      </div>
-
-                      {/* Mastery Star Badge */}
-                      {isMastered && (
-                        <div className="absolute top-2 right-2 rotate-12 opacity-10">
-                          <Star className="w-16 h-16 text-yellow-500 fill-yellow-400" />
-                        </div>
-                      )}
-                    </div>
-                  );
-                })}
-              </div>
-            </div>
-
-          </div>
-        )}
-
-        {/* TAB 2: ALL 17 LESSONS (ENCYCLOPEDIA) */}
-        {activeTab === "encyclopedia" && (
-          <div className="space-y-6">
-            <div className="text-center max-w-lg mx-auto mb-6">
-              <span className="text-4xl">📖</span>
-              <h2 className="text-2xl md:text-3xl font-display font-black text-blue-950 mt-2">All {STRATEGIES.length} Lessons</h2>
-              <p className="text-sm text-blue-800 font-extrabold mt-1">
-                A simple guide for the lessons in order.
+              <span className="text-5xl">👑</span>
+              <h2 className="text-2xl font-display font-black text-amber-950">You did it!</h2>
+              <p className="text-sm font-bold text-amber-800">
+                All {STRATEGIES.length} lessons complete &mdash; amazing work!
               </p>
-            </div>
+              <button
+                onClick={() => {
+                  if (!confirm("Restart from Lesson 1? All stars will be kept.")) return;
+                  setMasteredStrategyIds([]); setViewedStrategyIds([1]); setCurrentStageId(StageId.StarterIsland);
+                  setShowAllDone(false);
+                  saveProgress([1], [], speedTarget, bestStreaks, bestSpeeds, factStatsRef.current, strategyStars);
+                }}
+                className="bg-[#FF4757] hover:bg-[#FF6B81] text-white font-black py-2.5 px-6 rounded-xl text-sm transition border-2 border-[#D63031] cursor-pointer inline-flex items-center gap-1.5"
+              >
+                <RefreshCw className="w-4 h-4" /> Restart
+              </button>
+            </motion.div>
+          )}
 
-            <div className="grid grid-cols-1 gap-6">
-              {STRATEGIES.map((strategy) => {
-                const isViewed = viewedStrategyIds.includes(strategy.id);
-                const isMastered = masteredStrategyIds.includes(strategy.id);
-                const isUnlocked = strategy.id === 1 || isViewed || isMastered;
-                const earnedStars = getStrategyStarCount(strategy.id);
-                const ownStageValue = STAGES.find(s => s.id === strategy.stageId) || STAGES[0];
+          {/* Chapter Navigation */}
+          <div className="flex items-center justify-center gap-2">
+            <button
+              onClick={() => {
+                const prev = STAGES.find((s) => s.id === currentStageId - 1);
+                if (prev && isStageUnlocked(prev.id)) setCurrentStageId(prev.id);
+              }}
+              disabled={currentStageId <= 1}
+              className="p-2 rounded-full bg-white border-2 border-blue-200 text-blue-700 hover:bg-blue-50 disabled:opacity-30 disabled:cursor-not-allowed cursor-pointer transition"
+            >
+              <ChevronLeft className="w-5 h-5" />
+            </button>
 
+            <div className="flex gap-2 overflow-x-auto px-1 py-1">
+              {STAGES.map((stage) => {
+                const unlocked = isStageUnlocked(stage.id);
+                const active = currentStageId === stage.id;
+                const done = STRATEGIES.filter((s) => s.stageId === stage.id).every((s) => masteredStrategyIds.includes(s.id));
                 return (
-                  <div 
-                    key={strategy.id}
-                    id={`slide-card-${strategy.id}`}
-                    className={`rounded-[32px] border-4 p-6 md:p-8 relative overflow-hidden transition-all ${
-                      isMastered
-                        ? "bg-emerald-50/40 border-emerald-300 shadow-[0_6px_0px_0px_#A7F3D0]"
-                        : isUnlocked
-                        ? "bg-white border-blue-200 shadow-[0_6px_0px_0px_#DBEAFE] hover:border-blue-300 hover:shadow-[0_6px_0px_0px_#93C5FD]"
-                        : "bg-slate-100/50 border-slate-200 opacity-75 shadow-none"
+                  <button
+                    key={stage.id}
+                    onClick={() => { if (unlocked) setCurrentStageId(stage.id); }}
+                    disabled={!unlocked}
+                    className={`shrink-0 px-3 py-2 rounded-xl text-xs font-black transition border-2 cursor-pointer ${
+                      active
+                        ? "bg-white border-yellow-400 shadow-md"
+                        : unlocked
+                        ? "bg-white border-blue-200 hover:border-blue-300"
+                        : "bg-slate-100 border-slate-200 opacity-50 cursor-not-allowed"
                     }`}
                   >
-                    {/* Header Row with no absolute overlap in mobile */}
-                    <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2.5 mb-4 border-b border-dashed border-slate-200 pb-3">
-                      {/* Badge / Stop Marker */}
-                      <span className="text-xs bg-blue-50 border border-blue-200 font-mono font-black text-blue-700 px-3 py-1 rounded-full w-fit">
-                        Lesson {strategy.id} of {STRATEGIES.length}
-                      </span>
-
-                      <div className="flex flex-wrap gap-2">
-                        {/* Star indicator */}
-                        <span className={`text-xs border px-3 py-1 font-black flex items-center gap-1.5 rounded-full w-fit ${
-                          isUnlocked
-                            ? "bg-amber-50 border-amber-200 text-amber-800"
-                            : "bg-slate-50 border-slate-200 text-slate-400"
-                        }`}>
-                          {renderLessonStars(earnedStars, "w-3 h-3")}
-                          <span>{earnedStars}/3 stars</span>
-                        </span>
-
-                        {/* Chapter indicator */}
-                        <span className="text-xs bg-blue-50 border border-blue-200 px-3 py-1 font-black flex items-center gap-1.5 rounded-full text-blue-900 w-fit">
-                          <span>{ownStageValue.emoji}</span>
-                          <span>{ownStageValue.name}</span>
-                        </span>
-                      </div>
-                    </div>
-
-                    <div className="max-w-xl">
-
-                      {/* Chapter/Lesson Unlocking badge */}
-                      <div className="text-yellow-700 text-xs font-black mb-2 flex items-center gap-1 bg-yellow-50 border border-yellow-200 w-fit px-2.5 py-1 rounded-full">
-                        <Sparkles className="w-3.5 h-3.5 text-yellow-500" />
-                        {strategy.reason}
-                      </div>
-
-                      {/* Strategy Name */}
-                      <h3 className={`text-xl md:text-2xl font-display font-black tracking-tight mb-2 ${isUnlocked ? "text-blue-950" : "text-slate-400"}`}>
-                        {!isUnlocked ? "🔒 Lesson Locked" : strategy.name}
-                      </h3>
-
-                      {/* Explanation */}
-                      <p className={`text-sm font-bold pr-10 mb-5 leading-relaxed ${isUnlocked ? "text-gray-600" : "text-slate-400"}`}>
-                        {isUnlocked ? strategy.explanation : "This lesson is locked. Complete the previous lesson first."}
-                      </p>
-
-                      {/* Split section like requested: Example and Think */}
-                      {isUnlocked ? (
-                        <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-6">
-                          {/* Example */}
-                          <div className="bg-blue-50/50 p-4 rounded-xl border-2 border-blue-100">
-                            <span className="text-[11px] font-mono uppercase tracking-widest text-[#FF4757] font-black block mb-1">
-                              Example:
-                            </span>
-                            <span className="text-lg font-mono font-black text-blue-950">
-                              {strategy.example}
-                            </span>
-                          </div>
-
-                          {/* Think */}
-                          <div className="bg-yellow-50/50 p-4 rounded-xl border-2 border-yellow-100">
-                            <span className="text-[11px] font-mono uppercase tracking-widest text-yellow-700 font-black block mb-2">
-                              Think:
-                            </span>
-                            <div className="space-y-1">
-                              {strategy.thinkSteps.map((step, idx) => (
-                                <p key={idx} className="text-xs text-blue-900 leading-snug font-black flex items-start gap-1.5">
-                                  <span className="text-yellow-500 font-bold mt-0.5 inline-block">•</span>
-                                  <span>{step}</span>
-                                </p>
-                              ))}
-                            </div>
-                          </div>
-                        </div>
-                      ) : (
-                        <div className="bg-slate-50 px-6 py-8 rounded-2xl border-2 border-dashed border-slate-200 mb-6 text-center text-xs font-black text-slate-400 flex flex-col items-center justify-center gap-1">
-                          <span className="text-3xl mb-1">🔐</span>
-                          <span>Complete Lesson {strategy.id - 1} with a passing practice to unlock.</span>
-                        </div>
-                      )}
-
-                      {/* Footer Tip & Run */}
-                      <div className="flex flex-col sm:flex-row items-baseline sm:items-center justify-between gap-3 pt-3.5 border-t-2 border-slate-100 text-xs">
-                        <span className="text-gray-400 font-bold">
-                          {isUnlocked ? `Best stars: ${earnedStars}/3` : "Secret mental math trick hidden inside."}
-                        </span>
-                        
-                        <div className="flex items-center gap-2 w-full sm:w-auto mt-2 sm:mt-0">
-                          <button
-                            disabled={!isUnlocked}
-                            onClick={() => handleStartPracticeRound(strategy)}
-                            className={`font-black py-2 px-4 rounded-xl flex items-center gap-1.5 transition border-2 w-full justify-center sm:w-auto ${
-                              !isUnlocked
-                                ? "bg-slate-100 border-slate-200 text-slate-300 cursor-not-allowed"
-                                : "bg-emerald-500 hover:bg-emerald-600 text-white shadow-[0_3px_0px_0px_#047857] active:translate-y-0.5 active:shadow-none border-emerald-700 cursor-pointer"
-                            }`}
-                          >
-                            <Play className="w-3 h-3 fill-current" />
-                            {isMastered ? (earnedStars >= STARS_PER_STRATEGY ? "Replay Practice" : "Try for 3 Stars") : "Start Practice"}
-                          </button>
-                        </div>
-                      </div>
-                    </div>
-                  </div>
+                    <span className="text-lg block text-center">{unlocked ? stage.emoji : "🔒"}</span>
+                    <span className={`block mt-0.5 text-center ${active ? "text-blue-900" : "text-slate-600"}`}>
+                      {stage.name}
+                    </span>
+                    {done && <Check className="w-3 h-3 text-emerald-500 mx-auto mt-0.5" />}
+                  </button>
                 );
               })}
             </div>
+
+            <button
+              onClick={() => {
+                const next = STAGES.find((s) => s.id === currentStageId + 1);
+                if (next && isStageUnlocked(next.id)) setCurrentStageId(next.id);
+              }}
+              disabled={currentStageId >= STAGES.length || !isStageUnlocked((currentStageId + 1) as StageId)}
+              className="p-2 rounded-full bg-white border-2 border-blue-200 text-blue-700 hover:bg-blue-50 disabled:opacity-30 disabled:cursor-not-allowed cursor-pointer transition"
+            >
+              <ChevronRight className="w-5 h-5" />
+            </button>
           </div>
-        )}
 
-        {/* TAB 3: THE PRACTICE ARENA SCREEN */}
-        {activeTab === "practice" && activeStrategyRound && (
-          <div className={`max-w-2xl mx-auto ${isTimedQuizInProgress ? "timed-practice-shell" : ""}`}>
-            
-            {/* Header back options */}
-            {!isTimedQuizInProgress && (
-            <div className="flex items-center justify-between mb-4">
-              <button
-                onClick={() => {
-                  clearRoundCountdown();
-                  setIsRoundActive(false);
-                  setActiveTab("map");
-                }}
-                className="text-xs text-blue-800 hover:text-blue-900 flex items-center gap-1.5 bg-white border-2 border-blue-200 px-3 py-1.5 rounded-xl font-black transition active:translate-y-0.5 cursor-pointer"
-              >
-                <ArrowLeft className="w-4 h-4" />
-                Map
-              </button>
-
-              <span className="text-xs bg-white border-2 border-blue-200 px-3 py-1.5 rounded-xl text-blue-900 font-black">
-                Lesson {activeStrategyRound.id}/{STRATEGIES.length}
-              </span>
+          {/* Chapter Header */}
+          <div className="text-center">
+            <span className="text-4xl">{activeStage.emoji}</span>
+            <h2 className="text-xl md:text-2xl font-display font-black text-blue-950 mt-1">
+              {activeStage.name}
+            </h2>
+            <p className="text-sm text-blue-800 font-bold">{activeStage.description}</p>
+            <div className="mt-2 flex items-center justify-center gap-1.5">
+              <Trophy className="w-4 h-4 text-yellow-500" />
+              <span className="text-sm font-black text-blue-900">{chapterProgress} lessons done</span>
             </div>
+          </div>
+
+          {/* Lesson Cards */}
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+            {activeStrategies.map((strategy) => {
+              const unlocked = strategy.id === 1 || viewedStrategyIds.includes(strategy.id) || masteredStrategyIds.includes(strategy.id);
+              const mastered = masteredStrategyIds.includes(strategy.id);
+              const sStars = getStrategyStarCount(strategy.id);
+
+              return (
+                <div
+                  key={strategy.id}
+                  className={`p-4 rounded-2xl border-2 transition ${
+                    mastered
+                      ? "bg-emerald-50 border-emerald-300"
+                      : unlocked
+                      ? "bg-white border-blue-200 hover:border-blue-300"
+                      : "bg-slate-50 border-slate-200 opacity-60"
+                  }`}
+                >
+                  <div className="flex items-start justify-between gap-2">
+                    <div className="min-w-0">
+                      <h3 className={`font-display font-black text-sm md:text-base ${unlocked ? "text-blue-950" : "text-slate-400"}`}>
+                        {!unlocked ? "🔒 " : ""}{strategy.name}
+                      </h3>
+                      <p className={`text-xs mt-0.5 ${unlocked ? "text-slate-500" : "text-slate-400"}`}>
+                        {unlocked ? strategy.explanation : "Finish the lesson before this one"}
+                      </p>
+                    </div>
+                    <div className="flex gap-0.5 shrink-0">
+                      {renderStars(sStars, "w-3.5 h-3.5")}
+                    </div>
+                  </div>
+
+                  {unlocked && (
+                    <div className="flex items-center gap-2 mt-3">
+                      <button
+                        onClick={() => setShowLessonModal(strategy)}
+                        className="flex items-center gap-1 px-2.5 py-1.5 rounded-lg text-xs font-bold bg-white border border-slate-200 text-slate-600 hover:bg-slate-50 cursor-pointer transition"
+                      >
+                        <BookOpen className="w-3.5 h-3.5" /> How?
+                      </button>
+                      <button
+                        onClick={() => handleStartPractice(strategy)}
+                        className={`flex-1 flex items-center justify-center gap-1.5 py-2 rounded-lg text-sm font-black transition cursor-pointer border-2 ${
+                          mastered
+                            ? "bg-emerald-100 border-emerald-300 text-emerald-700 hover:bg-emerald-200"
+                            : "bg-emerald-500 border-emerald-600 text-white hover:bg-emerald-600 shadow-sm"
+                        }`}
+                      >
+                        <Play className="w-4 h-4 fill-current" />
+                        {mastered ? (sStars >= STARS_PER_STRATEGY ? "Play Again" : "Try for 3") : "Play"}
+                      </button>
+                    </div>
+                  )}
+                </div>
+              );
+            })}
+          </div>
+
+          {/* Footer */}
+          <div className="flex items-center justify-center gap-4 pt-4 pb-8 text-xs">
+            <button
+              onClick={() => setShowSettingsModal(true)}
+              className="text-slate-500 hover:text-slate-700 font-bold cursor-pointer"
+            >
+              Settings
+            </button>
+            <span className="text-slate-300">|</span>
+            <button
+              onClick={() => printCertificate(activeStage.id, activeStage.name, activeStage.emoji, stars, studentName)}
+              className="text-slate-500 hover:text-slate-700 font-bold cursor-pointer"
+            >
+              Print Certificate
+            </button>
+          </div>
+        </main>
+      ) : (
+        /* ─── Practice Screen ─── */
+        <main className={`flex-1 max-w-2xl w-full mx-auto ${isTimedQuizInProgress ? "timed-quiz-main p-0 sm:p-4 md:p-6" : "p-4 md:p-6"}`}>
+          <div className={isTimedQuizInProgress ? "timed-practice-shell" : ""}>
+            {!isTimedQuizInProgress && (
+              <div className="flex items-center justify-between mb-4">
+                <button onClick={exitPractice} className="text-xs text-blue-800 flex items-center gap-1 bg-white border-2 border-blue-200 px-3 py-1.5 rounded-xl font-bold cursor-pointer transition">
+                  <ArrowLeft className="w-4 h-4" /> Back
+                </button>
+                <span className="text-xs bg-white border-2 border-blue-200 px-3 py-1.5 rounded-xl text-blue-900 font-bold">
+                  Lesson {activeStrategyRound.id}/{STRATEGIES.length}
+                </span>
+              </div>
             )}
 
-            {/* Main practicing card */}
-            <div className={`bg-white rounded-[40px] border-[6px] border-blue-400 p-6 md:p-8 relative overflow-hidden shadow-[0_20px_0px_0px_#BFDBFE] text-slate-900 ${isTimedQuizInProgress ? "timed-quiz-card" : ""}`}>
-              
-              {/* Outer boundary glow */}
-              <div className="absolute top-0 left-0 w-full h-[6px] bg-[#FF4757]" />
+            <div className={`bg-white rounded-[32px] border-4 border-blue-400 p-5 md:p-7 relative overflow-hidden shadow-lg ${isTimedQuizInProgress ? "timed-quiz-card" : ""}`}>
+              <div className="absolute top-0 left-0 w-full h-1.5 bg-[#FF4757]" />
 
+              {/* Countdown overlay */}
               <AnimatePresence>
                 {countdownValue !== null && (
                   <motion.div
-                    key="timed-round-countdown"
-                    initial={{ opacity: 0 }}
-                    animate={{ opacity: 1 }}
-                    exit={{ opacity: 0 }}
-                    className="absolute inset-0 z-50 grid place-items-center bg-white/80 backdrop-blur-[2px] pointer-events-none"
-                    aria-live="assertive"
+                    key="cd" initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }}
+                    className="absolute inset-0 z-50 grid place-items-center bg-white/80 backdrop-blur-sm pointer-events-none"
                   >
-                    <div className="rounded-[32px] border-4 border-blue-300 bg-white/95 px-8 py-6 text-center shadow-2xl min-w-[180px]">
-                      <div className="text-[11px] font-black uppercase tracking-[0.2em] text-blue-700 mb-2">
-                        {countdownLabel}
-                      </div>
+                    <div className="rounded-2xl border-4 border-blue-300 bg-white/95 px-8 py-6 text-center shadow-xl">
+                      <div className="text-xs font-black uppercase tracking-widest text-blue-700 mb-2">Get Ready</div>
                       <motion.div
                         key={countdownValue}
-                        initial={{ scale: 0.72, opacity: 0, y: 12 }}
-                        animate={{ scale: 1, opacity: 1, y: 0 }}
-                        exit={{ scale: 1.2, opacity: 0, y: -12 }}
-                        transition={{ type: "spring", stiffness: 420, damping: 18 }}
-                        className="text-6xl md:text-8xl font-black font-display text-[#FF4757] leading-none"
+                        initial={{ scale: 0.7, opacity: 0 }} animate={{ scale: 1, opacity: 1 }} exit={{ scale: 1.2, opacity: 0 }}
+                        className="text-6xl md:text-8xl font-black font-display text-[#FF4757]"
                       >
                         {countdownValue}
                       </motion.div>
@@ -2109,616 +731,303 @@ export default function App() {
               </AnimatePresence>
 
               {!roundCompleted ? (
-                // Active Math Quest Layout
-                <div className="space-y-6">
-                  
-                  {/* Ready State Pre-round */}
+                <div className="space-y-5">
                   {!isRoundActive ? (
-                    <div className="text-center py-6 space-y-6">
-                      <div className="space-y-2">
-                        <span className="inline-block bg-blue-100 border-2 border-blue-200 text-blue-700 text-xs font-black px-3.5 py-1.5 rounded-full">
+                    /* Pre-round */
+                    <div className="text-center py-4 space-y-5">
+                      <div>
+                        <span className="inline-block bg-blue-100 border-2 border-blue-200 text-blue-700 text-xs font-black px-3 py-1 rounded-full">
                           1-Minute Practice
                         </span>
-                        <h3 className="text-2xl md:text-3xl font-display font-black text-blue-950">
+                        <h3 className="text-xl md:text-2xl font-display font-black text-blue-950 mt-2">
                           {activeStrategyRound.name}
                         </h3>
-                        <p className="text-sm text-slate-600 max-w-md mx-auto leading-relaxed">
-                          Answer as many as you can in 1 minute.
-                        </p>
-                        <div className="inline-flex flex-wrap items-center justify-center gap-2 bg-amber-50 border-2 border-amber-200 px-4 py-2 rounded-2xl text-xs font-black text-amber-800">
-                          <span>Best:</span>
-                          {renderLessonStars(activeRoundBestStars, "w-4 h-4")}
-                          <span>{activeRoundBestStars}/3 stars</span>
-                          {activeRoundBestStars > 0 && activeRoundBestStars < STARS_PER_STRATEGY && (
-                            <span className="text-blue-800">- Try to upgrade!</span>
-                          )}
-                          {activeRoundBestStars >= STARS_PER_STRATEGY && (
-                            <span className="text-emerald-700">- Top score earned</span>
-                          )}
-                        </div>
                       </div>
 
-                      {/* Practice goal grid */}
-                      <div className="bg-slate-50 border-2 border-slate-100 p-4 rounded-2xl max-w-md mx-auto space-y-3">
-                        <span className="text-[10px] text-slate-400 font-black font-mono uppercase tracking-widest block">
-                          1-Minute Practice Goals
-                        </span>
-                        <div className="grid grid-cols-3 gap-2 text-center text-xs font-black">
-                          <div className="p-3 bg-white border-2 border-amber-200 rounded-xl shadow-xs">
-                            <span className="block text-xl">🥉</span>
-                            <span className="text-amber-800 block mt-1">Bronze</span>
-                            <span className="font-mono text-sm text-slate-500">{Math.max(3, Math.round(speedTarget * 0.3))} correct</span>
+                      <div className="bg-slate-50 border-2 border-slate-100 p-4 rounded-2xl max-w-xs mx-auto">
+                        <span className="text-xs text-slate-400 font-bold uppercase tracking-wider block mb-2">Goals</span>
+                        <div className="grid grid-cols-3 gap-2 text-center text-xs font-bold">
+                          <div className="p-2 bg-white border-2 border-amber-200 rounded-xl">
+                            <span className="text-xl block">🥉</span>
+                            <span className="text-amber-800 block mt-0.5">Bronze</span>
+                            <span className="font-mono text-slate-500">{Math.max(3, Math.round(speedTarget * 0.3))}+</span>
                           </div>
-                          
-                          <div className="p-3 bg-white border-2 border-slate-300 rounded-xl shadow-xs">
-                            <span className="block text-xl">🥈</span>
-                            <span className="text-slate-700 block mt-1">Silver</span>
-                            <span className="font-mono text-sm text-slate-500">{Math.max(6, Math.round(speedTarget * 0.6))} correct</span>
+                          <div className="p-2 bg-white border-2 border-slate-300 rounded-xl">
+                            <span className="text-xl block">🥈</span>
+                            <span className="text-slate-700 block mt-0.5">Silver</span>
+                            <span className="font-mono text-slate-500">{roundPassTarget}+</span>
                           </div>
-
-                          <div className="p-3 bg-white border-2 border-yellow-300 rounded-xl shadow-xs">
-                            <span className="block text-xl">🥇</span>
-                            <span className="text-yellow-800 block mt-1">Gold Goal</span>
-                            <span className="font-mono text-sm text-slate-500">{speedTarget} correct</span>
+                          <div className="p-2 bg-white border-2 border-yellow-300 rounded-xl">
+                            <span className="text-xl block">🥇</span>
+                            <span className="text-yellow-800 block mt-0.5">Gold</span>
+                            <span className="font-mono text-slate-500">{speedTarget}+</span>
                           </div>
                         </div>
-                        <p className="text-[10px] text-blue-800 font-extrabold">
-                          Pass: {roundPassTarget}+ facts with 80% accuracy.
+                        <p className="text-xs text-blue-800 font-bold mt-2">
+                          Best: {renderStars(activeRoundBestStars, "w-3.5 h-3.5 inline")} {activeRoundBestStars}/3
                         </p>
                       </div>
 
-                      {/* Lesson slide shortcut prior to start */}
                       <button
-                        onClick={() => handleOpenStrategySlide(activeStrategyRound)}
-                        className="mx-auto bg-white hover:bg-slate-50 border-2 border-slate-200 text-xs text-slate-700 font-black py-3 px-6 rounded-xl transition flex items-center justify-center gap-1.5 cursor-pointer active:translate-y-0.5"
+                        onClick={() => setShowLessonModal(activeStrategyRound)}
+                        className="mx-auto bg-white hover:bg-slate-50 border-2 border-slate-200 text-xs text-slate-700 font-bold py-2 px-5 rounded-xl cursor-pointer transition flex items-center gap-1.5"
                       >
-                        <BookOpen className="w-4 h-4 text-[#FF4757]" />
-                        Review lesson
+                        <BookOpen className="w-4 h-4 text-[#FF4757]" /> How to solve
                       </button>
 
-                      {/* Huge Start Button */}
                       <button
-                        onClick={startTimedRoundCountdown}
-                        className="w-full max-w-[340px] mx-auto block bg-emerald-500 hover:bg-emerald-600 text-white font-black py-4 rounded-2xl text-lg transition border-2 border-emerald-600 shadow-[0_5px_0px_#047857] active:scale-98 active:translate-y-0.5 cursor-pointer active:shadow-none"
+                        onClick={startCountdown}
+                        className="w-full max-w-[300px] mx-auto block bg-emerald-500 hover:bg-emerald-600 text-white font-black py-3.5 rounded-2xl text-lg transition border-2 border-emerald-600 shadow-md cursor-pointer"
                       >
-                        Start Practice
+                        Start!
                       </button>
                     </div>
                   ) : (
-                    // Timed Active Practice Playing Layout
+                    /* Active practice */
                     <div className="timed-practice-layout">
-                      
-                      {(() => {
-                        const elapsed = 60 - timeLeft;
-                        const realtimeSpeed = elapsed > 0 ? (roundScore / elapsed) * 60 : 0;
-                        return (
-                          <div className="timed-stats-grid grid grid-cols-4 gap-2 bg-slate-50/80 px-3 py-2 rounded-2xl border border-slate-100 text-center">
-                            <div className="flex flex-col items-center justify-center">
-                              <Clock className={`w-4 h-4 text-[#FF4757] stroke-[3.5] ${timeLeft <= 15 ? "animate-pulse" : ""}`} />
-                              <span className={`font-mono text-base font-black ${timeLeft <= 15 ? "text-red-600" : "text-blue-950"}`}>{timeLeft}s</span>
-                              <span className="text-[9px] font-black uppercase text-slate-500">Time</span>
-                            </div>
-                            <div className="flex flex-col items-center justify-center">
-                              <Trophy className="w-4 h-4 text-amber-500 stroke-[3.5]" />
-                              <span className="font-mono text-base font-black text-blue-950">{roundScore}</span>
-                              <span className="text-[9px] font-black uppercase text-slate-500">Solved</span>
-                            </div>
-                            <div className="flex flex-col items-center justify-center">
-                              <span className="text-base leading-none">🔥</span>
-                              <span className="font-mono text-base font-black text-orange-600">{currentStreak}</span>
-                              <span className="text-[9px] font-black uppercase text-slate-500">Streak</span>
-                            </div>
-                            <div className="flex flex-col items-center justify-center">
-                              <span className="text-base leading-none">🏃</span>
-                              <span className="font-mono text-base font-black text-blue-950">{realtimeSpeed.toFixed(0)}</span>
-                              <span className="text-[9px] font-black uppercase text-slate-500">/min</span>
-                            </div>
-                          </div>
-                        );
-                      })()}
-
-                      {/* Math Question Arena Display */}
-                      <motion.div 
-                        onClick={() => inputRef.current?.blur()}
-                        animate={isShaking ? { x: [-10, 10, -10, 10, -5, 5, 0] } : {}}
-                        transition={{ duration: 0.14 }}
-                        className={`timed-question-card text-center py-6 md:py-8 rounded-3xl border-4 transition-all duration-75 relative overflow-hidden select-none cursor-pointer ${
-                          isAnimatingCorrect 
-                            ? "border-emerald-500 bg-emerald-50/10" 
-                            : isShaking 
-                            ? "border-rose-500 bg-rose-50/10" 
-                            : "bg-slate-50/50 border-slate-200 hover:border-slate-300"
-                        }`}
-                      >
-                        <span className={`quiz-info-capsule text-[10px] font-mono uppercase border font-black px-3 py-1 rounded-full inline-flex items-center justify-center mb-2 ${questionCapsule.className}`}>
-                          {questionCapsule.label}
-                        </span>
-
-                        {/* Centered Question Formula */}
-                        <div className="relative z-10 py-2">
-                          <motion.h4
-                            key={currentQuestionIdx}
-                            initial={{ opacity: 0.85, scale: 0.99 }}
-                            animate={{ opacity: 1, scale: 1 }}
-                            transition={{ duration: 0.06 }}
-                            className="text-5xl md:text-7xl font-sans font-extrabold tracking-tight text-slate-800"
-                          >
-                            {currentQuestion?.question}
-                          </motion.h4>
+                      {/* Stats bar */}
+                      <div className="timed-stats-grid flex items-center justify-between gap-2 text-xs font-black text-blue-800 bg-blue-50 p-2.5 rounded-xl border-2 border-blue-100">
+                        <div className="flex items-center gap-2">
+                          <span className="font-mono text-lg">{timeLeft}s</span>
+                          <span>|</span>
+                          <span className="font-mono text-lg">{roundScore}</span>
+                          <span className="text-slate-400">correct</span>
                         </div>
-
-                        {/* Active Central Blue Input Box */}
-                        <div className="mt-2.5 relative z-10">
-                          <div className={`border-4 bg-white rounded-2xl w-44 h-16 flex items-center justify-center mx-auto text-3xl font-extrabold font-mono transition duration-75 shadow-inner select-none ${
-                            isAnimatingCorrect 
-                              ? "border-emerald-500 text-emerald-600 scale-102"
-                              : isShaking 
-                              ? "border-rose-500 text-rose-500" 
-                              : "border-sky-500 text-sky-600"
-                          }`}>
-                            {userAnswer === "" ? (
-                              <span className="text-slate-300">?</span>
-                            ) : (
-                              <span>{userAnswer}</span>
-                            )}
-                          </div>
-                        </div>
-
-                        {/* Subtle flash text messages */}
-                        {isAnimatingCorrect && (
-                          <div className="absolute top-2 right-4 text-xs font-black text-emerald-600 uppercase tracking-wider">
-                            Correct! ✨
-                          </div>
-                        )}
-                        {isShaking && (
-                          <div className="absolute top-2 right-4 text-xs font-black text-rose-600 uppercase tracking-wider">
-                            Let's try again! ☄️
-                          </div>
-                        )}
-                      </motion.div>
-
-                      {/* Interactive Spam Warning */}
-                      {spamWarning && !isTimedQuizInProgress && (
-                        <motion.div 
-                          initial={{ opacity: 0, y: 5 }}
-                          animate={{ opacity: 1, y: 0 }}
-                          className="bg-amber-100 border-2 border-amber-300 rounded-xl p-3 text-center text-xs font-extrabold text-amber-900 flex items-center justify-center gap-1.5 shadow-sm"
-                        >
-                          <span>⚠️</span> {spamWarning}
-                        </motion.div>
-                      )}
-
-                      {/* Computer keyboard typing bridge (invisible trigger) */}
-                      <input
-                        ref={inputRef}
-                        type="text"
-                        pattern="[0-9]*"
-                        inputMode="none"
-                        autoComplete="off"
-                        value={userAnswer}
-                        onChange={(e) => {
-                          const val = e.target.value.replace(/[^0-9]/g, "");
-                          setUserAnswer(val);
-                        }}
-                        className="sr-only opacity-0 absolute pointer-events-none"
-                        readOnly
-                        tabIndex={-1}
-                        aria-hidden="true"
-                      />
-
-                      {/* RESTORED KEYPAD EXACTLY AS PREVIOUSLY DESIGNED */}
-                      <div className="timed-keypad-wrap space-y-3">
-                        <div className="grid grid-cols-3 gap-2.5 max-w-[340px] mx-auto select-none">
-                          {["1", "2", "3", "4", "5", "6", "7", "8", "9"].map((num) => (
-                            <button
-                              key={num}
-                              onClick={() => handleNumClick(num)}
-                              className="bg-white hover:bg-slate-50 border-[2px] border-slate-200 text-slate-800 py-3 rounded-xl text-2xl font-black flex items-center justify-center cursor-pointer transition active:scale-95 shadow-xs font-sans"
-                            >
-                              {num}
-                            </button>
-                          ))}
-                          
-                          {/* 0 Spanning 2 columns */}
-                          <button
-                            onClick={() => handleNumClick("0")}
-                            className="col-span-2 bg-white hover:bg-slate-50 border-[2px] border-slate-200 text-slate-800 py-3 rounded-xl text-2xl font-black flex items-center justify-center cursor-pointer transition active:scale-95 shadow-xs font-sans"
-                          >
-                            0
-                          </button>
-
-                          {/* Delete key ⌫ */}
-                          <button
-                            onClick={() => handleNumClick("DELETE")}
-                            className="bg-[#FFF5F5] hover:bg-red-50 border-[2px] border-red-100 text-rose-600 py-3 rounded-xl text-xl font-black flex items-center justify-center cursor-pointer transition active:scale-95 shadow-xs font-sans"
-                            title="Backspace clear last digit"
-                          >
-                            ⌫
-                          </button>
+                        <div className="flex items-center gap-2">
+                          <span>{consecutiveErrors > 0 ? `${consecutiveErrors} miss` : currentStreak > 1 ? `${currentStreak} streak` : ""}</span>
                         </div>
                       </div>
 
-                      {/* Hint Slide Drawer Buttons */}
-                      {!isTimedQuizInProgress && (
-                      <div className="flex gap-2.5 max-w-[340px] mx-auto select-none pt-1">
-                        <button
-                          onClick={() => setShowHint(!showHint)}
-                          className="flex-1 bg-white hover:bg-slate-50 border-2 border-slate-200 text-[11px] text-slate-700 font-bold py-2.5 px-3 rounded-xl transition flex items-center justify-center gap-1.5 cursor-pointer active:translate-y-0.5"
-                        >
-                          <HelpCircle className="w-3.5 h-3.5 text-yellow-500" />
-                          {showHint ? "Hide hint" : "Hint"}
-                        </button>
+                      {/* Question */}
+                      <div className="timed-question-card bg-blue-50/50 rounded-2xl border-2 border-blue-100 p-6 text-center">
+                        <h4 className="text-5xl md:text-7xl font-black font-mono text-blue-950 tracking-tight">
+                          {currentQuestion?.question || "..."}
+                        </h4>
+                        <div className="h-14 flex items-center justify-center">
+                          <input
+                            ref={inputRef}
+                            type="text"
+                            inputMode="numeric"
+                            value={userAnswer}
+                            onChange={(e) => {
+                              if (answerLockedRef.current || roundCompletedRef.current) return;
+                              const v = e.target.value.replace(/[^0-9-]/g, "");
+                              if (v === "" || v === "-" || /^-?[0-9]{0,8}$/.test(v)) setUserAnswer(v);
+                            }}
+                            onKeyDown={(e) => { if (e.key === "Enter") handleSubmit(); }}
+                            className={`w-40 text-center text-3xl md:text-4xl font-mono font-black bg-transparent border-b-4 outline-none transition-colors py-2 ${
+                              isAnimatingCorrect ? "border-emerald-400 text-emerald-600" :
+                              isAnimatingIncorrect ? "border-red-400 text-red-500" :
+                              "border-blue-300 text-blue-800 focus:border-blue-500"
+                            } ${isShaking ? "animate-pulse" : ""}`}
+                            autoFocus
+                            autoComplete="off"
+                          />
+                        </div>
+                        <div className="text-xs font-bold text-slate-400 mt-1 flex items-center justify-center gap-2">
+                          Question {currentQuestionIdx + 1}
+                          {showHint && currentQuestion && (
+                            <span className="text-blue-600">{currentQuestion.hint}</span>
+                          )}
+                          {!showHint && currentQuestion && (
+                            <button onClick={() => setShowHint(true)} className="text-blue-400 hover:text-blue-600 cursor-pointer">hint?</button>
+                          )}
+                        </div>
+                      </div>
 
+                      {/* Keypad */}
+                      <div className="timed-keypad-wrap">
+                        <div className="grid grid-cols-4 gap-2 max-w-xs mx-auto">
+                          {["1","2","3","DEL","4","5","6","CLR","7","8","9","-","","0","",""].map((k, i) => {
+                            if (k === "DEL") return <button key={i} onClick={() => handleNumClick("DEL")} className="p-3 rounded-xl bg-red-100 border-2 border-red-200 text-red-700 font-black text-sm cursor-pointer active:bg-red-200 transition">⌫</button>;
+                            if (k === "CLR") return <button key={i} onClick={() => handleNumClick("CLR")} className="p-3 rounded-xl bg-slate-100 border-2 border-slate-200 text-slate-700 font-black text-sm cursor-pointer active:bg-slate-200 transition">C</button>;
+                            if (k === "-") {
+                              return <button key={i} onClick={() => handleNumClick(k)} className={`p-3 rounded-xl font-black text-lg cursor-pointer transition border-2 ${
+                                userAnswer === "-" ? "bg-blue-200 border-blue-400 text-blue-800" : "bg-white border-slate-200 text-slate-700 hover:bg-slate-50"
+                              }`}>-</button>;
+                            }
+                            if (k === "") return <div key={i} />;
+                            return <button key={i} onClick={() => handleNumClick(k)} className="p-3 rounded-xl bg-white border-2 border-slate-200 text-blue-900 font-black text-lg cursor-pointer hover:bg-blue-50 active:bg-blue-100 transition shadow-sm">{k}</button>;
+                          })}
+                        </div>
                         <button
-                          onClick={() => handleOpenStrategySlide(activeStrategyRound)}
-                          className="flex-1 bg-white hover:bg-slate-50 border-2 border-slate-200 text-[11px] text-slate-700 font-bold py-2.5 px-3 rounded-xl transition flex items-center justify-center gap-1.5 cursor-pointer active:translate-y-0.5"
+                          onClick={handleSubmit}
+                          className="w-full max-w-xs mx-auto block mt-2 py-3 bg-[#FF4757] hover:bg-[#FF6B81] text-white font-black rounded-xl text-sm transition border-2 border-[#D63031] shadow-sm cursor-pointer"
                         >
-                          <BookOpen className="w-3.5 h-3.5 text-red-500" />
-                          Review lesson
+                          Submit
                         </button>
                       </div>
-                      )}
+                    </div>
+                  )}
+                </div>
+              ) : (
+                /* Round Results */
+                <div className="text-center py-6 space-y-4">
+                  <span className="text-4xl">{roundScore >= roundPassTarget ? "🎉" : "💪"}</span>
+                  <h3 className="text-xl md:text-2xl font-display font-black text-blue-950">
+                    {roundScore >= roundPassTarget ? "Great job!" : "Nice try!"}
+                  </h3>
 
-                      {!isTimedQuizInProgress && showHint && (
-                        <div className="bg-yellow-50/50 border-2 border-yellow-200 p-4 rounded-2xl space-y-2 max-w-[340px] mx-auto text-left">
-                          <div className="flex items-center gap-1.5">
-                            <Lightbulb className="w-4 h-4 text-yellow-500 stroke-[2.5]" />
-                            <h5 className="text-[10px] font-black text-yellow-800 uppercase tracking-wider">
-                              How to solve this fast:
-                            </h5>
-                          </div>
-                          <p className="text-xs text-slate-700 font-black italic">
-                            "{currentQuestion?.hint || activeStrategyRound.example}"
-                          </p>
-                          <div className="space-y-1">
-                            {activeStrategyRound.thinkSteps.map((step, s) => (
-                              <p key={s} className="text-[11px] text-blue-900 pl-2.5 border-l-2 border-blue-400 font-semibold leading-tight">
-                                {step}
-                              </p>
-                            ))}
-                          </div>
-                        </div>
-                      )}
+                  <div className="flex items-center justify-center gap-3">
+                    <div className="text-center">
+                      <span className="text-3xl font-black font-mono text-blue-950 block">{roundScore}</span>
+                      <span className="text-xs text-slate-400 font-bold">correct</span>
+                    </div>
+                    <span className="text-slate-300 text-xl">|</span>
+                    <div className="text-center">
+                      <span className="text-3xl font-black font-mono text-blue-950 block">{roundAttempts}</span>
+                      <span className="text-xs text-slate-400 font-bold">answered</span>
+                    </div>
+                  </div>
 
+                  {lastRoundStarResult && (
+                    <div className="flex items-center justify-center gap-1.5 bg-amber-50 border-2 border-amber-200 px-4 py-2 rounded-full w-fit mx-auto">
+                      <span className="text-xs font-bold text-amber-800">
+                        {lastRoundStarResult.improved ? "Star improved!" : lastRoundStarResult.earnedStars > 0 ? `${lastRoundStarResult.earnedStars} star${lastRoundStarResult.earnedStars > 1 ? "s" : ""}` : "No new stars"}
+                      </span>
+                      <span className="flex gap-0.5">{renderStars(lastRoundStarResult.bestStars, "w-4 h-4")}</span>
                     </div>
                   )}
 
-                </div>
-              ) : (
-                // Perfect / Completion Screen for Practices
-                <div className="text-center py-8 space-y-6">
-                  
-                  <div className="relative select-none">
-                    <div className="text-8xl animate-bounce-slow">🏆</div>
-                    {roundScore >= Math.max(3, Math.round(speedTarget * 0.3)) && (
-                      <div className="absolute -top-3 right-1/4 animate-pulse">
-                        <Star className="w-8 h-8 text-yellow-500 fill-yellow-400" />
-                      </div>
-                    )}
-                    {roundScore >= Math.max(6, Math.round(speedTarget * 0.6)) && (
-                      <div className="absolute -top-3 left-1/4 animate-pulse">
-                        <Star className="w-8 h-8 text-sky-500 fill-sky-400" />
-                      </div>
-                    )}
-                    {roundScore >= speedTarget && (
-                      <div className="absolute -top-7 left-1/2 -translate-x-1/2 animate-bounce">
-                        <Sparkles className="w-10 h-10 text-yellow-400 fill-yellow-400" />
-                      </div>
-                    )}
-                  </div>
+                  {roundScore >= roundPassTarget && (
+                    <p className="text-sm font-bold text-emerald-700">Lesson passed! {activeStrategyRound && activeStrategyRound.id < STRATEGIES.length ? "Next lesson unlocked!" : ""}</p>
+                  )}
 
-                  <div className="space-y-2">
-                    <h3 className="text-2xl md:text-3xl font-display font-black text-blue-950">
-                      Practice Complete! ⏱️
-                    </h3>
-                    <p className="text-sm text-slate-600 font-extrabold max-w-sm mx-auto leading-relaxed">
-                      Nice work on <strong className="text-blue-600 font-black">{activeStrategyRound.name}</strong>.
-                    </p>
-                  </div>
-
-                  {/* score badge summary */}
-                  <div className="bg-yellow-50 p-6 rounded-[32px] border-4 border-yellow-300 inline-block shadow-[0_4px_0px_0px_#FDE047]">
-                    <span className="text-xs text-[#FF4757] uppercase tracking-widest block mb-1 font-black font-semibold">Result</span>
-                    <span className="text-4xl font-mono font-black text-blue-950">{roundScore} correct in 1 min</span>
-                    <span className="block text-xs text-slate-500 font-black mt-1">{roundAccuracyPercent}% correct</span>
-                    
-                    <div className="mt-4 pt-3 border-t border-yellow-200 text-xs text-blue-950 font-black space-y-2">
-                      <div className="flex items-center justify-center gap-2">
-                        {renderLessonStars(roundStarsEarned, "w-5 h-5")}
-                        <span className="text-sm">{roundStarsEarned}/3 stars this round</span>
-                      </div>
-
-                      {roundStarsEarned >= STARS_PER_STRATEGY ? (
-                        <p className="text-amber-600 font-black text-sm">🏆 Gold! Top star score! 🏆</p>
-                      ) : roundStarsEarned === 2 ? (
-                        <p className="text-slate-700 font-black text-sm">🥈 Silver! Try again for 3 stars.</p>
-                      ) : roundStarsEarned === 1 ? (
-                        <p className="text-amber-800 font-semibold">🥉 Bronze! Try again to upgrade.</p>
-                      ) : (
-                        <p className="text-slate-500 font-bold max-w-xs mx-auto leading-snug">
-                          🌿 Try again for {roundPassTarget}+ facts with 80% accuracy.
-                        </p>
-                      )}
-
-                      {displayedLastRoundStarResult && (
-                        <p className={`max-w-xs mx-auto leading-snug ${displayedLastRoundStarResult.improved ? "text-emerald-700" : "text-blue-800"}`}>
-                          {displayedLastRoundStarResult.improved
-                            ? `New best! Improved from ${displayedLastRoundStarResult.previousBestStars}/3 to ${displayedLastRoundStarResult.bestStars}/3.`
-                            : `Best stays at ${displayedLastRoundStarResult.bestStars}/3 stars.`}
-                        </p>
-                      )}
-                    </div>
-                  </div>
-
-                  <div className={`border-2 p-4 rounded-2xl max-w-lg mx-auto text-center space-y-2 ${activeStrategyPassed ? "bg-emerald-50/80 border-emerald-200" : "bg-blue-50/70 border-blue-100"}`}>
-                    <span className={`text-[10px] font-black font-mono uppercase tracking-widest block ${activeStrategyPassed ? "text-emerald-700" : "text-blue-700"}`}>
-                      {activeStrategyPassed
-                        ? activeRoundBestStars >= STARS_PER_STRATEGY
-                          ? "Lesson at 3 stars"
-                          : "Lesson passed - stars can improve"
-                        : "Keep practicing"}
-                    </span>
-                    {activeStrategyPassed ? (
-                      <p className="text-sm text-emerald-800 font-black leading-relaxed">
-                        Your best for this lesson is now {activeRoundBestStars}/3 stars. Replays can only improve your best score.
-                      </p>
-                    ) : (
-                      <p className="text-sm text-slate-700 font-bold leading-relaxed">
-                        Goal: {roundPassTarget}+ facts with 80% accuracy.
-                      </p>
-                    )}
-                  </div>
-
-                  {/* Suggest action slides */}
-                  <div className="flex flex-col sm:flex-row gap-3 justify-center pt-4">
+                  <div className="flex flex-col sm:flex-row gap-2 justify-center">
                     <button
-                      onClick={() => {
-                        setActiveTab("map");
-                        setActiveStrategyRound(null);
-                      }}
-                      className="bg-white hover:bg-slate-50 border-2 border-slate-200 text-slate-700 font-black py-3 px-6 rounded-xl text-xs sm:text-sm transition cursor-pointer active:translate-y-0.5"
+                      onClick={() => activeStrategyRound && handleStartPractice(activeStrategyRound)}
+                      className="bg-emerald-500 hover:bg-emerald-600 text-white font-black py-2.5 px-6 rounded-xl text-sm transition border-2 border-emerald-600 cursor-pointer shadow-sm"
                     >
-                      Map
+                      Play Again
                     </button>
-
                     <button
-                      onClick={() => handleStartPracticeRound(activeStrategyRound)}
-                      className="bg-white hover:bg-slate-50 border-2 border-slate-200 text-amber-600 font-black py-3 px-6 rounded-xl text-xs sm:text-sm transition flex items-center justify-center gap-1.5 cursor-pointer active:translate-y-0.5"
+                      onClick={exitPractice}
+                      className="bg-white hover:bg-slate-50 text-slate-700 font-bold py-2.5 px-6 rounded-xl text-sm transition border-2 border-slate-200 cursor-pointer"
                     >
-                      <RefreshCw className="w-4 h-4 text-amber-500" />
-                      Try Again
+                      Back to Map
                     </button>
-
-                    {activeStrategyPassed && nextStrategyAfterRound && (
-                      <button
-                        onClick={() => {
-                          handleOpenStrategySlide(nextStrategyAfterRound, "You unlocked a new lesson!");
-                        }}
-                        className="bg-emerald-500 hover:bg-emerald-600 text-white font-black py-3 px-6 rounded-xl text-xs sm:text-sm transition flex items-center justify-center gap-1.5 border-2 border-emerald-700 shadow-[0_4px_0px_0px_#047857] active:translate-y-0.5 cursor-pointer"
-                      >
-                        Next Lesson
-                        <ChevronRight className="w-4 h-4 stroke-[3]" />
-                      </button>
-                    )}
                   </div>
-
                 </div>
               )}
-
             </div>
           </div>
-        )}
+        </main>
+      )}
 
-      </main>
-
-      {/* STRATEGY BREAK MODAL OVERLAY */}
+      {/* Lesson Modal */}
       <AnimatePresence>
-        {activeModalStrategy && (
-          <div className="fixed inset-0 bg-blue-950/40 backdrop-blur-xs z-50 flex items-center justify-center p-4">
-            
-            <motion.div 
-              initial={{ scale: 0.93, opacity: 0 }}
-              animate={{ scale: 1, opacity: 1 }}
-              exit={{ scale: 0.93, opacity: 0 }}
-              transition={{ type: "spring", damping: 25, stiffness: 350 }}
-              className="bg-white border-[6px] border-blue-400 rounded-[36px] p-6 md:p-8 max-w-lg w-full relative overflow-hidden shadow-[0_20px_0px_0px_#BFDBFE] flex flex-col gap-6"
+        {showLessonModal && (
+          <motion.div
+            initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }}
+            className="fixed inset-0 z-50 bg-black/40 flex items-center justify-center p-4"
+            onClick={() => setShowLessonModal(null)}
+          >
+            <motion.div
+              initial={{ scale: 0.95, y: 10 }} animate={{ scale: 1, y: 0 }} exit={{ scale: 0.95, y: 10 }}
+              className="bg-white rounded-3xl border-4 border-blue-300 p-6 max-w-md w-full max-h-[80vh] overflow-y-auto shadow-xl"
+              onClick={(e) => e.stopPropagation()}
             >
-              
-              {/* Cute top graphic frame */}
-              <div className="absolute top-0 left-0 w-full h-[6px] bg-[#FF4757]" />
-              
-              {/* Close Button */}
-              <button 
-                onClick={() => setActiveModalStrategy(null)}
-                className="absolute top-4 right-4 bg-white border-2 border-slate-200 p-1.5 rounded-full text-slate-500 hover:text-slate-800 transition cursor-pointer"
-              >
-                <X className="w-4 h-4 focus:outline-hidden" />
-              </button>
-
-              {/* Exact content structures requested, including spaces & "Lesson Tip" header */}
-              <div className="space-y-5 text-left text-slate-900">
-                
-                {/* 1. Header label "Lesson Tip" */}
-                <div className="flex items-center gap-2">
-                  <span className="inline-block bg-blue-50 text-blue-700 font-mono font-black tracking-wider text-[11px] uppercase border-2 border-blue-100 px-3 py-1 rounded-full">
-                    💡 Lesson Tip
-                  </span>
-                  <span className="text-xs text-slate-400 font-bold">Lesson {activeModalStrategy.id}/{STRATEGIES.length}</span>
-                </div>
-
-                {/* 2. Reason for screen */}
-                <div className="text-xs md:text-sm text-[#FF4757] bg-red-50 px-3.5 py-2.5 rounded-xl border border-red-200 font-black">
-                  {activeModalReason}
-                </div>
-
-                {/* 3. Strategy name */}
-                <div>
-                  <h3 className="text-xl md:text-2xl font-display font-black text-blue-950 tracking-tight leading-snug">
-                    {activeModalStrategy.name}
-                  </h3>
-                </div>
-
-                {/* 4. One short, friendly explanation */}
-                <div>
-                  <p className="text-sm text-gray-700 leading-relaxed md:text-base font-bold">
-                    {activeModalStrategy.explanation}
-                  </p>
-                </div>
-
-                {/* Clear divider step */}
-                <div className="border-t-2 border-slate-100 my-1" />
-
-                {/* 5. Example & Think Blocks */}
-                <div className="space-y-4">
-                  {/* Example list */}
-                  <div>
-                    <h5 className="text-xs font-mono uppercase tracking-widest text-slate-400 font-black mb-1">
-                      Example:
-                    </h5>
-                    <p className="text-base md:text-lg font-mono font-black text-blue-950 bg-blue-50/50 p-2.5 rounded-xl border-2 border-blue-100 inline-block px-5">
-                      {activeModalStrategy.example}
-                    </p>
-                  </div>
-
-                  {/* Think step by step */}
-                  <div className="space-y-2">
-                    <h5 className="text-xs font-mono uppercase tracking-widest text-[#FF4757] font-black">
-                      Think:
-                    </h5>
-                    <div className="bg-yellow-50/50 p-4 rounded-xl border-2 border-yellow-100 space-y-1.5">
-                      {activeModalStrategy.thinkSteps.map((step, idx) => (
-                        <p 
-                          key={idx} 
-                          className="text-xs md:text-sm text-blue-900 leading-relaxed font-black flex items-start gap-2"
-                        >
-                          <span className="text-yellow-500 font-black mt-0.5">•</span>
-                          <span>{step}</span>
-                        </p>
-                      ))}
-                    </div>
-                  </div>
-                </div>
-
-                {/* Clear divider step */}
-                <div className="border-t-2 border-slate-100 my-1" />
-
-                {/* 6. Try this statement */}
-                <div>
-                  <p className="text-xs text-gray-400 font-extrabold">
-                    Use this when it helps.
-                  </p>
-                </div>
-
-              </div>
-
-              {/* 7. Start Next Round Button */}
-              <div className="pt-2">
-                <button
-                  onClick={() => handleStartPracticeRound(activeModalStrategy)}
-                  className="w-full bg-emerald-500 hover:bg-emerald-600 text-white font-black py-4 px-6 rounded-2xl flex items-center justify-center gap-2 transition active:scale-95 text-sm md:text-base border-2 border-emerald-700 shadow-[0_4px_0px_0px_#047857] cursor-pointer"
-                >
-                  <Play className="w-4 h-4 fill-current" />
-                  Start Practice
+              <div className="flex items-center justify-between mb-4">
+                <span className="text-xs font-mono font-black text-blue-500">Lesson {showLessonModal.id}</span>
+                <button onClick={() => setShowLessonModal(null)} className="p-1.5 rounded-full hover:bg-slate-100 cursor-pointer transition">
+                  <X className="w-5 h-5 text-slate-400" />
                 </button>
               </div>
 
-            </motion.div>
-          </div>
-        )}
+              <h3 className="text-xl font-display font-black text-blue-950 mb-1">{showLessonModal.name}</h3>
+              <p className="text-sm text-slate-600 font-bold mb-4">{showLessonModal.explanation}</p>
 
-        {showSettingsModal && (
-          <div className="fixed inset-0 bg-blue-950/45 backdrop-blur-xs z-50 flex items-center justify-center p-4">
-            <motion.div 
-              initial={{ scale: 0.93, opacity: 0 }}
-              animate={{ scale: 1, opacity: 1 }}
-              exit={{ scale: 0.93, opacity: 0 }}
-              transition={{ type: "spring", damping: 25, stiffness: 350 }}
-              className="bg-white border-[6px] border-blue-400 rounded-[36px] p-6 md:p-8 max-w-lg w-full relative overflow-y-auto max-h-[90dvh] shadow-[0_20px_0px_0px_#BFDBFE] flex flex-col gap-5"
-            >
-              {/* Cute top graphic frame */}
-              <div className="absolute top-0 left-0 w-full h-[6px] bg-blue-500" />
-              
-              {/* Close Button */}
-              <button 
-                onClick={() => setShowSettingsModal(false)}
-                className="absolute top-4 right-4 bg-white border-2 border-slate-200 p-1.5 rounded-full text-slate-500 hover:text-slate-800 transition cursor-pointer"
-              >
-                <X className="w-4 h-4 focus:outline-hidden" />
-              </button>
-
-              <div className="space-y-4 text-left text-slate-900">
-                <div className="flex items-center gap-2">
-                  <span className="inline-block bg-blue-50 text-blue-700 font-mono font-black tracking-wider text-[11px] uppercase border-2 border-blue-100 px-3 py-1 rounded-full">
-                    ⚙️ Settings
-                  </span>
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 mb-5">
+                <div className="bg-blue-50 p-3 rounded-xl border-2 border-blue-100">
+                  <span className="text-xs font-mono font-black text-[#FF4757] uppercase block mb-1">Example</span>
+                  <span className="text-lg font-mono font-black text-blue-950">{showLessonModal.example}</span>
                 </div>
-
-                <div className="space-y-1">
-                  <h3 className="text-xl font-display font-black text-blue-950 tracking-tight leading-snug">
-                    Settings
-                  </h3>
-                  <p className="text-xs text-slate-500 font-bold">
-                    Choose the practice speed.
-                  </p>
-                </div>
-
-                <div className="border-t-2 border-slate-100 my-1" />
-
-                {/* 1. Goal Speed Settings */}
-                <div className="space-y-2">
-                  <label className="text-xs font-mono uppercase tracking-widest text-[#FF4757] font-black block">
-                    ⚡ Practice Speed
-                  </label>
-                  <div className="bg-blue-50/50 p-4 rounded-xl border-2 border-blue-100">
-                    <select
-                      value={speedTarget}
-                      onChange={(e) => {
-                        const val = parseInt(e.target.value, 10);
-                        setSpeedTarget(val);
-                        saveProgress(viewedStrategyIds, masteredStrategyIds, stars, val, bestStreaks, bestSpeeds);
-                      }}
-                      className="w-full bg-white border-2 border-slate-200 px-3 py-2 rounded-xl text-xs font-black text-blue-900 focus:ring-2 focus:ring-blue-400 focus:outline-hidden text-slate-900"
-                    >
-                      <option value={10}>10 items/min (Relaxed)</option>
-                      <option value={15}>15 items/min (Moderate)</option>
-                      <option value={20}>20 items/min (Normal)</option>
-                      <option value={30}>30 items/min (Challenger)</option>
-                      <option value={40}>40 items/min (Grandmaster)</option>
-                    </select>
-                    <p className="text-[10px] text-gray-500 font-bold mt-2 leading-relaxed">
-                      Gold means reaching this many correct answers in 1 minute.
+                <div className="bg-yellow-50 p-3 rounded-xl border-2 border-yellow-100">
+                  <span className="text-xs font-mono font-black text-yellow-700 uppercase block mb-1">Think</span>
+                  {showLessonModal.thinkSteps.map((step, i) => (
+                    <p key={i} className="text-xs text-blue-900 font-bold flex items-start gap-1.5">
+                      <span className="text-yellow-500">•</span> {step}
                     </p>
-                  </div>
+                  ))}
                 </div>
-
-                <div className="border-t-2 border-slate-100 my-1" />
-
-                <details className="bg-slate-50/60 border-2 border-slate-100 rounded-xl p-3 text-left">
-                  <summary className="text-[11px] font-black text-slate-500 uppercase tracking-widest cursor-pointer select-none">
-                    Advanced
-                  </summary>
-
-                  <div className="mt-4 bg-red-50/50 p-3 rounded-xl border-2 border-red-100 space-y-2">
-                    <span className="text-[10px] font-black text-red-700 uppercase tracking-widest block">
-                      Reset progress
-                    </span>
-                    <button 
-                      onClick={() => {
-                        handleResetProgress();
-                        setShowSettingsModal(false);
-                      }}
-                      className="w-full py-2.5 px-4 bg-red-100 hover:bg-red-200 text-red-700 font-black rounded-lg text-xs border-2 border-red-300 transition active:translate-y-0.5 cursor-pointer text-center"
-                    >
-                      Reset Progress
-                    </button>
-                  </div>
-                </details>
               </div>
+
+              <button
+                onClick={() => handleStartPractice(showLessonModal)}
+                className="w-full bg-emerald-500 hover:bg-emerald-600 text-white font-black py-3 rounded-xl transition border-2 border-emerald-600 cursor-pointer shadow-sm flex items-center justify-center gap-2"
+              >
+                <Play className="w-4 h-4 fill-current" /> Ready? Play!
+              </button>
             </motion.div>
-          </div>
+          </motion.div>
         )}
       </AnimatePresence>
 
+      {/* Settings Modal */}
+      <AnimatePresence>
+        {showSettingsModal && (
+          <motion.div
+            initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }}
+            className="fixed inset-0 z-50 bg-black/40 flex items-center justify-center p-4"
+            onClick={() => setShowSettingsModal(false)}
+          >
+            <motion.div
+              initial={{ scale: 0.95, y: 10 }} animate={{ scale: 1, y: 0 }} exit={{ scale: 0.95, y: 10 }}
+              className="bg-white rounded-3xl border-4 border-blue-300 p-6 max-w-sm w-full shadow-xl"
+              onClick={(e) => e.stopPropagation()}
+            >
+              <div className="flex items-center justify-between mb-5">
+                <h3 className="text-lg font-display font-black text-blue-950">Settings</h3>
+                <button onClick={() => setShowSettingsModal(false)} className="p-1.5 rounded-full hover:bg-slate-100 cursor-pointer transition">
+                  <X className="w-5 h-5 text-slate-400" />
+                </button>
+              </div>
+
+              <div className="space-y-4">
+                <div>
+                  <label className="text-xs font-black text-slate-500 uppercase tracking-wider block mb-1">Speed Target ({speedTarget}/min)</label>
+                  <input
+                    type="range" min="8" max="40" value={speedTarget}
+                    onChange={(e) => {
+                      const v = parseInt(e.target.value, 10);
+                      setSpeedTarget(v);
+                      saveProgress(viewedStrategyIds, masteredStrategyIds, v, bestStreaks, bestSpeeds, factStatsRef.current);
+                    }}
+                    className="w-full accent-emerald-500"
+                  />
+                  <div className="flex justify-between text-xs text-slate-400 font-bold mt-0.5">
+                    <span>Easier (8)</span><span>Harder (40)</span>
+                  </div>
+                </div>
+
+                <div>
+                  <label className="text-xs font-black text-slate-500 uppercase tracking-wider block mb-1">Your Name</label>
+                  <input
+                    type="text" value={studentName} placeholder="Your name"
+                    onChange={(e) => setStudentName(e.target.value)}
+                    className="w-full px-3 py-2 bg-slate-50 border-2 border-slate-200 rounded-xl text-sm font-bold focus:outline-none focus:border-blue-300"
+                  />
+                </div>
+
+                <button
+                  onClick={() => {
+                    if (!confirm("Reset ALL progress? This cannot be undone.")) return;
+                    setViewedStrategyIds([1]); setMasteredStrategyIds([]); setStars(0);
+                    setStrategyStars({}); setBestStreaks({}); setBestSpeeds({}); setFactStats({});
+                    factStatsRef.current = {}; setCurrentStageId(StageId.StarterIsland);
+                    setShowAllDone(false);
+                    saveProgress([1], [], speedTarget, {}, {}, {});
+                    setShowSettingsModal(false);
+                  }}
+                  className="w-full bg-red-100 hover:bg-red-200 border-2 border-red-300 text-red-700 font-black py-2.5 rounded-xl text-sm transition cursor-pointer"
+                >
+                  Reset All Progress
+                </button>
+              </div>
+            </motion.div>
+          </motion.div>
+        )}
+      </AnimatePresence>
     </div>
   );
 }
