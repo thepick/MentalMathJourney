@@ -12,6 +12,7 @@ import {
   FactStatsMap, chooseNextFact, getPriorityReviewQuestions,
   getStrategyAdaptiveMastery, mergeUniqueQuestions, updateFactStats,
 } from "./adaptiveEngine";
+import { evaluateAnswer, getAnswerDigitLimit } from "./answerEvaluation";
 
 // ─── Types ──────────────────────────────────────────────
 
@@ -62,6 +63,7 @@ const getStarsForScore = (score: number, target: number) => {
 export default function App() {
   // Refs
   const inputRef = useRef<HTMLInputElement>(null);
+  const inputBlurTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
   const factStatsRef = useRef<FactStatsMap>({});
   const currentQuestionRef = useRef<MathQuestion | null>(null);
   const questionStartedAtRef = useRef<number>(Date.now());
@@ -183,6 +185,7 @@ export default function App() {
 
   useEffect(() => () => {
     countdownTimersRef.current.forEach(clearTimeout);
+    if (inputBlurTimerRef.current) clearTimeout(inputBlurTimerRef.current);
     if (confettiClearTimerRef.current) clearTimeout(confettiClearTimerRef.current);
     if (correctFeedbackTimerRef.current) clearTimeout(correctFeedbackTimerRef.current);
     if (incorrectFeedbackTimerRef.current) clearTimeout(incorrectFeedbackTimerRef.current);
@@ -192,6 +195,7 @@ export default function App() {
     if (questionRevealTimerRef.current) clearTimeout(questionRevealTimerRef.current);
     if (correctAdvanceTimerRef.current) clearTimeout(correctAdvanceTimerRef.current);
     if (slowDownTimerRef.current) clearTimeout(slowDownTimerRef.current);
+    if (inputCooldownTimerRef.current) clearTimeout(inputCooldownTimerRef.current);
     document.body.classList.remove("timed-quiz-active");
     document.documentElement.classList.remove("timed-quiz-active");
   }, []);
@@ -452,7 +456,11 @@ export default function App() {
   const beginRoundNow = () => {
     clearCountdown(); resetRoundCounters(); isRoundActiveRef.current = true; setIsRoundActive(true);
     startQuestionRevealTimer();
-    setTimeout(() => { const el = document.activeElement as HTMLElement | null; if (el) el.blur(); }, 0);
+    inputBlurTimerRef.current = setTimeout(() => {
+      inputBlurTimerRef.current = null;
+      const el = document.activeElement as HTMLElement | null;
+      if (el) el.blur();
+    }, 0);
   };
 
   const startCountdown = () => {
@@ -564,7 +572,7 @@ export default function App() {
   const getCurrentAnswerDigitLimit = () => {
     const q = currentQuestionRef.current;
     if (!q) return 8;
-    return Math.max(1, Math.min(8, String(q.answer).length));
+    return getAnswerDigitLimit(q.answer);
   };
 
   const setAnswerValue = (next: string) => {
@@ -619,6 +627,11 @@ export default function App() {
   };
 
   const completeCorrectTransition = (stats: FactStatsMap, questionId: string, holdMs: number) => {
+    // A previous wrong-answer callback must not clear this answer or release its lock.
+    if (incorrectFeedbackTimerRef.current) {
+      clearTimeout(incorrectFeedbackTimerRef.current);
+      incorrectFeedbackTimerRef.current = null;
+    }
     clearCorrectAdvanceTimer();
     answerLockedRef.current = true;
 
@@ -739,33 +752,22 @@ export default function App() {
   const checkRevealedAnswerValue = (rawValue: string, force = false) => {
     if (!isRoundActiveRef.current || roundCompletedRef.current || !currentQuestionRef.current || answerLockedRef.current || isInputTemporarilyBlocked()) return;
 
-    const raw = rawValue.trim();
-    if (raw === "") {
+    const { raw, status } = evaluateAnswer(rawValue, currentQuestionRef.current.answer, force);
+    if (status === "pending") {
       setIsAnimatingCorrect(false);
       setIsAnimatingIncorrect(false);
       setIsShaking(false);
       return;
     }
 
-    const expected = currentQuestionRef.current.answer;
-    const neededDigits = getCurrentAnswerDigitLimit();
-
-    if (!force && raw.length < neededDigits) {
-      setIsAnimatingCorrect(false);
-      setIsAnimatingIncorrect(false);
-      setIsShaking(false);
-      return;
-    }
-
-    const parsed = Number(raw);
-    if (Number.isNaN(parsed)) {
+    if (status === "invalid") {
       setAnswerValue("");
       return;
     }
 
-    if (parsed === expected) {
+    if (status === "correct") {
       handleRevealedAnswerComplete(raw);
-    } else if (force || raw.length >= neededDigits) {
+    } else {
       setIsAnimatingIncorrect(true);
       setIsAnimatingCorrect(false);
       setIsShaking(true);
@@ -817,32 +819,21 @@ export default function App() {
       return;
     }
 
-    const raw = rawValue.trim();
-    if (raw === "") {
+    const { raw, status } = evaluateAnswer(rawValue, currentQuestionRef.current.answer, force);
+    if (status === "pending") {
       setIsAnimatingCorrect(false);
       setIsAnimatingIncorrect(false);
       setIsShaking(false);
       return;
     }
 
-    const expected = currentQuestionRef.current.answer;
-    const neededDigits = getCurrentAnswerDigitLimit();
-
-    if (!force && raw.length < neededDigits) {
-      setIsAnimatingCorrect(false);
-      setIsAnimatingIncorrect(false);
-      setIsShaking(false);
-      return;
-    }
-
-    const parsed = Number(raw);
-    if (Number.isNaN(parsed)) {
+    if (status === "invalid") {
       setAnswerValue("");
       return;
     }
 
-    if (parsed === expected) handleCorrectAnswer(raw);
-    else if (force || raw.length >= neededDigits) handleIncorrectAnswer(raw);
+    if (status === "correct") handleCorrectAnswer(raw);
+    else handleIncorrectAnswer(raw);
   };
 
   const queueAnswerInputCheck = (nextValue: string) => {

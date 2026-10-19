@@ -201,6 +201,22 @@ npm run build
 
 Then copy the generated `source/dist/index.html` and `source/dist/assets/` into the deploy root.
 
+## Tests
+
+Use Node.js 24 LTS (verified with 24.12.0). From `source/`, install the locked dependencies and run the checks:
+
+```bash
+npm ci --ignore-scripts
+npm run lint
+npm test
+npm test -- --coverage
+npm run build
+```
+
+`src/answerEvaluation.ts` holds the shared evaluation rules for normal and revealed answers. Auto-check waits for the answer's digit count; Submit checks shorter input immediately. Copying a revealed answer does not earn points.
+
+The component tests mount the real App under StrictMode using Testing Library and jsdom. Fake timers cover countdown, keyboard/keypad input, delayed checking, wrong-answer correction, reveal, cooldown, expiry, replay, exit, and unmount cleanup. Only Motion's visual transitions are replaced; question generation, adaptive scoring, and browser storage run normally. Coverage for App and the evaluator is written to `coverage/`, including an HTML report. These tests do not verify CSS layout, animation, or physical-device behavior.
+
 ## License
 
 MIT
