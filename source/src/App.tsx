@@ -733,6 +733,10 @@ export default function App() {
 
     setCurrentStreak(0);
     if (recordedWrongNow) setConsecutiveErrors((p) => p + 1);
+    showIncorrectFeedback(submittedValue);
+  };
+
+  const showIncorrectFeedback = (submittedValue: string) => {
     setIsAnimatingIncorrect(true);
     setIsAnimatingCorrect(false);
     setIsShaking(true);
@@ -747,42 +751,6 @@ export default function App() {
       answerLockedRef.current = false;
       incorrectFeedbackTimerRef.current = null;
     }, INCORRECT_FEEDBACK_MS);
-  };
-
-  const checkRevealedAnswerValue = (rawValue: string, force = false) => {
-    if (!isRoundActiveRef.current || roundCompletedRef.current || !currentQuestionRef.current || answerLockedRef.current || isInputTemporarilyBlocked()) return;
-
-    const { raw, status } = evaluateAnswer(rawValue, currentQuestionRef.current.answer, force);
-    if (status === "pending") {
-      setIsAnimatingCorrect(false);
-      setIsAnimatingIncorrect(false);
-      setIsShaking(false);
-      return;
-    }
-
-    if (status === "invalid") {
-      setAnswerValue("");
-      return;
-    }
-
-    if (status === "correct") {
-      handleRevealedAnswerComplete(raw);
-    } else {
-      setIsAnimatingIncorrect(true);
-      setIsAnimatingCorrect(false);
-      setIsShaking(true);
-      showIncorrectAnswerThenReset(raw);
-
-      if (incorrectFeedbackTimerRef.current) clearTimeout(incorrectFeedbackTimerRef.current);
-      incorrectFeedbackTimerRef.current = setTimeout(() => {
-        clearIncorrectAnswerResetTimer();
-        setAnswerValue("");
-        setIsAnimatingIncorrect(false);
-        setIsShaking(false);
-        answerLockedRef.current = false;
-        incorrectFeedbackTimerRef.current = null;
-      }, INCORRECT_FEEDBACK_MS);
-    }
   };
 
   const triggerAnswerReveal = () => {
@@ -814,11 +782,6 @@ export default function App() {
   const checkAnswerValue = (rawValue: string, force = false) => {
     if (!isRoundActiveRef.current || roundCompletedRef.current || !currentQuestionRef.current || answerLockedRef.current || isInputTemporarilyBlocked()) return;
 
-    if (answerRevealActiveRef.current) {
-      checkRevealedAnswerValue(rawValue, force);
-      return;
-    }
-
     const { raw, status } = evaluateAnswer(rawValue, currentQuestionRef.current.answer, force);
     if (status === "pending") {
       setIsAnimatingCorrect(false);
@@ -832,7 +795,11 @@ export default function App() {
       return;
     }
 
-    if (status === "correct") handleCorrectAnswer(raw);
+    // Copying a revealed answer advances without changing attempts, points or cooldowns.
+    if (answerRevealActiveRef.current) {
+      if (status === "correct") handleRevealedAnswerComplete(raw);
+      else showIncorrectFeedback(raw);
+    } else if (status === "correct") handleCorrectAnswer(raw);
     else handleIncorrectAnswer(raw);
   };
 

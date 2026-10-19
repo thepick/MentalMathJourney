@@ -210,6 +210,57 @@ test.each([false, true])("correcting a wrong answer keeps its full hold (reveale
   expect(answer().value).toBe("");
 });
 
+test.each([false, true])("wrong-answer feedback clears at 220ms without advancing (revealed: %s)", (revealed) => {
+  mount();
+  startRound();
+  if (revealed) tick(11250);
+  key("9");
+  key("Enter");
+  expect(answer().value).toBe("9");
+  expect(answer().classList.contains("answer-glow-bad")).toBe(true);
+  tick(219);
+  expect(answer().value).toBe("9");
+  tick(1);
+  expect(answer().value).toBe("");
+  expect(answer().classList.contains("answer-glow-bad")).toBe(false);
+  tick(180);
+  expect(screen.getByText("Question 1")).toBeTruthy();
+  expect(totalAttempts()).toBe(1);
+  expect(score()).toBe(0);
+});
+
+test("revealed two-digit answers keep partial input and never add misses, points or cooldowns", () => {
+  localStorage.setItem("mental_math_journey_v2", JSON.stringify({ viewedStrategyIds: [1, 5] }));
+  mount();
+  fireEvent.click(screen.getAllByRole("button", { name: "Play" })[1]);
+  fireEvent.click(screen.getByRole("button", { name: "Start!" }));
+  tick(3700);
+  tick(11250);
+  const saved = localStorage.getItem("mental_math_journey_v2");
+  key("Enter");
+  expect(answer().value).toBe("");
+  for (let attempt = 0; attempt < 2; attempt++) {
+    key("1");
+    tick(50);
+    expect(answer().value).toBe("1");
+    expect(answer().classList.contains("answer-glow-bad")).toBe(false);
+    key("Enter");
+    expect(answer().classList.contains("answer-glow-bad")).toBe(true);
+    tick(400);
+    expect(answer().value).toBe("");
+    expect(answer().disabled).toBe(false);
+    expect(screen.queryByText("Slow down! Read carefully")).toBeNull();
+  }
+  key("1");
+  key("0");
+  tick(50);
+  expect(answer().classList.contains("answer-glow-good")).toBe(true);
+  tick(225);
+  expect(screen.getByText("Question 2")).toBeTruthy();
+  expect(score()).toBe(0);
+  expect(localStorage.getItem("mental_math_journey_v2")).toBe(saved);
+});
+
 test("round expiry cancels a queued answer check and leaves no phantom final attempt", () => {
   mount();
   startRound();
